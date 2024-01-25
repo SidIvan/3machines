@@ -2,97 +2,106 @@ package svc
 
 import (
 	"DeltaReceiver/internal/conf"
-	"DeltaReceiver/pkg/binance/model"
+	"DeltaReceiver/internal/model"
 	"DeltaReceiver/pkg/log"
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
-	"github.com/gorilla/websocket"
 	"go.uber.org/zap"
-	"net/http"
+	"os"
+	"time"
 )
 
 type BinanceClient interface {
-	GetFullSnapshot() (*model.DepthSnapshot, error)
+	//GetFullSnapshot() (*model.DepthSnapshot, error)
 }
 
 type LocalRepo interface {
+	SaveDeltas([]model.Delta) error
 }
 
 type GlobalRepo interface {
+	SendDeltas([]model.Delta) error
 }
 
 type DeltaReceiver interface {
+	ReceiveDeltas(ctx context.Context, deltaCh chan<- *model.Delta)
 }
 
 type MetricsHolder interface {
 }
 
 type DeltaReceiverSvc struct {
-	log           *zap.Logger
-	binanceClient BinanceClient
-	deltaReceiver DeltaReceiver
-	localRepo     LocalRepo
-	globalRepo    GlobalRepo
-	metricsHolder MetricsHolder
-	cfg           *conf.AppConfig
+	log            *zap.Logger
+	binanceClient  BinanceClient
+	deltaReceivers []DeltaReceiver
+	localRepo      LocalRepo
+	globalRepo     GlobalRepo
+	metricsHolder  MetricsHolder
+	cfg            *conf.AppConfig
 }
 
-func NewDeltaReceiverSvc(config *conf.AppConfig, binanceClient BinanceClient, deltaReceiver DeltaReceiver, localRepo LocalRepo,
+func NewDeltaReceiverSvc(config *conf.AppConfig, binanceClient BinanceClient, deltaReceivers []DeltaReceiver, localRepo LocalRepo,
 	globalRepo GlobalRepo, metricsHolder MetricsHolder) *DeltaReceiverSvc {
 	return &DeltaReceiverSvc{
-		log:           log.GetLogger("DeltaReceiverSvc"),
-		binanceClient: binanceClient,
-		deltaReceiver: deltaReceiver,
-		localRepo:     localRepo,
-		globalRepo:    globalRepo,
-		metricsHolder: metricsHolder,
-		cfg:           config,
+		log:            log.GetLogger("DeltaReceiverSvc"),
+		binanceClient:  binanceClient,
+		deltaReceivers: deltaReceivers,
+		localRepo:      localRepo,
+		globalRepo:     globalRepo,
+		metricsHolder:  metricsHolder,
+		cfg:            config,
 	}
 }
 
-// "wss://stream.binance.com:9443/ws/btcusdt@depth@100ms"
-func (s *DeltaReceiverSvc) ReceiveDeltas(ctx context.Context) {
-	for pair, period := range s.cfg.BinanceHttpConfig.Pair2Period {
-		go s.ReceivePair(ctx, pair, period)
+func (s *DeltaReceiverSvc) ReceiveDeltasPairs(ctx context.Context) {
+	for _, deltaReceiver := range s.deltaReceivers {
+		go func(ctx context.Context, deltaReceiver DeltaReceiver) {
+			for {
+				s.ReceivePair(ctx, deltaReceiver)
+			}
+		}(ctx, deltaReceiver)
 	}
 }
 
-func (s *DeltaReceiverSvc) ReceivePair(ctx context.Context, pair string, period int16) {
-	url := fmt.Sprintf("%s%s@depth@%dms", s.cfg.BinanceHttpConfig.DeltaStreamBaseUriConfig.GetBaseUri(), pair, period)
+func (s *DeltaReceiverSvc) ReceivePair(ctx context.Context, deltaReceiver DeltaReceiver) {
+	deltaCh := make(chan *model.Delta)
+	go deltaReceiver.ReceiveDeltas(ctx, deltaCh)
+	batchSize := s.cfg.GDBBatchSize
 	for {
-		conn, resp, err := websocket.DefaultDialer.Dial(url, nil)
-		if resp.StatusCode == http.StatusTeapot || resp.StatusCode == http.StatusTooManyRequests {
-
+		deltas := make([]model.Delta, batchSize)
+		for i := 0; i != batchSize; i++ {
+			delta, ok := <-deltaCh
+			if !ok {
+				s.sendDeltas(deltas)
+				return
+			}
+			deltas[i] = *delta
 		}
-		if err != nil {
-			s.log.Error("dial: " + err.Error())
-		}
-		conn.Close()
+		s.sendDeltas(deltas)
 	}
-	go func() {
-		for {
-			_, message, err := conn.ReadMessage()
-			if err != nil {
-				log.Println("read: ", err)
-				return
-			}
-			stringDeltas = append(stringDeltas, string(message))
-			fmt.Println(string(message))
-			//fmt.Println(string(message))
-			var delta Delta
-			if err := json.Unmarshal(message, &delta); err != nil {
-				fmt.Println("Error unmarshalling JSON:", err)
-				return
-			}
-			deltasMutex.Lock()
-			deltas = append(deltas, delta)
-			deltasMutex.Unlock()
-			go SaveDelta(context.Background(), &delta)
+}
+
+func (s *DeltaReceiverSvc) sendDeltas(deltas []model.Delta) {
+	err := s.globalRepo.SendDeltas(deltas)
+	if err != nil {
+		//run reconnects
+		s.log.Error(err.Error())
+		err = s.localRepo.SaveDeltas(deltas)
+		if err != nil {
+			//run reconnects
+			s.log.Error(err.Error())
 		}
-	}()
-	<-ctx.Done()
+		// УСЁ ПРОПАЛО
+		s.saveToFile(deltas)
+	}
+}
+
+func (s *DeltaReceiverSvc) saveToFile(deltas []model.Delta) {
+	file, _ := os.Create(string(time.Now().UnixMilli()))
+	data, _ := json.Marshal(deltas)
+	file.Write(data)
+	file.Close()
 }
 
 var (
