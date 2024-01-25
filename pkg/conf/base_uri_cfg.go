@@ -1,0 +1,13 @@
+package conf
+
+import "fmt"
+
+type BaseUriConfig struct {
+	Schema string `yaml:"schema"`
+	Host   string `yaml:"host"`
+	Port   int    `yaml:"port"`
+}
+
+func (cfg *BaseUriConfig) GetBaseUri() string {
+	return fmt.Sprintf("%s%s:%d/", cfg.Schema, cfg.Host, cfg.Port)
+}

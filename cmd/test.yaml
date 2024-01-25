@@ -1,0 +1,6 @@
+timeout.sec:
+  3
+uri:
+  "AXAXA"
+database.name:
+  "db"
