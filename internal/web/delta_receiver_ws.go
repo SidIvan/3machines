@@ -44,6 +44,7 @@ func (s DeltaReceiverWS) ReceiveDeltas(ctx context.Context, ch chan<- *model.Del
 				Price:     price,
 				Count:     count,
 				T:         true,
+				UpdateId:  deltaMsg.UpdateId,
 			}
 		}
 		for _, ask := range deltaMsg.Asks {

@@ -13,15 +13,18 @@ import (
 )
 
 type BinanceClient interface {
-	//GetFullSnapshot() (*model.DepthSnapshot, error)
+	GetFullSnapshot(ctx context.Context, pair string, depth int) ([]model.DepthSnapshotPart, error)
 }
 
 type LocalRepo interface {
-	SaveDeltas([]model.Delta) error
+	SaveDeltas(context.Context, []model.Delta) bool
+	SaveSnapshot(context.Context, []model.DepthSnapshotPart) bool
+	Reconnect(ctx context.Context)
 }
 
 type GlobalRepo interface {
-	SendDeltas([]model.Delta) error
+	SendDeltas(context.Context, []model.Delta) error
+	SendSnapshot(context.Context, []model.DepthSnapshotPart) error
 }
 
 type DeltaReceiver interface {
@@ -54,6 +57,25 @@ func NewDeltaReceiverSvc(config *conf.AppConfig, binanceClient BinanceClient, de
 	}
 }
 
+const fullSnapshotDepth = 5000
+
+func (s *DeltaReceiverSvc) CronGetAndStoreFullSnapshots(ctx context.Context, pair string) {
+	snapshot, err := s.binanceClient.GetFullSnapshot(ctx, pair, fullSnapshotDepth)
+	if err != nil {
+		s.log.Error(err.Error())
+		return
+	}
+	err = s.globalRepo.SendSnapshot(ctx, snapshot)
+	if err != nil {
+		s.log.Error(err.Error())
+		if s.localRepo.SaveSnapshot(ctx, snapshot) {
+			return
+		}
+		// УСЁ ПРОПАЛО
+		s.saveSnapshotToFile(snapshot)
+	}
+}
+
 func (s *DeltaReceiverSvc) ReceiveDeltasPairs(ctx context.Context) {
 	for _, deltaReceiver := range s.deltaReceivers {
 		go func(ctx context.Context, deltaReceiver DeltaReceiver) {
@@ -73,32 +95,37 @@ func (s *DeltaReceiverSvc) ReceivePair(ctx context.Context, deltaReceiver DeltaR
 		for i := 0; i != batchSize; i++ {
 			delta, ok := <-deltaCh
 			if !ok {
-				s.sendDeltas(deltas)
+				s.sendDeltas(ctx, deltas)
 				return
 			}
 			deltas[i] = *delta
 		}
-		s.sendDeltas(deltas)
+		s.sendDeltas(ctx, deltas)
 	}
 }
 
-func (s *DeltaReceiverSvc) sendDeltas(deltas []model.Delta) {
-	err := s.globalRepo.SendDeltas(deltas)
+func (s *DeltaReceiverSvc) sendDeltas(ctx context.Context, deltas []model.Delta) {
+	err := s.globalRepo.SendDeltas(ctx, deltas)
 	if err != nil {
 		//run reconnects
 		s.log.Error(err.Error())
-		err = s.localRepo.SaveDeltas(deltas)
-		if err != nil {
-			//run reconnects
-			s.log.Error(err.Error())
+		if s.localRepo.SaveDeltas(ctx, deltas) {
+			return
 		}
 		// УСЁ ПРОПАЛО
-		s.saveToFile(deltas)
+		s.saveDeltasToFile(deltas)
 	}
 }
 
-func (s *DeltaReceiverSvc) saveToFile(deltas []model.Delta) {
-	file, _ := os.Create(string(time.Now().UnixMilli()))
+func (s *DeltaReceiverSvc) saveSnapshotToFile(snapshot []model.DepthSnapshotPart) {
+	file, _ := os.Create("snapshot" + string(time.Now().UnixMilli()))
+	data, _ := json.Marshal(snapshot)
+	file.Write(data)
+	file.Close()
+}
+
+func (s *DeltaReceiverSvc) saveDeltasToFile(deltas []model.Delta) {
+	file, _ := os.Create("deltas" + string(time.Now().UnixMilli()))
 	data, _ := json.Marshal(deltas)
 	file.Write(data)
 	file.Close()
