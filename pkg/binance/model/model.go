@@ -18,6 +18,14 @@ type DepthSnapshot struct {
 
 type Symbol string
 
+func ParseSymbol(pair string) Symbol {
+	return string2Symbol[pair]
+}
+
+var string2Symbol = map[string]Symbol{
+	"btcusdt": BTCUSDT,
+}
+
 const (
-	BTCUSDT = Symbol("BTCUSDT")
+	BTCUSDT = Symbol("btcusdt")
 )

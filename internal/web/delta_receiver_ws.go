@@ -14,16 +14,18 @@ import (
 type DeltaReceiverWS struct {
 	logger   *zap.Logger
 	Receiver *binance.DeltaReceiveClient
+	symbol   bmodel.Symbol
 }
 
 func NewDeltaReceiverWs(cfg *binance.BinanceHttpClientConfig, pair string, period int16) *DeltaReceiverWS {
 	return &DeltaReceiverWS{
 		logger:   log.GetLogger(fmt.Sprintf("BinanceDeltaReceiverWS: %s", pair)),
 		Receiver: binance.NewDeltaReceiveClient(cfg, pair, period),
+		symbol:   bmodel.ParseSymbol(pair),
 	}
 }
 
-func (s DeltaReceiverWS) ReceiveDeltas(ctx context.Context, ch chan<- *model.Delta) {
+func (s DeltaReceiverWS) ReceiveDeltas(ctx context.Context, ch chan<- model.Delta) {
 	deltaMessageCh := make(chan *bmodel.DeltaMessage)
 	go s.Receiver.ReceiveDeltas(deltaMessageCh)
 	for {
@@ -39,13 +41,7 @@ func (s DeltaReceiverWS) ReceiveDeltas(ctx context.Context, ch chan<- *model.Del
 				s.logger.Error(err.Error())
 				continue
 			}
-			ch <- &model.Delta{
-				Timestamp: deltaMsg.EventTime,
-				Price:     price,
-				Count:     count,
-				T:         true,
-				UpdateId:  deltaMsg.UpdateId,
-			}
+			ch <- model.NewDelta(deltaMsg.EventTime, price, count, deltaMsg.UpdateId, true, convBinanceSymb2Symb(s.symbol))
 		}
 		for _, ask := range deltaMsg.Asks {
 			price, err := strconv.ParseFloat(ask[0], 64)
@@ -58,12 +54,7 @@ func (s DeltaReceiverWS) ReceiveDeltas(ctx context.Context, ch chan<- *model.Del
 				s.logger.Error(err.Error())
 				continue
 			}
-			ch <- &model.Delta{
-				Timestamp: deltaMsg.EventTime,
-				Price:     price,
-				Count:     count,
-				T:         false,
-			}
+			ch <- model.NewDelta(deltaMsg.EventTime, price, count, deltaMsg.UpdateId, false, convBinanceSymb2Symb(s.symbol))
 		}
 	}
 }

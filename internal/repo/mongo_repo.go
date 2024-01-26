@@ -26,18 +26,18 @@ func NewLocalMongoRepo(cfg *appConf.LocalRepoConfig) *LocalMongoRepo {
 	return repo
 }
 
-func (s *LocalMongoRepo) initCollections(ctx context.Context) {
+func (s LocalMongoRepo) initCollections(ctx context.Context) {
 	if db, ok := mongo.ConnectMongo(s.logger, s.cfg.MongoConfig); !ok {
 		s.BinanceDeltasCol = mongo.NewMongoCollection(s.logger, s.cfg.MongoConfig, db.Collection(s.cfg.DeltaColName))
 		s.BinanceSnapshotCol = mongo.NewMongoCollection(s.logger, s.cfg.MongoConfig, db.Collection(s.cfg.SnapshotColName))
 	}
 }
 
-func (s *LocalMongoRepo) Reconnect(ctx context.Context) {
+func (s LocalMongoRepo) Reconnect(ctx context.Context) {
 	s.initCollections(ctx)
 }
 
-func (s *LocalMongoRepo) SaveDeltas(ctx context.Context, deltas []model.Delta) bool {
+func (s LocalMongoRepo) SaveDeltas(ctx context.Context, deltas []model.Delta) bool {
 	for _, delta := range deltas {
 		if _, ok := s.BinanceDeltasCol.InsertDocument(delta); !ok {
 			return false
@@ -46,7 +46,7 @@ func (s *LocalMongoRepo) SaveDeltas(ctx context.Context, deltas []model.Delta) b
 	return true
 }
 
-func (s *LocalMongoRepo) SaveSnapshot(ctx context.Context, snapshot []model.DepthSnapshotPart) bool {
+func (s LocalMongoRepo) SaveSnapshot(ctx context.Context, snapshot []model.DepthSnapshotPart) bool {
 	for _, snapshotPart := range snapshot {
 		if _, ok := s.BinanceSnapshotCol.InsertDocument(snapshotPart); !ok {
 			return false

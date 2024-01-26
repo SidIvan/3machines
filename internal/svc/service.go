@@ -23,12 +23,12 @@ type LocalRepo interface {
 }
 
 type GlobalRepo interface {
-	SendDeltas(context.Context, []model.Delta) error
-	SendSnapshot(context.Context, []model.DepthSnapshotPart) error
+	SendDeltas(context.Context, []model.Delta) bool
+	SendSnapshot(context.Context, []model.DepthSnapshotPart) bool
 }
 
 type DeltaReceiver interface {
-	ReceiveDeltas(ctx context.Context, deltaCh chan<- *model.Delta)
+	ReceiveDeltas(ctx context.Context, deltaCh chan<- model.Delta)
 }
 
 type MetricsHolder interface {
@@ -65,9 +65,7 @@ func (s *DeltaReceiverSvc) CronGetAndStoreFullSnapshots(ctx context.Context, pai
 		s.log.Error(err.Error())
 		return
 	}
-	err = s.globalRepo.SendSnapshot(ctx, snapshot)
-	if err != nil {
-		s.log.Error(err.Error())
+	if !s.globalRepo.SendSnapshot(ctx, snapshot) {
 		if s.localRepo.SaveSnapshot(ctx, snapshot) {
 			return
 		}
@@ -87,7 +85,7 @@ func (s *DeltaReceiverSvc) ReceiveDeltasPairs(ctx context.Context) {
 }
 
 func (s *DeltaReceiverSvc) ReceivePair(ctx context.Context, deltaReceiver DeltaReceiver) {
-	deltaCh := make(chan *model.Delta)
+	deltaCh := make(chan model.Delta)
 	go deltaReceiver.ReceiveDeltas(ctx, deltaCh)
 	batchSize := s.cfg.GDBBatchSize
 	for {
@@ -98,17 +96,15 @@ func (s *DeltaReceiverSvc) ReceivePair(ctx context.Context, deltaReceiver DeltaR
 				s.sendDeltas(ctx, deltas)
 				return
 			}
-			deltas[i] = *delta
+			deltas[i] = delta
 		}
 		s.sendDeltas(ctx, deltas)
 	}
 }
 
 func (s *DeltaReceiverSvc) sendDeltas(ctx context.Context, deltas []model.Delta) {
-	err := s.globalRepo.SendDeltas(ctx, deltas)
-	if err != nil {
+	if !s.globalRepo.SendDeltas(ctx, deltas) {
 		//run reconnects
-		s.log.Error(err.Error())
 		if s.localRepo.SaveDeltas(ctx, deltas) {
 			return
 		}
