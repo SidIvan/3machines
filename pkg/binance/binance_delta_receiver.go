@@ -3,6 +3,7 @@ package binance
 import (
 	"DeltaReceiver/pkg/binance/model"
 	"DeltaReceiver/pkg/log"
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/gorilla/websocket"
@@ -17,6 +18,7 @@ type DeltaReceiveClient struct {
 	pair         string
 	period       int16
 	receiveTimeS int
+	dialer       *websocket.Conn
 }
 
 func NewDeltaReceiveClient(cfg *BinanceHttpClientConfig, pair string, period int16) *DeltaReceiveClient {
@@ -39,6 +41,11 @@ func (s *DeltaReceiveClient) ReceiveDeltas(ch chan *model.DeltaMessage) error {
 		s.logger.Error(err.Error())
 		return err
 	}
+	s.dialer = dialer
+	defer func() {
+		s.dialer.Close()
+		s.dialer = nil
+	}()
 	if resp.StatusCode == http.StatusTeapot {
 		return banBinanceRequests(resp, TeapotErr)
 	}
@@ -61,4 +68,12 @@ func (s *DeltaReceiveClient) ReceiveDeltas(ch chan *model.DeltaMessage) error {
 		ch <- &deltaMsg
 	}
 	return nil
+}
+
+func (s *DeltaReceiveClient) Shutdown(ctx context.Context) {
+	if s.dialer != nil {
+		s.dialer.Close()
+		for s.dialer != nil {
+		}
+	}
 }

@@ -26,10 +26,14 @@ func NewDeltaReceiverWs(cfg *binance.BinanceHttpClientConfig, pair string, perio
 }
 
 func (s DeltaReceiverWS) ReceiveDeltas(ctx context.Context, ch chan<- model.Delta) {
+	defer close(ch)
 	deltaMessageCh := make(chan *bmodel.DeltaMessage)
 	go s.Receiver.ReceiveDeltas(deltaMessageCh)
 	for {
-		deltaMsg := <-deltaMessageCh
+		deltaMsg, ok := <-deltaMessageCh
+		if !ok {
+			return
+		}
 		for _, bid := range deltaMsg.Bids {
 			price, err := strconv.ParseFloat(bid[0], 64)
 			if err != nil {
@@ -57,4 +61,8 @@ func (s DeltaReceiverWS) ReceiveDeltas(ctx context.Context, ch chan<- model.Delt
 			ch <- model.NewDelta(deltaMsg.EventTime, price, count, deltaMsg.UpdateId, false, convBinanceSymb2Symb(s.symbol))
 		}
 	}
+}
+
+func (s *DeltaReceiverWS) Shutdown(ctx context.Context) {
+	s.Receiver.Shutdown(ctx)
 }

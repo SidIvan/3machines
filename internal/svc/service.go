@@ -29,6 +29,7 @@ type GlobalRepo interface {
 
 type DeltaReceiver interface {
 	ReceiveDeltas(ctx context.Context, deltaCh chan<- model.Delta)
+	Shutdown(context.Context)
 }
 
 type MetricsHolder interface {
@@ -59,7 +60,16 @@ func NewDeltaReceiverSvc(config *conf.AppConfig, binanceClient BinanceClient, de
 
 const fullSnapshotDepth = 5000
 
-func (s *DeltaReceiverSvc) CronGetAndStoreFullSnapshots(ctx context.Context, pair string) {
+func (s *DeltaReceiverSvc) CronGetAndStoreFullSnapshot(pair string, periodM int16) {
+	for {
+		time.Sleep(time.Duration(periodM) * time.Minute)
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		s.GetAndStoreFullSnapshot(ctx, pair)
+		cancel()
+	}
+}
+
+func (s *DeltaReceiverSvc) GetAndStoreFullSnapshot(ctx context.Context, pair string) {
 	snapshot, err := s.binanceClient.GetFullSnapshot(ctx, pair, fullSnapshotDepth)
 	if err != nil {
 		s.log.Error(err.Error())
@@ -74,17 +84,18 @@ func (s *DeltaReceiverSvc) CronGetAndStoreFullSnapshots(ctx context.Context, pai
 	}
 }
 
-func (s *DeltaReceiverSvc) ReceiveDeltasPairs(ctx context.Context) {
+func (s *DeltaReceiverSvc) ReceiveDeltasPairs() {
 	for _, deltaReceiver := range s.deltaReceivers {
-		go func(ctx context.Context, deltaReceiver DeltaReceiver) {
+		go func(deltaReceiver DeltaReceiver) {
 			for {
-				s.ReceivePair(ctx, deltaReceiver)
+				s.ReceivePair(deltaReceiver)
 			}
-		}(ctx, deltaReceiver)
+		}(deltaReceiver)
 	}
 }
 
-func (s *DeltaReceiverSvc) ReceivePair(ctx context.Context, deltaReceiver DeltaReceiver) {
+func (s *DeltaReceiverSvc) ReceivePair(deltaReceiver DeltaReceiver) {
+	ctx := context.Background()
 	deltaCh := make(chan model.Delta)
 	go deltaReceiver.ReceiveDeltas(ctx, deltaCh)
 	batchSize := s.cfg.GDBBatchSize
@@ -125,6 +136,12 @@ func (s *DeltaReceiverSvc) saveDeltasToFile(deltas []model.Delta) {
 	data, _ := json.Marshal(deltas)
 	file.Write(data)
 	file.Close()
+}
+
+func (s *DeltaReceiverSvc) Shutdown(ctx context.Context) {
+	for _, recv := range s.deltaReceivers {
+		recv.Shutdown(ctx)
+	}
 }
 
 var (

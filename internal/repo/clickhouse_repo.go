@@ -1,7 +1,9 @@
 package repo
 
 import (
+	"DeltaReceiver/internal/conf"
 	"DeltaReceiver/internal/model"
+	"DeltaReceiver/pkg/log"
 	"context"
 	"github.com/ClickHouse/ch-go"
 	"github.com/ClickHouse/ch-go/proto"
@@ -12,6 +14,21 @@ import (
 type ClickhouseRepo struct {
 	client *ch.Client
 	logger *zap.Logger
+}
+
+func NewClickhouseRepo(cfg *conf.GlobalRepoConfig) *ClickhouseRepo {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(cfg.TimeoutS)*time.Second)
+	defer cancel()
+	logger := log.GetLogger("ClickhouseRepo")
+	client, err := ch.Dial(ctx, ch.Options{})
+	if err != nil {
+		logger.Error(err.Error())
+		return nil
+	}
+	return &ClickhouseRepo{
+		logger: logger,
+		client: client,
+	}
 }
 
 func prepareDeltasInsertBlock(deltas []model.Delta) proto.Input {
