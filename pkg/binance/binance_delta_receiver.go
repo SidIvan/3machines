@@ -18,6 +18,7 @@ type DeltaReceiveClient struct {
 	pair         string
 	period       int16
 	receiveTimeS int
+	shutdown     bool
 	dialer       *websocket.Conn
 }
 
@@ -27,8 +28,21 @@ func NewDeltaReceiveClient(cfg *BinanceHttpClientConfig, pair string, period int
 		baseUri:      cfg.DeltaStreamBaseUriConfig.GetBaseUri(),
 		period:       period,
 		pair:         pair,
-		receiveTimeS: cfg.receiveTimeS,
+		receiveTimeS: cfg.ReceiveTimeS,
 	}
+}
+
+func (s *DeltaReceiveClient) Reconnect() error {
+	if s.shutdown {
+		return nil
+	}
+	dialer, _, err := websocket.DefaultDialer.Dial(fmt.Sprintf("%sws/%s@depth@%dms", s.baseUri, s.pair, s.period), nil)
+	if err != nil {
+		s.logger.Error(err.Error())
+		return err
+	}
+	s.dialer = dialer
+	return nil
 }
 
 func (s *DeltaReceiveClient) ReceiveDeltas(ch chan *model.DeltaMessage) error {
@@ -36,12 +50,13 @@ func (s *DeltaReceiveClient) ReceiveDeltas(ch chan *model.DeltaMessage) error {
 	if isBanned() {
 		return RequestRejectedErr
 	}
-	dialer, resp, err := websocket.DefaultDialer.Dial(fmt.Sprintf("%s/ws%s@depth%dms", s.baseUri, s.pair, s.period), nil)
+	dialer, resp, err := websocket.DefaultDialer.Dial(fmt.Sprintf("%sws/%s@depth@%dms", s.baseUri, s.pair, s.period), nil)
 	if err != nil {
 		s.logger.Error(err.Error())
 		return err
 	}
 	s.dialer = dialer
+	dialer.ReadMessage()
 	defer func() {
 		s.dialer.Close()
 		s.dialer = nil
@@ -59,6 +74,7 @@ func (s *DeltaReceiveClient) ReceiveDeltas(ch chan *model.DeltaMessage) error {
 			s.logger.Error(err.Error())
 			return err
 		}
+		s.logger.Info("got delta")
 		var deltaMsg model.DeltaMessage
 		err = json.Unmarshal(msg, &deltaMsg)
 		if err != nil {
@@ -66,11 +82,13 @@ func (s *DeltaReceiveClient) ReceiveDeltas(ch chan *model.DeltaMessage) error {
 			return err
 		}
 		ch <- &deltaMsg
+		s.logger.Info("delta sent")
 	}
 	return nil
 }
 
 func (s *DeltaReceiveClient) Shutdown(ctx context.Context) {
+	s.shutdown = true
 	if s.dialer != nil {
 		s.dialer.Close()
 		for s.dialer != nil {

@@ -1,7 +1,6 @@
 package binance
 
 import (
-	"DeltaReceiver/internal/svc"
 	"DeltaReceiver/pkg/binance/model"
 	"DeltaReceiver/pkg/log"
 	"context"
@@ -68,7 +67,7 @@ func (s BinanceHttpClient) GetFullSnapshot(ctx context.Context, symbol model.Sym
 }
 
 var (
-	TeapotErr              = fmt.Errorf("got teapot http response status, current IP banned by binance%w", svc.StopRetryErr)
-	WeightLimitExceededErr = fmt.Errorf("too many requests, weight limit exceeded%w", svc.StopRetryErr)
-	InvalidBinanceDataErr  = fmt.Errorf("got invalid data from binance server%w", svc.StopRetryErr)
+	TeapotErr              = fmt.Errorf("got teapot http response status, current IP banned by binance")
+	WeightLimitExceededErr = fmt.Errorf("too many requests, weight limit exceeded")
+	InvalidBinanceDataErr  = fmt.Errorf("got invalid data from binance server")
 )

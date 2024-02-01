@@ -9,26 +9,45 @@ import (
 	"fmt"
 	"go.uber.org/zap"
 	"strconv"
+	"time"
 )
 
 type DeltaReceiverWS struct {
-	logger   *zap.Logger
-	Receiver *binance.DeltaReceiveClient
-	symbol   bmodel.Symbol
+	logger           *zap.Logger
+	Receiver         *binance.DeltaReceiveClient
+	symbol           bmodel.Symbol
+	reconnectPeriodM int16
 }
 
-func NewDeltaReceiverWs(cfg *binance.BinanceHttpClientConfig, pair string, period int16) *DeltaReceiverWS {
+func NewDeltaReceiverWs(cfg *binance.BinanceHttpClientConfig, pair string, period, reconnectPeriodM int16) *DeltaReceiverWS {
 	return &DeltaReceiverWS{
-		logger:   log.GetLogger(fmt.Sprintf("BinanceDeltaReceiverWS: %s", pair)),
-		Receiver: binance.NewDeltaReceiveClient(cfg, pair, period),
-		symbol:   bmodel.ParseSymbol(pair),
+		logger:           log.GetLogger(fmt.Sprintf("BinanceDeltaReceiverWS: %s", pair)),
+		Receiver:         binance.NewDeltaReceiveClient(cfg, pair, period),
+		symbol:           bmodel.ParseSymbol(pair),
+		reconnectPeriodM: reconnectPeriodM,
 	}
+}
+
+func (s DeltaReceiverWS) GetSymbol() model.Symbol {
+	return convBinanceSymb2Symb(s.symbol)
 }
 
 func (s DeltaReceiverWS) ReceiveDeltas(ctx context.Context, ch chan<- model.Delta) {
 	defer close(ch)
 	deltaMessageCh := make(chan *bmodel.DeltaMessage)
-	go s.Receiver.ReceiveDeltas(deltaMessageCh)
+	go func() {
+		for {
+			time.Sleep(time.Duration(s.reconnectPeriodM) * time.Minute)
+			if err := s.Receiver.Reconnect(); err != nil {
+				s.logger.Error(err.Error())
+			}
+		}
+	}()
+	go func() {
+		if err := s.Receiver.ReceiveDeltas(deltaMessageCh); err != nil {
+			s.logger.Error(err.Error())
+		}
+	}()
 	for {
 		deltaMsg, ok := <-deltaMessageCh
 		if !ok {
@@ -63,6 +82,6 @@ func (s DeltaReceiverWS) ReceiveDeltas(ctx context.Context, ch chan<- model.Delt
 	}
 }
 
-func (s *DeltaReceiverWS) Shutdown(ctx context.Context) {
+func (s DeltaReceiverWS) Shutdown(ctx context.Context) {
 	s.Receiver.Shutdown(ctx)
 }

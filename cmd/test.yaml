@@ -1,6 +1,55 @@
-timeout.sec:
-  3
-uri:
-  "AXAXA"
-database.name:
-  "db"
+global.db.batch.size:
+  1000
+get.full.snapshot.period.m:
+  10000
+reconnect.period.m:
+  1
+
+local.repo.config:
+  delta.collection.name:
+    deltas
+  snapshot.collection.name:
+    snapshots
+  mongo:
+    timeout.sec:
+      5
+    database.name:
+      db
+    num.conn.retries:
+      3
+    uri:
+      schema:
+        mongodb://
+      host:
+        localhost
+      port:
+        27017
+
+binance.client:
+  delta.stream.url:
+    schema:
+      wss://
+    host:
+      stream.binance.com
+    port:
+      9443
+  http.base.uri.config:
+    schema:
+      https://
+    host:
+      api.binance.com
+    port:
+      443
+  receive.time.s:
+    60
+  pairs:
+    btcusdt: 100
+
+
+global.repo.config:
+  timeoutS:
+    3
+  database.name:
+    db
+  delta.table.name:
+    binance

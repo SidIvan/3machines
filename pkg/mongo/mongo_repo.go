@@ -64,9 +64,21 @@ func (s *Collection) GetAll() []interface{} {
 }
 
 func (s *Collection) GetAllWithContext(ctx context.Context) []interface{} {
+	return s.GetAllWithFilterAndContext(ctx, bson.D{})
+}
+
+func (s *Collection) GetAllWithFilter(filter interface{}) []interface{} {
+	return s.GetAllWithFilterAndContext(context.Background(), filter)
+}
+
+func (s *Collection) GetAllWithFilterAndContext(ctx context.Context, filter interface{}) []interface{} {
+	return s.GetAllWithFilterAndOptionsAndContext(ctx, filter, nil)
+}
+
+func (s *Collection) GetAllWithFilterAndOptionsAndContext(ctx context.Context, filter interface{}, opts *options.FindOptions) []interface{} {
 	ctx, cancel := context.WithTimeout(ctx, s.timeout)
 	defer cancel()
-	cur, err := s.col.Find(ctx, bson.M{})
+	cur, err := s.col.Find(ctx, filter, opts)
 	if err != nil {
 		s.log.Error(err.Error())
 		return nil

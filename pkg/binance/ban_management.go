@@ -1,7 +1,6 @@
 package binance
 
 import (
-	"DeltaReceiver/internal/svc"
 	"DeltaReceiver/pkg/log"
 	"fmt"
 	"go.uber.org/zap"
@@ -52,4 +51,4 @@ func setBanned(banTimestamp int64) {
 	endOfBanS.Store(time.Now().Unix() + banTimestamp)
 }
 
-var RequestRejectedErr = fmt.Errorf("attempt of sending request while weight limit exceeded%w", svc.StopRetryErr)
+var RequestRejectedErr = fmt.Errorf("attempt of sending request while weight limit exceeded")

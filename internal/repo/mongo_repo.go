@@ -6,7 +6,10 @@ import (
 	"DeltaReceiver/pkg/log"
 	"DeltaReceiver/pkg/mongo"
 	"context"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.uber.org/zap"
+	"time"
 )
 
 type LocalMongoRepo struct {
@@ -53,4 +56,12 @@ func (s LocalMongoRepo) SaveSnapshot(ctx context.Context, snapshot []model.Depth
 		}
 	}
 	return true
+}
+
+func (s LocalMongoRepo) GetLastSavedTimestamp(ctx context.Context, symb model.Symbol) time.Time {
+	delta := s.BinanceDeltasCol.GetAllWithFilterAndOptionsAndContext(ctx, bson.D{{"symb", symb}}, options.Find().SetSort(bson.D{{"timestamp", -1}}))
+	if len(delta) == 0 {
+		return time.Unix(0, 0)
+	}
+	return time.UnixMilli(delta[0].(model.Delta).Timestamp)
 }

@@ -16,11 +16,15 @@ func main() {
 	cfgData, err := os.ReadFile("cmd/test.yaml")
 	if err != nil {
 		log.Println(err.Error())
+		return
 	}
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer cancel()
 	var cfg conf.AppConfig
-	yaml.Unmarshal(cfgData, &cfg)
+	if err = yaml.Unmarshal(cfgData, &cfg); err != nil {
+		log.Println(err.Error())
+		return
+	}
 	a := app.NewApp(&cfg)
 	a.Start()
 	<-ctx.Done()

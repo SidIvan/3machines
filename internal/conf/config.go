@@ -9,6 +9,7 @@ type AppConfig struct {
 	BinanceHttpConfig      *binance.BinanceHttpClientConfig `yaml:"binance.client"`
 	GDBBatchSize           int                              `yaml:"global.db.batch.size"`
 	GetFullSnapshotPeriodM int16                            `yaml:"get.full.snapshot.period.m"`
+	ReconnectPeriodM       int16                            `yaml:"reconnect.period.m"`
 	LocalRepoCfg           *LocalRepoConfig                 `yaml:"local.repo.config"`
 	GlobalRepoConfig       *GlobalRepoConfig                `yaml:"global.repo.config"`
 }
@@ -20,5 +21,7 @@ type LocalRepoConfig struct {
 }
 
 type GlobalRepoConfig struct {
-	TimeoutS int `yaml:"timeoutS"`
+	TimeoutS     int    `yaml:"timeoutS"`
+	DatabaseName string `yaml:"database.name"`
+	DeltaTable   string `yaml:"delta.table.name"`
 }

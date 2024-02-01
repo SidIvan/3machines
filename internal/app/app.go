@@ -23,7 +23,7 @@ func NewApp(cfg *conf.AppConfig) *App {
 	binanceClient := web.NewBinanceClient(cfg.BinanceHttpConfig)
 	var deltaReceivers []svc.DeltaReceiver
 	for pair, period := range cfg.BinanceHttpConfig.Pair2Period {
-		deltaReceivers = append(deltaReceivers, *web.NewDeltaReceiverWs(cfg.BinanceHttpConfig, pair, period))
+		deltaReceivers = append(deltaReceivers, web.NewDeltaReceiverWs(cfg.BinanceHttpConfig, pair, period, cfg.ReconnectPeriodM))
 	}
 	deltaRecSvc := svc.NewDeltaReceiverSvc(cfg, binanceClient, deltaReceivers, localRepo, globalRepo, nil)
 	return &App{
@@ -43,5 +43,7 @@ func (s *App) Start() {
 }
 
 func (s *App) Stop(ctx context.Context) {
+	s.logger.Info("Begin of graceful shutdown")
 	s.deltaRecSvc.Shutdown(ctx)
+	s.logger.Info("End of graceful shutdown")
 }
