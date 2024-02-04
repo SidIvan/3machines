@@ -1,9 +1,9 @@
 global.db.batch.size:
-  1000
+  10000
 get.full.snapshot.period.m:
   10000
 reconnect.period.m:
-  1
+  15
 
 local.repo.config:
   delta.collection.name:
@@ -12,7 +12,7 @@ local.repo.config:
     snapshots
   mongo:
     timeout.sec:
-      5
+      1
     database.name:
       db
     num.conn.retries:
@@ -40,11 +40,41 @@ binance.client:
       api.binance.com
     port:
       443
-  receive.time.s:
-    60
   pairs:
     btcusdt: 100
-
+    btcfdusd: 100
+    jupusdt: 100
+    1000satsusdt: 100
+    solusdt: 100
+    ethfdusd: 100
+    seiusdt: 100
+    avaxusdt: 100
+    tiausdt: 100
+    runeusdt: 100
+    fttusdt: 100
+    rndrusdt: 100
+    fdusdusdt: 100
+    usdcusdt: 100
+    xmrbtc: 100
+    trxtry: 100
+    arkmusdt: 100
+    pepetry: 100
+    bondusdt: 100
+    dcrusdt: 100
+    linketh: 100
+    raretry: 100
+    belusdt: 100
+    balusdt: 100
+    btcpln: 100
+    mantabnb: 100
+    dexeusdt: 100
+    scrtusdt: 100
+    chzbtc: 100
+    lptbnb: 100
+    lokabtc: 100
+    chessbtc: 100
+    bnbupusdt: 100
+    grteur: 100
 
 global.repo.config:
   timeoutS:

@@ -1,22 +1,24 @@
 package model
 
 type Delta struct {
-	Timestamp int64   `json:"timestamp" bson:"timestamp"`
-	Price     float64 `json:"price" bson:"price"`
-	Count     float64 `json:"count" bson:"count"`
-	UpdateId  int64   `json:"updateId" bson:"updateId"`
-	T         bool    `json:"type" bson:"type"`
-	Symbol    Symbol  `json:"symbol" bson:"symbol"`
+	Timestamp     int64   `json:"timestamp" bson:"timestamp"`
+	Price         float64 `json:"price" bson:"price"`
+	Count         float64 `json:"count" bson:"count"`
+	UpdateId      int64   `json:"updateId" bson:"updateId"`
+	FirstUpdateId int64   `json:"firstUpdateId" bson:"firstUpdateId"`
+	T             bool    `json:"type" bson:"type"`
+	Symbol        Symbol  `json:"symbol" bson:"symbol"`
 }
 
-func NewDelta(timestamp int64, price, count float64, updateId int64, t bool, symbol Symbol) Delta {
+func NewDelta(timestamp int64, price, count float64, updateId, firstUpdateId int64, t bool, symbol Symbol) Delta {
 	return Delta{
-		Timestamp: timestamp,
-		Price:     price,
-		Count:     count,
-		UpdateId:  updateId,
-		T:         t,
-		Symbol:    symbol,
+		Timestamp:     timestamp,
+		Price:         price,
+		Count:         count,
+		UpdateId:      updateId,
+		FirstUpdateId: firstUpdateId,
+		T:             t,
+		Symbol:        symbol,
 	}
 }
 

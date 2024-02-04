@@ -25,19 +25,23 @@ func NewLocalMongoRepo(cfg *appConf.LocalRepoConfig) *LocalMongoRepo {
 		logger: logger,
 		cfg:    cfg,
 	}
-	repo.initCollections(context.Background())
+	repoRes := repo.initCollections(context.Background())
+	repo = &repoRes
 	return repo
 }
 
-func (s LocalMongoRepo) initCollections(ctx context.Context) {
-	if db, ok := mongo.ConnectMongo(s.logger, s.cfg.MongoConfig); !ok {
+func (s LocalMongoRepo) initCollections(ctx context.Context) LocalMongoRepo {
+	if db, ok := mongo.ConnectMongo(s.logger, s.cfg.MongoConfig); ok {
 		s.BinanceDeltasCol = mongo.NewMongoCollection(s.logger, s.cfg.MongoConfig, db.Collection(s.cfg.DeltaColName))
 		s.BinanceSnapshotCol = mongo.NewMongoCollection(s.logger, s.cfg.MongoConfig, db.Collection(s.cfg.SnapshotColName))
 	}
+	return s
 }
 
 func (s LocalMongoRepo) Reconnect(ctx context.Context) {
+	s.logger.Debug("reconnecting to mongo")
 	s.initCollections(ctx)
+	s.logger.Debug("successfully reconnected to mongo")
 }
 
 func (s LocalMongoRepo) SaveDeltas(ctx context.Context, deltas []model.Delta) bool {

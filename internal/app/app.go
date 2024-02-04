@@ -35,9 +35,9 @@ func NewApp(cfg *conf.AppConfig) *App {
 
 func (s *App) Start() {
 	go s.deltaRecSvc.ReceiveDeltasPairs()
-	for pair, _ := range s.cfg.BinanceHttpConfig.Pair2Period {
-		go s.deltaRecSvc.CronGetAndStoreFullSnapshot(pair, s.cfg.GetFullSnapshotPeriodM)
-	}
+	//for pair, _ := range s.cfg.BinanceHttpConfig.Pair2Period {
+	//	go s.deltaRecSvc.CronGetAndStoreFullSnapshot(pair, s.cfg.GetFullSnapshotPeriodM)
+	//}
 	time.Sleep(1 * time.Second)
 	s.logger.Info("App started")
 }

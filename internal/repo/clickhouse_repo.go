@@ -9,6 +9,7 @@ import (
 	"github.com/ClickHouse/ch-go"
 	"github.com/ClickHouse/ch-go/proto"
 	"go.uber.org/zap"
+	"sync"
 	"time"
 )
 
@@ -17,10 +18,25 @@ const (
 	SymbolCol    = "symbol"
 )
 
-type ClickhouseRepo struct {
+type chClientHolder struct {
 	client *ch.Client
-	logger *zap.Logger
-	cfg    *conf.GlobalRepoConfig
+	mut    sync.Mutex
+}
+
+type ClickhouseRepo struct {
+	clientH *chClientHolder
+	logger  *zap.Logger
+	cfg     *conf.GlobalRepoConfig
+}
+
+func (s ClickhouseRepo) Reconnect(ctx context.Context) {
+	s.clientH.mut.Lock()
+	defer s.clientH.mut.Unlock()
+	if client, err := ch.Dial(ctx, ch.Options{}); err != nil {
+		s.logger.Error(err.Error())
+	} else {
+		s.clientH.client = client
+	}
 }
 
 func NewClickhouseRepo(cfg *conf.GlobalRepoConfig) *ClickhouseRepo {
@@ -34,8 +50,11 @@ func NewClickhouseRepo(cfg *conf.GlobalRepoConfig) *ClickhouseRepo {
 	}
 	return &ClickhouseRepo{
 		logger: logger,
-		client: client,
-		cfg:    cfg,
+		clientH: &chClientHolder{
+			client: client,
+			mut:    sync.Mutex{},
+		},
+		cfg: cfg,
 	}
 }
 
@@ -45,6 +64,7 @@ func prepareDeltasInsertBlock(deltas []model.Delta) proto.Input {
 	var priceCol proto.ColFloat64
 	var countCol proto.ColFloat64
 	var updateIdCol proto.ColInt64
+	var firstUpdateIdCol proto.ColInt64
 	var symbCol proto.ColEnum
 	for _, delta := range deltas {
 		timestampCol.Append(time.UnixMilli(delta.Timestamp))
@@ -56,6 +76,7 @@ func prepareDeltasInsertBlock(deltas []model.Delta) proto.Input {
 		priceCol.Append(delta.Price)
 		countCol.Append(delta.Count)
 		updateIdCol.Append(delta.UpdateId)
+		firstUpdateIdCol.Append(delta.FirstUpdateId)
 		symbCol.Append(string(delta.Symbol))
 	}
 	return proto.Input{
@@ -64,6 +85,7 @@ func prepareDeltasInsertBlock(deltas []model.Delta) proto.Input {
 		{Name: "price", Data: &priceCol},
 		{Name: "count", Data: &countCol},
 		{Name: "update_id", Data: &updateIdCol},
+		{Name: "first_update_id", Data: &firstUpdateIdCol},
 		{Name: SymbolCol, Data: &symbCol},
 	}
 }
@@ -98,15 +120,16 @@ func prepareFullSnapshotInsertBlock(snapshotParts []model.DepthSnapshotPart) pro
 }
 
 func (s ClickhouseRepo) SendDeltas(ctx context.Context, deltas []model.Delta) bool {
-	input := prepareDeltasInsertBlock(deltas)
-	for _, tmp := range input {
-		fmt.Println(tmp.Data)
+	if len(deltas) == 0 {
+		return true
 	}
-	fmt.Println(input)
-	err := s.client.Do(ctx, ch.Query{
+	input := prepareDeltasInsertBlock(deltas)
+	s.clientH.mut.Lock()
+	err := s.clientH.client.Do(ctx, ch.Query{
 		Body:  fmt.Sprintf("INSERT INTO %s.%s VALUES", s.cfg.DatabaseName, s.cfg.DeltaTable),
 		Input: input,
 	})
+	s.clientH.mut.Unlock()
 	if err != nil {
 		s.logger.Error(err.Error())
 		return false
@@ -116,7 +139,7 @@ func (s ClickhouseRepo) SendDeltas(ctx context.Context, deltas []model.Delta) bo
 
 func (s ClickhouseRepo) SendSnapshot(ctx context.Context, snapshot []model.DepthSnapshotPart) bool {
 	input := prepareFullSnapshotInsertBlock(snapshot)
-	err := s.client.Do(ctx, ch.Query{
+	err := s.clientH.client.Do(ctx, ch.Query{
 		Body:  "INSERT INTO binance_full_snapshots VALUES",
 		Input: input,
 	})
@@ -130,7 +153,7 @@ func (s ClickhouseRepo) SendSnapshot(ctx context.Context, snapshot []model.Depth
 func (s ClickhouseRepo) GetLastSavedTimestamp(ctx context.Context, symb model.Symbol) time.Time {
 	timestampResp := new(proto.ColDateTime64).WithPrecision(3)
 	latestTimestamp := time.Unix(0, 0)
-	if err := s.client.Do(ctx, ch.Query{
+	if err := s.clientH.client.Do(ctx, ch.Query{
 		Body: fmt.Sprintf("SELECT %s from %s.%s WHERE %s = %s ORDER BY %s LIMIT 1",
 			TimestampCol, s.cfg.DatabaseName, s.cfg.DeltaTable, SymbolCol, symb, TimestampCol),
 		Result: proto.Results{

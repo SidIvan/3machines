@@ -21,7 +21,7 @@ type Collection struct {
 func NewMongoCollection(log *zap.Logger, cfg *conf.MongoRepoConfig, col *mongo.Collection) *Collection {
 	return &Collection{
 		log:     log,
-		timeout: time.Duration(cfg.TimeoutS),
+		timeout: time.Duration(cfg.TimeoutS) * time.Second,
 		cfg:     cfg,
 		col:     col,
 	}
@@ -41,6 +41,7 @@ func ConnectMongoWithContext(ctx context.Context, logger *zap.Logger, cfg *conf.
 }
 
 func SingleConnectMongoWithContext(ctx context.Context, logger *zap.Logger, cfg *conf.MongoRepoConfig) (*mongo.Database, bool) {
+	logger.Debug("start connection to mongo")
 	ctx, cancel := context.WithTimeout(ctx, time.Duration(cfg.TimeoutS)*time.Second)
 	defer cancel()
 	client, err := mongo.Connect(ctx, options.Client().ApplyURI(cfg.URI.GetBaseUri()))
@@ -55,8 +56,8 @@ func SingleConnectMongoWithContext(ctx context.Context, logger *zap.Logger, cfg 
 		logger.Error(err.Error())
 		return nil, false
 	}
+	logger.Debug("successfully connection to mongo")
 	return client.Database(cfg.DatabaseName), true
-
 }
 
 func (s *Collection) GetAll() []interface{} {

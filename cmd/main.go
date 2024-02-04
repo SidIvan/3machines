@@ -28,6 +28,6 @@ func main() {
 	a := app.NewApp(&cfg)
 	a.Start()
 	<-ctx.Done()
-	ctx, cancel = context.WithTimeout(context.Background(), time.Duration(15)*time.Second)
+	ctx, cancel = context.WithTimeout(context.Background(), time.Duration(60)*time.Second)
 	a.Stop(ctx)
 }

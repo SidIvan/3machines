@@ -10,6 +10,9 @@ import (
 	"fmt"
 	"go.uber.org/zap"
 	"os"
+	"strconv"
+	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -28,12 +31,14 @@ type GlobalRepo interface {
 	GetLastSavedTimestamp(context.Context, model.Symbol) time.Time
 	SendDeltas(context.Context, []model.Delta) bool
 	SendSnapshot(context.Context, []model.DepthSnapshotPart) bool
+	Reconnect(ctx context.Context)
 }
 
 type DeltaReceiver interface {
-	ReceiveDeltas(ctx context.Context, deltaCh chan<- model.Delta)
+	ReceiveDeltas(ctx context.Context) []model.Delta
 	Shutdown(context.Context)
 	GetSymbol() model.Symbol
+	Reconnect()
 }
 
 type MetricsHolder interface {
@@ -47,10 +52,15 @@ type DeltaReceiverSvc struct {
 	globalRepo     GlobalRepo
 	metricsHolder  MetricsHolder
 	cfg            *conf.AppConfig
+	shutdown       *atomic.Bool
+	dRecWg         *sync.WaitGroup
 }
 
 func NewDeltaReceiverSvc(config *conf.AppConfig, binanceClient BinanceClient, deltaReceivers []DeltaReceiver, localRepo LocalRepo,
 	globalRepo GlobalRepo, metricsHolder MetricsHolder) *DeltaReceiverSvc {
+	var shutdown atomic.Bool
+	var dRecWg sync.WaitGroup
+	shutdown.Store(false)
 	return &DeltaReceiverSvc{
 		log:            log.GetLogger("DeltaReceiverSvc"),
 		binanceClient:  binanceClient,
@@ -59,6 +69,8 @@ func NewDeltaReceiverSvc(config *conf.AppConfig, binanceClient BinanceClient, de
 		globalRepo:     globalRepo,
 		metricsHolder:  metricsHolder,
 		cfg:            config,
+		shutdown:       &shutdown,
+		dRecWg:         &dRecWg,
 	}
 }
 
@@ -79,6 +91,11 @@ func (s *DeltaReceiverSvc) GetAndStoreFullSnapshot(ctx context.Context, pair str
 		s.log.Error(err.Error())
 		return
 	}
+	for i := 0; i < 3; i++ {
+		if s.globalRepo.SendSnapshot(ctx, snapshot) {
+
+		}
+	}
 	if !s.globalRepo.SendSnapshot(ctx, snapshot) {
 		if s.localRepo.SaveSnapshot(ctx, snapshot) {
 			return
@@ -92,49 +109,72 @@ func (s *DeltaReceiverSvc) ReceiveDeltasPairs() {
 	for _, deltaReceiver := range s.deltaReceivers {
 		go func(deltaReceiver DeltaReceiver) {
 			for {
+				if s.shutdown.Load() {
+					return
+				}
+				s.dRecWg.Add(1)
 				s.ReceivePair(deltaReceiver)
+				s.dRecWg.Done()
+			}
+		}(deltaReceiver)
+		go func(deltaReceiver DeltaReceiver) {
+			for {
+				if s.shutdown.Load() {
+					return
+				}
+				deltaReceiver.Reconnect()
 			}
 		}(deltaReceiver)
 	}
 }
 
 func (s *DeltaReceiverSvc) ReceivePair(deltaReceiver DeltaReceiver) {
-	s.log.Info(fmt.Sprintf("start receiving deltas for %s pair", deltaReceiver.GetSymbol()))
+	s.log.Info(fmt.Sprintf("start receive deltas [%s]", deltaReceiver.GetSymbol()))
 	ctx := context.Background()
-	deltaCh := make(chan model.Delta)
-	go deltaReceiver.ReceiveDeltas(ctx, deltaCh)
 	batchSize := s.cfg.GDBBatchSize
+	var deltas []model.Delta
 	for {
-		var deltas []model.Delta
-		for i := 0; i != batchSize; i++ {
-			delta, ok := <-deltaCh
-			if !ok {
-				s.log.Info("chanel closed, sending last deltas")
-				s.sendDeltas(ctx, deltas)
-				return
-			}
-			deltas = append(deltas, delta)
+		receivedDeltas := deltaReceiver.ReceiveDeltas(ctx)
+		if receivedDeltas == nil {
+			s.log.Info(fmt.Sprintf("last batch of deltas [%s]", deltaReceiver.GetSymbol()))
+			s.sendDeltas(ctx, deltas)
+			return
 		}
-		s.log.Info("got full batch of deltas")
-		s.sendDeltas(ctx, deltas)
+		for _, delta := range receivedDeltas {
+			deltas = append(deltas, delta)
+			if len(deltas) == batchSize {
+				s.log.Info(fmt.Sprintf("got full batch of deltas [%s]", deltaReceiver.GetSymbol()))
+				s.sendDeltas(ctx, deltas)
+				deltas = make([]model.Delta, 0)
+			}
+		}
 	}
 }
 
 func (s *DeltaReceiverSvc) sendDeltas(ctx context.Context, deltas []model.Delta) {
 	curTime := time.Now().UnixMilli()
 	s.log.Info(fmt.Sprintf("sending batch of %d deltas, send timestamp %d", len(deltas), curTime))
-	if !s.globalRepo.SendDeltas(ctx, deltas) {
-		s.log.Warn(fmt.Sprintf("failed send to Ch, try save to mongo send timestamp %d", curTime))
-		//run reconnects
+	for i := 0; i < 3; i++ {
+		if s.globalRepo.SendDeltas(ctx, deltas) {
+			s.log.Info(fmt.Sprintf("successfully sended to Ch, send timestamp %d", curTime))
+			return
+		}
+		s.log.Warn(fmt.Sprintf("failed send to Ch, try to reconnect %d", curTime))
+		s.globalRepo.Reconnect(ctx)
+	}
+	s.log.Warn(fmt.Sprintf("failed send to Ch, try save to mongo send timestamp %d", curTime))
+	for i := 0; i < 3; i++ {
 		if s.localRepo.SaveDeltas(ctx, deltas) {
 			s.log.Info(fmt.Sprintf("successfully saved to mongo, send timestamp %d", curTime))
 			return
 		}
-		s.log.Warn(fmt.Sprintf("failed save to mongo, attempting save to file, send timestamp %d", curTime))
-		// УСЁ ПРОПАЛО
-		s.saveDeltasToFile(deltas)
+		s.log.Warn(fmt.Sprintf("failed save to mongo, try to reconnect timestamp %d", curTime))
+		s.localRepo.Reconnect(ctx)
 	}
-	s.log.Info(fmt.Sprintf("successfully sended to Ch, send timestamp %d", curTime))
+	s.log.Warn(fmt.Sprintf("failed save to mongo, attempting save to file, send timestamp %d", curTime))
+	// УСЁ ПРОПАЛО
+	s.saveDeltasToFile(deltas)
+	return
 }
 
 func (s *DeltaReceiverSvc) saveSnapshotToFile(snapshot []model.DepthSnapshotPart) {
@@ -145,16 +185,25 @@ func (s *DeltaReceiverSvc) saveSnapshotToFile(snapshot []model.DepthSnapshotPart
 }
 
 func (s *DeltaReceiverSvc) saveDeltasToFile(deltas []model.Delta) {
-	file, _ := os.Create("deltas" + string(time.Now().UnixMilli()))
+	file, err := os.Create("deltas" + strconv.FormatInt(time.Now().UnixMilli(), 10))
+	if err != nil {
+		s.log.Error(err.Error())
+		return
+	}
 	data, _ := json.Marshal(deltas)
-	file.Write(data)
+	if _, err = file.Write(data); err != nil {
+		s.log.Error(err.Error())
+		return
+	}
 	file.Close()
 }
 
 func (s *DeltaReceiverSvc) Shutdown(ctx context.Context) {
+	s.shutdown.Store(true)
 	for _, recv := range s.deltaReceivers {
-		recv.Shutdown(ctx)
+		go recv.Shutdown(ctx)
 	}
+	s.dRecWg.Wait()
 }
 
 var (
