@@ -6,6 +6,7 @@ import (
 	bmodel "DeltaReceiver/pkg/binance/model"
 	"DeltaReceiver/pkg/log"
 	"context"
+	"fmt"
 	"go.uber.org/zap"
 	"strconv"
 	"time"
@@ -24,6 +25,7 @@ func NewBinanceClient(cfg *binance.BinanceHttpClientConfig) *BinanceClient {
 }
 
 func (s BinanceClient) GetFullSnapshot(ctx context.Context, pair string, depth int) ([]model.DepthSnapshotPart, error) {
+	s.logger.Info(fmt.Sprintf("get full shapshot [%s]", pair))
 	snapshot, err := s.client.GetFullSnapshot(ctx, bmodel.Symbol(pair), depth)
 	if err != nil {
 		s.logger.Error(err.Error())

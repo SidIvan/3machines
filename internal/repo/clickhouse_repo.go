@@ -138,11 +138,16 @@ func (s ClickhouseRepo) SendDeltas(ctx context.Context, deltas []model.Delta) bo
 }
 
 func (s ClickhouseRepo) SendSnapshot(ctx context.Context, snapshot []model.DepthSnapshotPart) bool {
+	if len(snapshot) == 0 {
+		return true
+	}
 	input := prepareFullSnapshotInsertBlock(snapshot)
+	s.clientH.mut.Lock()
 	err := s.clientH.client.Do(ctx, ch.Query{
-		Body:  "INSERT INTO binance_full_snapshots VALUES",
+		Body:  fmt.Sprintf("INSERT INTO %s.%s VALUES", s.cfg.DatabaseName, s.cfg.SnapshotTable),
 		Input: input,
 	})
+	s.clientH.mut.Unlock()
 	if err != nil {
 		s.logger.Error(err.Error())
 		return false

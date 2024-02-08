@@ -152,8 +152,6 @@ func (s *DeltaReceiveClient) Shutdown(ctx context.Context) {
 			err := s.dialer.Close()
 			if err != nil {
 				s.logger.Error(err.Error())
-			} else {
-				fmt.Println("UWU")
 			}
 		}
 	}

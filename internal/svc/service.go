@@ -74,7 +74,7 @@ func NewDeltaReceiverSvc(config *conf.AppConfig, binanceClient BinanceClient, de
 	}
 }
 
-const fullSnapshotDepth = 5000
+const fullSnapshotDepth = 100
 
 func (s *DeltaReceiverSvc) CronGetAndStoreFullSnapshot(pair string, periodM int16) {
 	for {

@@ -47,9 +47,9 @@ func validateSnapshotScheduling(cfg *conf.AppConfig) {
 
 func (s *App) Start() {
 	go s.deltaRecSvc.ReceiveDeltasPairs()
-	//for pair, _ := range s.cfg.BinanceHttpConfig.Pair2Period {
-	//	go s.deltaRecSvc.CronGetAndStoreFullSnapshot(pair, s.cfg.GetFullSnapshotPeriodM)
-	//}
+	for pair, period := range s.cfg.BinanceHttpConfig.SnapshotPeriod {
+		go s.deltaRecSvc.CronGetAndStoreFullSnapshot(pair, period)
+	}
 	time.Sleep(1 * time.Second)
 	s.logger.Info("App started")
 }

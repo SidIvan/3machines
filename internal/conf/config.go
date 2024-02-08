@@ -21,7 +21,8 @@ type LocalRepoConfig struct {
 }
 
 type GlobalRepoConfig struct {
-	TimeoutS     int    `yaml:"timeoutS"`
-	DatabaseName string `yaml:"database.name"`
-	DeltaTable   string `yaml:"delta.table.name"`
+	TimeoutS      int    `yaml:"timeoutS"`
+	DatabaseName  string `yaml:"database.name"`
+	DeltaTable    string `yaml:"delta.table.name"`
+	SnapshotTable string `yaml:"snapshot.table.name"`
 }

@@ -76,7 +76,7 @@ binance.client:
     bnbupusdt: 100
     grteur: 100
   snapshot.periods:
-    btcusdt: 1440
+    BTCUSDT: 1440
 
 global.repo.config:
   timeoutS:
@@ -85,3 +85,5 @@ global.repo.config:
     db
   delta.table.name:
     binance
+  snapshot.table.name:
+    binance_snapshots

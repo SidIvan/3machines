@@ -9,6 +9,7 @@ import (
 	"go.uber.org/zap"
 	"io"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -26,13 +27,17 @@ func NewBinanceHttpClient(cfg *BinanceHttpClientConfig) *BinanceHttpClient {
 	}
 }
 
+func symbolToURIForSnapshot(symbol model.Symbol) string {
+	return strings.ToUpper(string(symbol))
+}
+
 func (s BinanceHttpClient) GetFullSnapshot(ctx context.Context, symbol model.Symbol, depthLimit int) (*model.DepthSnapshot, error) {
 	if isBanned() {
 		return nil, RequestRejectedErr
 	}
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("%s/api/v3/depth?symbol=%s&limit=%d", s.baseUri, symbol, depthLimit), http.NoBody)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("%sapi/v3/depth?symbol=%s&limit=%d", s.baseUri, symbolToURIForSnapshot(symbol), depthLimit), http.NoBody)
 	if err != nil {
 		s.logger.Error(err.Error())
 		return nil, err

@@ -1,5 +1,7 @@
 package model
 
+import "strings"
+
 type Symbol string
 
 const (
@@ -77,5 +79,5 @@ var string2Symb = map[string]Symbol{
 }
 
 func SymbolFromString(symb string) Symbol {
-	return string2Symb[symb]
+	return string2Symb[strings.ToLower(symb)]
 }
