@@ -8,6 +8,7 @@ import (
 	"DeltaReceiver/pkg/log"
 	"context"
 	"go.uber.org/zap"
+	"math"
 	"time"
 )
 
@@ -25,11 +26,22 @@ func NewApp(cfg *conf.AppConfig) *App {
 	for pair, period := range cfg.BinanceHttpConfig.Pair2Period {
 		deltaReceivers = append(deltaReceivers, web.NewDeltaReceiverWs(cfg.BinanceHttpConfig, pair, period, cfg.ReconnectPeriodM))
 	}
+	validateSnapshotScheduling(cfg)
 	deltaRecSvc := svc.NewDeltaReceiverSvc(cfg, binanceClient, deltaReceivers, localRepo, globalRepo, nil)
 	return &App{
 		logger:      log.GetLogger("App"),
 		deltaRecSvc: deltaRecSvc,
 		cfg:         cfg,
+	}
+}
+
+func validateSnapshotScheduling(cfg *conf.AppConfig) {
+	numSnapsPerDay := 0.
+	for _, period := range cfg.BinanceHttpConfig.SnapshotPeriod {
+		numSnapsPerDay += math.Ceil(1440. / float64(period))
+	}
+	if numSnapsPerDay > 20 {
+		panic("large amount of get full snapshot requests")
 	}
 }
 

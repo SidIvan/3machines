@@ -49,10 +49,21 @@ func (s DeltaReceiverWS) Reconnect() {
 }
 
 func (s DeltaReceiverWS) ReceiveDeltas(ctx context.Context) []model.Delta {
-	deltaMsg := s.Receiver.ReceiveDelta(ctx)
-	if deltaMsg == nil {
-		s.logger.Info(fmt.Sprintf("delta receiver of pair %s ended", s.symbol))
+	if s.shutdown.Load() {
 		return nil
+	}
+	var deltaMsg *bmodel.DeltaMessage
+	for i := 0; i < 3; i++ {
+		deltaMsg = s.Receiver.ReceiveDeltaMessage(ctx)
+		if deltaMsg != nil {
+			break
+		}
+		if s.shutdown.Load() || i == 3 {
+			s.logger.Info(fmt.Sprintf("delta receiver of pair %s ended", s.symbol))
+			return nil
+		}
+		time.Sleep(3 * time.Second)
+		s.Reconnect()
 	}
 	var deltas []model.Delta
 	for _, bid := range deltaMsg.Bids {

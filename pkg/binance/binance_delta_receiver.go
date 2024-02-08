@@ -32,6 +32,10 @@ type DeltaReceiveClient struct {
 
 func (s *DeltaReceiveClient) setDialer(dialer *websocket.Conn) {
 	_, msg, err := dialer.ReadMessage()
+	if err != nil {
+		s.logger.Error(err.Error())
+		return
+	}
 	var deltaMsg model.DeltaMessage
 	err = json.Unmarshal(msg, &deltaMsg)
 	if err != nil {
@@ -97,28 +101,28 @@ func (s *DeltaReceiveClient) getDialer() (*websocket.Conn, error) {
 		Proxy: http.ProxyFromEnvironment,
 	}
 	dialer, resp, err := d.Dial(fmt.Sprintf("%sws/%s@depth@%dms", s.baseUri, s.pair, s.period), nil)
-	if err != nil {
-		s.logger.Error(err.Error())
-		return nil, err
-	}
 	if resp.StatusCode == http.StatusTeapot {
 		return nil, banBinanceRequests(resp, TeapotErr)
 	}
 	if resp.StatusCode == http.StatusTooManyRequests {
 		return nil, banBinanceRequests(resp, WeightLimitExceededErr)
 	}
+	if err != nil {
+		s.logger.Error(err.Error())
+		return nil, err
+	}
 	return dialer, nil
 }
 
-func (s *DeltaReceiveClient) ReceiveDelta(ctx context.Context) *model.DeltaMessage {
+func (s *DeltaReceiveClient) ReceiveDeltaMessage(ctx context.Context) *model.DeltaMessage {
 	if isBanned() || s.shutdown.Load() {
 		return nil
 	}
+	s.dialerMut.Lock()
 	if s.dialer == nil {
 		dialer, _ := s.getDialer()
 		s.dialer = dialer
 	}
-	s.dialerMut.Lock()
 	_, msg, err := s.dialer.ReadMessage()
 	s.dialerMut.Unlock()
 	if err != nil {
@@ -139,42 +143,6 @@ func (s *DeltaReceiveClient) ReceiveDelta(ctx context.Context) *model.DeltaMessa
 		s.reconMutex.ch <- struct{}{}
 	}
 	return &deltaMsg
-}
-
-func (s *DeltaReceiveClient) ReceiveDeltas(ch chan *model.DeltaMessage) error {
-	defer close(ch)
-	if isBanned() {
-		return RequestRejectedErr
-	}
-	if dialer, err := s.getDialer(); dialer != nil && s.dialer == nil {
-		s.dialer = dialer
-	} else {
-		return err
-	}
-	defer s.Shutdown(context.Background())
-	for {
-		s.dialerMut.Lock()
-		_, msg, err := s.dialer.ReadMessage()
-		s.dialerMut.Unlock()
-		if err != nil {
-			if s.shutdown.Load() {
-				return nil
-			}
-			s.logger.Error(err.Error())
-			return err
-		}
-		var deltaMsg model.DeltaMessage
-		err = json.Unmarshal(msg, &deltaMsg)
-		if err != nil {
-			s.logger.Error(err.Error())
-			continue
-		}
-		ch <- &deltaMsg
-		if s.reconMutex.lastUpdId.Load() <= deltaMsg.UpdateId {
-			s.reconMutex.lastUpdId.Store(math.MaxInt64)
-			s.reconMutex.ch <- struct{}{}
-		}
-	}
 }
 
 func (s *DeltaReceiveClient) Shutdown(ctx context.Context) {

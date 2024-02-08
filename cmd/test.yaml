@@ -40,7 +40,7 @@ binance.client:
       api.binance.com
     port:
       443
-  pairs:
+  delta.pairs:
     btcusdt: 100
     btcfdusd: 100
     jupusdt: 100
@@ -75,6 +75,8 @@ binance.client:
     chessbtc: 100
     bnbupusdt: 100
     grteur: 100
+  snapshot.periods:
+    btcusdt: 1440
 
 global.repo.config:
   timeoutS:

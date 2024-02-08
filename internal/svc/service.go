@@ -78,10 +78,10 @@ const fullSnapshotDepth = 5000
 
 func (s *DeltaReceiverSvc) CronGetAndStoreFullSnapshot(pair string, periodM int16) {
 	for {
-		time.Sleep(time.Duration(periodM) * time.Minute)
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 		s.GetAndStoreFullSnapshot(ctx, pair)
 		cancel()
+		time.Sleep(time.Duration(periodM) * time.Minute)
 	}
 }
 
@@ -91,18 +91,7 @@ func (s *DeltaReceiverSvc) GetAndStoreFullSnapshot(ctx context.Context, pair str
 		s.log.Error(err.Error())
 		return
 	}
-	for i := 0; i < 3; i++ {
-		if s.globalRepo.SendSnapshot(ctx, snapshot) {
-
-		}
-	}
-	if !s.globalRepo.SendSnapshot(ctx, snapshot) {
-		if s.localRepo.SaveSnapshot(ctx, snapshot) {
-			return
-		}
-		// УСЁ ПРОПАЛО
-		s.saveSnapshotToFile(snapshot)
-	}
+	s.sendSnapshot(ctx, snapshot)
 }
 
 func (s *DeltaReceiverSvc) ReceiveDeltasPairs() {
@@ -140,18 +129,49 @@ func (s *DeltaReceiverSvc) ReceivePair(deltaReceiver DeltaReceiver) {
 			s.sendDeltas(ctx, deltas)
 			return
 		}
-		for _, delta := range receivedDeltas {
-			deltas = append(deltas, delta)
-			if len(deltas) == batchSize {
-				s.log.Info(fmt.Sprintf("got full batch of deltas [%s]", deltaReceiver.GetSymbol()))
-				s.sendDeltas(ctx, deltas)
-				deltas = make([]model.Delta, 0)
-			}
+		deltas = append(deltas, receivedDeltas...)
+		if len(deltas) >= batchSize {
+			s.log.Info(fmt.Sprintf("got full batch of deltas [%s]", deltaReceiver.GetSymbol()))
+			s.sendDeltas(ctx, deltas)
+			clear(deltas)
 		}
 	}
 }
 
+func (s *DeltaReceiverSvc) sendSnapshot(ctx context.Context, snapshot []model.DepthSnapshotPart) {
+	if len(snapshot) == 0 {
+		s.log.Warn("empty snapshot")
+		return
+	}
+	s.log.Info(fmt.Sprintf("sending snapshot of %d parts [%s]", len(snapshot), snapshot[0].Symbol))
+	for i := 0; i < 3; i++ {
+		if s.globalRepo.SendSnapshot(ctx, snapshot) {
+			s.log.Info(fmt.Sprintf("successfully sended to Ch [%s]", snapshot[0].Symbol))
+			return
+		}
+		s.log.Warn(fmt.Sprintf("failed send to Ch, try to reconnect [%s]", snapshot[0].Symbol))
+		s.globalRepo.Reconnect(ctx)
+	}
+	s.log.Warn(fmt.Sprintf("failed send to Ch, try save to mongo [%s]", snapshot[0].Symbol))
+	for i := 0; i < 3; i++ {
+		if s.localRepo.SaveSnapshot(ctx, snapshot) {
+			s.log.Info(fmt.Sprintf("successfully saved to mongo [%s]", snapshot[0].Symbol))
+			return
+		}
+		s.log.Warn(fmt.Sprintf("failed save to mongo, try to reconnect [%s]", snapshot[0].Symbol))
+		s.localRepo.Reconnect(ctx)
+	}
+	s.log.Warn(fmt.Sprintf("failed save to mongo, attempting save to file [%s]", snapshot[0].Symbol))
+	// УСЁ ПРОПАЛО
+	s.saveSnapshotToFile(snapshot)
+	return
+}
+
 func (s *DeltaReceiverSvc) sendDeltas(ctx context.Context, deltas []model.Delta) {
+	if len(deltas) == 0 {
+		s.log.Info("empty deltas batch")
+		return
+	}
 	curTime := time.Now().UnixMilli()
 	s.log.Info(fmt.Sprintf("sending batch of %d deltas, send timestamp %d", len(deltas), curTime))
 	for i := 0; i < 3; i++ {
