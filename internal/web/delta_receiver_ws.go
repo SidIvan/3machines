@@ -37,7 +37,7 @@ func (s DeltaReceiverWS) GetSymbol() model.Symbol {
 	return convBinanceSymb2Symb(s.symbol)
 }
 
-func (s DeltaReceiverWS) Reconnect() {
+func (s DeltaReceiverWS) Reconnect() bool {
 	time.Sleep(time.Duration(s.ReconnectPeriodM) * time.Minute)
 	if s.shutdown.Load() {
 		return

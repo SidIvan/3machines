@@ -13,7 +13,7 @@ import (
 )
 
 func main() {
-	cfgData, err := os.ReadFile("cmd/test.yaml")
+	cfgData, err := os.ReadFile("test.yaml")
 	if err != nil {
 		log.Println(err.Error())
 		return

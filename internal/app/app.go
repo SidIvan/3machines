@@ -2,13 +2,16 @@ package app
 
 import (
 	"DeltaReceiver/internal/conf"
+	"DeltaReceiver/internal/metrics"
 	"DeltaReceiver/internal/repo"
 	"DeltaReceiver/internal/svc"
 	"DeltaReceiver/internal/web"
 	"DeltaReceiver/pkg/log"
 	"context"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.uber.org/zap"
 	"math"
+	"net/http"
 	"time"
 )
 
@@ -22,12 +25,13 @@ func NewApp(cfg *conf.AppConfig) *App {
 	globalRepo := repo.NewClickhouseRepo(cfg.GlobalRepoConfig)
 	localRepo := repo.NewLocalMongoRepo(cfg.LocalRepoCfg)
 	binanceClient := web.NewBinanceClient(cfg.BinanceHttpConfig)
+	metricsHolder := metrics.NewMetrics(cfg)
 	var deltaReceivers []svc.DeltaReceiver
 	for pair, period := range cfg.BinanceHttpConfig.Pair2Period {
 		deltaReceivers = append(deltaReceivers, web.NewDeltaReceiverWs(cfg.BinanceHttpConfig, pair, period, cfg.ReconnectPeriodM))
 	}
 	validateSnapshotScheduling(cfg)
-	deltaRecSvc := svc.NewDeltaReceiverSvc(cfg, binanceClient, deltaReceivers, localRepo, globalRepo, nil)
+	deltaRecSvc := svc.NewDeltaReceiverSvc(cfg, binanceClient, deltaReceivers, localRepo, globalRepo, metricsHolder)
 	return &App{
 		logger:      log.GetLogger("App"),
 		deltaRecSvc: deltaRecSvc,
@@ -46,6 +50,13 @@ func validateSnapshotScheduling(cfg *conf.AppConfig) {
 }
 
 func (s *App) Start() {
+	go func() {
+		http.Handle("/metrics", promhttp.Handler())
+		err := http.ListenAndServe(":9001", nil)
+		if err != nil {
+			panic(err)
+		}
+	}()
 	go s.deltaRecSvc.ReceiveDeltasPairs()
 	for pair, period := range s.cfg.BinanceHttpConfig.SnapshotPeriod {
 		go s.deltaRecSvc.CronGetAndStoreFullSnapshot(pair, period)

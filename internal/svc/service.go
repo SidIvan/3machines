@@ -38,10 +38,14 @@ type DeltaReceiver interface {
 	ReceiveDeltas(ctx context.Context) []model.Delta
 	Shutdown(context.Context)
 	GetSymbol() model.Symbol
-	Reconnect()
+	Reconnect() bool
 }
 
 type MetricsHolder interface {
+	IncreaseDeltaCtr(model.Symbol, int)
+	IncreaseSnapshotPairCtr(model.Symbol, int)
+	IncrementSuccessDeltaReconnectCtr(model.Symbol)
+	IncrementFailedDeltaReconnectCtr(model.Symbol)
 }
 
 type DeltaReceiverSvc struct {
@@ -91,6 +95,7 @@ func (s *DeltaReceiverSvc) GetAndStoreFullSnapshot(ctx context.Context, pair str
 		s.log.Error(err.Error())
 		return
 	}
+	s.metricsHolder.IncreaseSnapshotPairCtr(model.SymbolFromString(pair), len(snapshot))
 	s.sendSnapshot(ctx, snapshot)
 }
 
@@ -111,7 +116,11 @@ func (s *DeltaReceiverSvc) ReceiveDeltasPairs() {
 				if s.shutdown.Load() {
 					return
 				}
-				deltaReceiver.Reconnect()
+				if deltaReceiver.Reconnect() {
+					s.metricsHolder.IncrementSuccessDeltaReconnectCtr(deltaReceiver.GetSymbol())
+				} else {
+					s.metricsHolder.IncrementFailedDeltaReconnectCtr(deltaReceiver.GetSymbol())
+				}
 			}
 		}(deltaReceiver)
 	}
@@ -124,6 +133,7 @@ func (s *DeltaReceiverSvc) ReceivePair(deltaReceiver DeltaReceiver) {
 	var deltas []model.Delta
 	for {
 		receivedDeltas := deltaReceiver.ReceiveDeltas(ctx)
+		s.metricsHolder.IncreaseDeltaCtr(deltaReceiver.GetSymbol(), len(deltas))
 		if receivedDeltas == nil {
 			s.log.Info(fmt.Sprintf("last batch of deltas [%s]", deltaReceiver.GetSymbol()))
 			s.sendDeltas(ctx, deltas)

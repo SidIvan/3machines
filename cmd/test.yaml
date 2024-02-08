@@ -21,7 +21,7 @@ local.repo.config:
       schema:
         mongodb://
       host:
-        localhost
+        mongodb
       port:
         27017
 
