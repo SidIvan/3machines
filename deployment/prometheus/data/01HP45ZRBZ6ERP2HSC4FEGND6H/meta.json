@@ -1,0 +1,17 @@
+{
+	"ulid": "01HP45ZRBZ6ERP2HSC4FEGND6H",
+	"minTime": 1707379201357,
+	"maxTime": 1707386400000,
+	"stats": {
+		"numSamples": 219019,
+		"numSeries": 468,
+		"numChunks": 1874
+	},
+	"compaction": {
+		"level": 1,
+		"sources": [
+			"01HP45ZRBZ6ERP2HSC4FEGND6H"
+		]
+	},
+	"version": 1
+}

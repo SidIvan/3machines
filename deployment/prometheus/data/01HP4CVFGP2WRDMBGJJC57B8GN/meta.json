@@ -1,0 +1,17 @@
+{
+	"ulid": "01HP4CVFGP2WRDMBGJJC57B8GN",
+	"minTime": 1707386400472,
+	"maxTime": 1707393600000,
+	"stats": {
+		"numSamples": 133843,
+		"numSeries": 468,
+		"numChunks": 941
+	},
+	"compaction": {
+		"level": 1,
+		"sources": [
+			"01HP4CVFGP2WRDMBGJJC57B8GN"
+		]
+	},
+	"version": 1
+}

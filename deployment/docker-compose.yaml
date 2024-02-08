@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  build:
+    image: build:develop
+    build:
+      context: ".."
+      dockerfile: "deployment/build.Dockerfile"
+
+  service:
+    build:
+      context: "."
+      dockerfile: "run.Dockerfile"
+    restart: unless-stopped
+    depends_on:
+      build:
+        condition: service_completed_successfully
+      mongodb:
+        condition: service_healthy
+    volumes:
+      - '../cmd/test.yaml:/app/test.yaml'
+    ports:
+      - '9001:9001'
+
+  mongodb:
+    image: mongo
+    restart: always
+    ports:
+      - '27017:27017'
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+    volumes:
+      - './mongo_volume:/mongo_volume'
+
+  prometheus:
+    image: prom/prometheus
+    command:
+      - '--config.file=/prometheus/prometheus.yaml'
+    ports:
+      - 9090:9090
+    restart: unless-stopped
+    volumes:
+      - './prometheus:/prometheus'
+      - './prometheus_data:/prometheus_data'
