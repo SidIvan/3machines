@@ -8,7 +8,6 @@ import (
 	"context"
 	"fmt"
 	"go.uber.org/zap"
-	"strconv"
 	"sync/atomic"
 	"time"
 )
@@ -40,12 +39,14 @@ func (s DeltaReceiverWS) GetSymbol() model.Symbol {
 func (s DeltaReceiverWS) Reconnect() bool {
 	time.Sleep(time.Duration(s.ReconnectPeriodM) * time.Minute)
 	if s.shutdown.Load() {
-		return
+		return true
 	}
 	s.logger.Info("reconnecting")
 	if err := s.Receiver.Reconnect(); err != nil {
 		s.logger.Error(err.Error())
+		return false
 	}
+	return true
 }
 
 func (s DeltaReceiverWS) ReceiveDeltas(ctx context.Context) []model.Delta {
@@ -67,30 +68,10 @@ func (s DeltaReceiverWS) ReceiveDeltas(ctx context.Context) []model.Delta {
 	}
 	var deltas []model.Delta
 	for _, bid := range deltaMsg.Bids {
-		price, err := strconv.ParseFloat(bid[0], 64)
-		if err != nil {
-			s.logger.Error(err.Error())
-			continue
-		}
-		count, err := strconv.ParseFloat(bid[1], 64)
-		if err != nil {
-			s.logger.Error(err.Error())
-			continue
-		}
-		deltas = append(deltas, model.NewDelta(deltaMsg.EventTime, price, count, deltaMsg.UpdateId, deltaMsg.FirstUpdateId, true, convBinanceSymb2Symb(s.symbol)))
+		deltas = append(deltas, model.NewDelta(deltaMsg.EventTime, bid[0], bid[1], deltaMsg.UpdateId, deltaMsg.FirstUpdateId, true, convBinanceSymb2Symb(s.symbol)))
 	}
 	for _, ask := range deltaMsg.Asks {
-		price, err := strconv.ParseFloat(ask[0], 64)
-		if err != nil {
-			s.logger.Error(err.Error())
-			continue
-		}
-		count, err := strconv.ParseFloat(ask[1], 64)
-		if err != nil {
-			s.logger.Error(err.Error())
-			continue
-		}
-		deltas = append(deltas, model.NewDelta(deltaMsg.EventTime, price, count, deltaMsg.UpdateId, deltaMsg.FirstUpdateId, false, convBinanceSymb2Symb(s.symbol)))
+		deltas = append(deltas, model.NewDelta(deltaMsg.EventTime, ask[0], ask[1], deltaMsg.UpdateId, deltaMsg.FirstUpdateId, false, convBinanceSymb2Symb(s.symbol)))
 	}
 	return deltas
 }

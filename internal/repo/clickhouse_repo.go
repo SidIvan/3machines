@@ -61,8 +61,8 @@ func NewClickhouseRepo(cfg *conf.GlobalRepoConfig) *ClickhouseRepo {
 func prepareDeltasInsertBlock(deltas []model.Delta) proto.Input {
 	timestampCol := new(proto.ColDateTime64).WithPrecision(3)
 	var typeCol proto.ColEnum
-	var priceCol proto.ColFloat64
-	var countCol proto.ColFloat64
+	var priceCol proto.ColStr
+	var countCol proto.ColStr
 	var updateIdCol proto.ColInt64
 	var firstUpdateIdCol proto.ColInt64
 	var symbCol proto.ColEnum
@@ -94,8 +94,8 @@ func prepareFullSnapshotInsertBlock(snapshotParts []model.DepthSnapshotPart) pro
 	timestampCol := new(proto.ColDateTime64).WithPrecision(3)
 	var updateIdCol proto.ColInt64
 	var typeCol proto.ColEnum
-	var priceCol proto.ColFloat64
-	var countCol proto.ColFloat64
+	var priceCol proto.ColStr
+	var countCol proto.ColStr
 	var symbCol proto.ColEnum
 	for _, part := range snapshotParts {
 		timestampCol.Append(time.UnixMilli(part.Timestamp))

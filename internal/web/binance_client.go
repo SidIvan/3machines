@@ -8,7 +8,6 @@ import (
 	"context"
 	"fmt"
 	"go.uber.org/zap"
-	"strconv"
 	"time"
 )
 
@@ -34,30 +33,10 @@ func (s BinanceClient) GetFullSnapshot(ctx context.Context, pair string, depth i
 	timestamp := time.Now().UnixMilli()
 	var snapshotParts []model.DepthSnapshotPart
 	for _, bid := range snapshot.Bids {
-		price, err := strconv.ParseFloat(bid[0], 64)
-		if err != nil {
-			s.logger.Error(err.Error())
-			continue
-		}
-		count, err := strconv.ParseFloat(bid[1], 64)
-		if err != nil {
-			s.logger.Error(err.Error())
-			continue
-		}
-		snapshotParts = append(snapshotParts, model.NewDepthSnapshotPart(snapshot.LastUpdateId, true, price, count, model.SymbolFromString(pair), timestamp))
+		snapshotParts = append(snapshotParts, model.NewDepthSnapshotPart(snapshot.LastUpdateId, true, bid[0], bid[1], model.SymbolFromString(pair), timestamp))
 	}
 	for _, ask := range snapshot.Asks {
-		price, err := strconv.ParseFloat(ask[0], 64)
-		if err != nil {
-			s.logger.Error(err.Error())
-			continue
-		}
-		count, err := strconv.ParseFloat(ask[1], 64)
-		if err != nil {
-			s.logger.Error(err.Error())
-			continue
-		}
-		snapshotParts = append(snapshotParts, model.NewDepthSnapshotPart(snapshot.LastUpdateId, false, price, count, model.SymbolFromString(pair), timestamp))
+		snapshotParts = append(snapshotParts, model.NewDepthSnapshotPart(snapshot.LastUpdateId, false, ask[0], ask[1], model.SymbolFromString(pair), timestamp))
 	}
 	return snapshotParts, nil
 }
