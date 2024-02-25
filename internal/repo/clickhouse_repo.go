@@ -43,7 +43,9 @@ func NewClickhouseRepo(cfg *conf.GlobalRepoConfig) *ClickhouseRepo {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(cfg.TimeoutS)*time.Second)
 	defer cancel()
 	logger := log.GetLogger("ClickhouseRepo")
-	client, err := ch.Dial(ctx, ch.Options{})
+	client, err := ch.Dial(ctx, ch.Options{
+		Address: cfg.URI.GetAddress(),
+	})
 	if err != nil {
 		logger.Error(err.Error())
 		return nil

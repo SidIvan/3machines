@@ -11,3 +11,7 @@ type BaseUriConfig struct {
 func (cfg *BaseUriConfig) GetBaseUri() string {
 	return fmt.Sprintf("%s%s:%d/", cfg.Schema, cfg.Host, cfg.Port)
 }
+
+func (cfg *BaseUriConfig) GetAddress() string {
+	return fmt.Sprintf("%s:%d", cfg.Host, cfg.Port)
+}

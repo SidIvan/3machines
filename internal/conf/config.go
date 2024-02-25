@@ -2,6 +2,7 @@ package conf
 
 import (
 	"DeltaReceiver/pkg/binance"
+	conf2 "DeltaReceiver/pkg/conf"
 	"DeltaReceiver/pkg/mongo/conf"
 )
 
@@ -21,8 +22,9 @@ type LocalRepoConfig struct {
 }
 
 type GlobalRepoConfig struct {
-	TimeoutS      int    `yaml:"timeoutS"`
-	DatabaseName  string `yaml:"database.name"`
-	DeltaTable    string `yaml:"delta.table.name"`
-	SnapshotTable string `yaml:"snapshot.table.name"`
+	URI           *conf2.BaseUriConfig `yaml:"base.uri"`
+	TimeoutS      int                  `yaml:"timeoutS"`
+	DatabaseName  string               `yaml:"database.name"`
+	DeltaTable    string               `yaml:"delta.table.name"`
+	SnapshotTable string               `yaml:"snapshot.table.name"`
 }

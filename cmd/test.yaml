@@ -79,6 +79,11 @@ binance.client:
     BTCUSDT: 1440
 
 global.repo.config:
+  base.uri:
+    host:
+      176.113.80.155
+    port:
+      9000
   timeoutS:
     3
   database.name:
