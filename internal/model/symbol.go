@@ -81,3 +81,7 @@ var string2Symb = map[string]Symbol{
 func SymbolFromString(symb string) Symbol {
 	return string2Symb[strings.ToLower(symb)]
 }
+
+func SymbolToBinanceEnum(symbol Symbol) {
+	return
+}

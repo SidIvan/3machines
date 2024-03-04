@@ -9,7 +9,6 @@ import (
 	"github.com/ClickHouse/ch-go"
 	"github.com/ClickHouse/ch-go/proto"
 	"go.uber.org/zap"
-	"strings"
 	"sync"
 	"time"
 )
@@ -82,7 +81,7 @@ func prepareDeltasInsertBlock(deltas []model.Delta) proto.Input {
 		countCol.Append(delta.Count)
 		updateIdCol.Append(delta.UpdateId)
 		firstUpdateIdCol.Append(delta.FirstUpdateId)
-		symbCol.Append(strings.ToLower(string(delta.Symbol)))
+		symbCol.Append(string(delta.Symbol))
 	}
 	return proto.Input{
 		{Name: TimestampCol, Data: timestampCol},
@@ -112,7 +111,7 @@ func prepareFullSnapshotInsertBlock(snapshotParts []model.DepthSnapshotPart) pro
 		priceCol.Append(part.Price)
 		countCol.Append(part.Count)
 		updateIdCol.Append(part.LastUpdateId)
-		symbCol.Append(strings.ToLower(string(part.Symbol)))
+		symbCol.Append(string(part.Symbol))
 	}
 	return proto.Input{
 		{Name: TimestampCol, Data: timestampCol},
