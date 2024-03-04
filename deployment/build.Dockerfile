@@ -4,7 +4,7 @@ WORKDIR /build
 
 COPY go.mod .
 COPY go.sum .
-COPY /System/Library/Keychains/SystemRootCertificates.keychain /usr/local/share/ca-certificates/SystemRootCertificates.keychain
+#COPY /System/Library/Keychains/SystemRootCertificates.keychain /usr/local/share/ca-certificates/SystemRootCertificates.keychain
 
 RUN go mod download
 
