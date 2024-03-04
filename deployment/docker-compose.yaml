@@ -19,6 +19,7 @@ services:
       mongodb:
         condition: service_healthy
     volumes:
+      - '/etc/ssl/certs/ca-certificates.crt:/etc/ssl/certs/ca-certificates.crt'
       - '../cmd/test.yaml:/app/test.yaml'
       - '/var/log/writer:/app/log'
     ports:
