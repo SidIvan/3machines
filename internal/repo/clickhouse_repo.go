@@ -163,7 +163,7 @@ func (s ClickhouseRepo) GetLastSavedTimestamp(ctx context.Context, symb model.Sy
 	timestampResp := new(proto.ColDateTime64).WithPrecision(3)
 	latestTimestamp := time.Unix(0, 0)
 	if err := s.clientH.client.Do(ctx, ch.Query{
-		Body: fmt.Sprintf("SELECT %s from %s.%s WHERE %s = %s ORDER BY %s LIMIT 1",
+		Body: fmt.Sprintf("SELECT %s from %s.%s WHERE %s = '%s' ORDER BY %s LIMIT 1",
 			TimestampCol, s.cfg.DatabaseName, s.cfg.DeltaTable, SymbolCol, symb, TimestampCol),
 		Result: proto.Results{
 			{Name: TimestampCol, Data: timestampResp},

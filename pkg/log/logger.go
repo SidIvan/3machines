@@ -10,10 +10,16 @@ func GetLogger(loggerName string) *zap.Logger {
 	var logger *zap.Logger
 	var err error
 	if envType == env.DEV {
-		logger, err = zap.NewDevelopment(
-			zap.Development(),
-		)
+		cfg := zap.NewDevelopmentConfig()
+		cfg.OutputPaths = []string{
+			"/var/log/writer/writer.log",
+		}
+		logger, err = cfg.Build()
 	} else if envType == env.PROD {
+		cfg := zap.NewProductionConfig()
+		cfg.OutputPaths = []string{
+			"/var/log/writer/writer.log",
+		}
 		logger, err = zap.NewProduction()
 	}
 	if err != nil {
