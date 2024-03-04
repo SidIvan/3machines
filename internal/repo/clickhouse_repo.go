@@ -9,7 +9,6 @@ import (
 	"github.com/ClickHouse/ch-go"
 	"github.com/ClickHouse/ch-go/proto"
 	"go.uber.org/zap"
-	"os"
 	"sync"
 	"time"
 )
@@ -33,7 +32,9 @@ type ClickhouseRepo struct {
 func (s ClickhouseRepo) Reconnect(ctx context.Context) {
 	s.clientH.mut.Lock()
 	defer s.clientH.mut.Unlock()
-	if client, err := ch.Dial(ctx, ch.Options{}); err != nil {
+	if client, err := ch.Dial(ctx, ch.Options{
+		Address: s.cfg.URI.GetAddress(),
+	}); err != nil {
 		s.logger.Error(err.Error())
 	} else {
 		s.clientH.client = client
@@ -45,8 +46,7 @@ func NewClickhouseRepo(cfg *conf.GlobalRepoConfig) *ClickhouseRepo {
 	defer cancel()
 	logger := log.GetLogger("ClickhouseRepo")
 	client, err := ch.Dial(ctx, ch.Options{
-		Address:  cfg.URI.GetAddress(),
-		Password: os.Getenv("CH_PASS"),
+		Address: cfg.URI.GetAddress(),
 	})
 	if err != nil {
 		logger.Error(err.Error())
