@@ -136,13 +136,13 @@ func (s *DeltaReceiverSvc) ReceivePair(deltaReceiver DeltaReceiver) {
 		s.metricsHolder.IncreaseDeltaCtr(deltaReceiver.GetSymbol(), len(deltas))
 		if receivedDeltas == nil {
 			s.log.Info(fmt.Sprintf("last batch of deltas [%s]", deltaReceiver.GetSymbol()))
-			s.sendDeltas(ctx, deltas)
+			s.sendDeltas(ctx, deltas, deltaReceiver.GetSymbol())
 			return
 		}
 		deltas = append(deltas, receivedDeltas...)
 		if len(deltas) >= batchSize {
 			s.log.Info(fmt.Sprintf("got full batch of deltas [%s]", deltaReceiver.GetSymbol()))
-			s.sendDeltas(ctx, deltas)
+			s.sendDeltas(ctx, deltas, deltaReceiver.GetSymbol())
 			clear(deltas)
 		}
 	}
@@ -177,7 +177,7 @@ func (s *DeltaReceiverSvc) sendSnapshot(ctx context.Context, snapshot []model.De
 	return
 }
 
-func (s *DeltaReceiverSvc) sendDeltas(ctx context.Context, deltas []model.Delta) {
+func (s *DeltaReceiverSvc) sendDeltas(ctx context.Context, deltas []model.Delta, symbol model.Symbol) {
 	if len(deltas) == 0 {
 		s.log.Info("empty deltas batch")
 		return
@@ -189,10 +189,10 @@ func (s *DeltaReceiverSvc) sendDeltas(ctx context.Context, deltas []model.Delta)
 			s.log.Info(fmt.Sprintf("successfully sended to Ch, send timestamp %d", curTime))
 			return
 		}
-		s.log.Warn(fmt.Sprintf("failed send to Ch, try to reconnect %d", curTime))
+		s.log.Warn(fmt.Sprintf("failed send to Ch, try to reconnect %d [%s]", curTime, symbol))
 		s.globalRepo.Reconnect(ctx)
 	}
-	s.log.Warn(fmt.Sprintf("failed send to Ch, try save to mongo send timestamp %d", curTime))
+	s.log.Warn(fmt.Sprintf("failed send to Ch, try save to mongo send timestamp %d [%s]", curTime, symbol))
 	for i := 0; i < 3; i++ {
 		if s.localRepo.SaveDeltas(ctx, deltas) {
 			s.log.Info(fmt.Sprintf("successfully saved to mongo, send timestamp %d", curTime))
