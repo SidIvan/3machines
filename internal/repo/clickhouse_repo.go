@@ -9,6 +9,7 @@ import (
 	"github.com/ClickHouse/ch-go"
 	"github.com/ClickHouse/ch-go/proto"
 	"go.uber.org/zap"
+	"os"
 	"sync"
 	"time"
 )
@@ -44,7 +45,8 @@ func NewClickhouseRepo(cfg *conf.GlobalRepoConfig) *ClickhouseRepo {
 	defer cancel()
 	logger := log.GetLogger("ClickhouseRepo")
 	client, err := ch.Dial(ctx, ch.Options{
-		Address: cfg.URI.GetAddress(),
+		Address:  cfg.URI.GetAddress(),
+		Password: os.Getenv("CH_PASS"),
 	})
 	if err != nil {
 		logger.Error(err.Error())
