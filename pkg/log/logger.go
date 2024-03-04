@@ -12,13 +12,13 @@ func GetLogger(loggerName string) *zap.Logger {
 	if envType == env.DEV {
 		cfg := zap.NewDevelopmentConfig()
 		cfg.OutputPaths = []string{
-			"/var/log/writer/writer.log",
+			"/app/log/writer.log",
 		}
 		logger, err = cfg.Build()
 	} else if envType == env.PROD {
 		cfg := zap.NewProductionConfig()
 		cfg.OutputPaths = []string{
-			"/var/log/writer/writer.log",
+			"/app/log/writer.log",
 		}
 		logger, err = zap.NewProduction()
 	}

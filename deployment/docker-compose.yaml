@@ -19,6 +19,7 @@ services:
         condition: service_healthy
     volumes:
       - '../cmd/test.yaml:/app/test.yaml'
+      - '/var/log/writer:/app/log'
     ports:
       - '9001:9001'
 
