@@ -11,6 +11,7 @@ services:
     build:
       context: "."
       dockerfile: "run.Dockerfile"
+    user: root
     restart: unless-stopped
     depends_on:
       build:
@@ -25,6 +26,7 @@ services:
 
   mongodb:
     image: mongo
+    user: root
     restart: always
     ports:
       - '27017:27017'
@@ -35,6 +37,7 @@ services:
 
   prometheus:
     image: prom/prometheus
+    user: root
     command:
       - '--config.file=/prometheus/prometheus.yaml'
     ports:
