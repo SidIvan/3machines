@@ -143,7 +143,7 @@ func (s *DeltaReceiverSvc) ReceivePair(deltaReceiver DeltaReceiver) {
 		if len(deltas) >= batchSize {
 			s.log.Info(fmt.Sprintf("got full batch of deltas [%s]", deltaReceiver.GetSymbol()))
 			s.sendDeltas(ctx, deltas, deltaReceiver.GetSymbol())
-			clear(deltas)
+			deltas = make([]model.Delta, 0)
 		}
 	}
 }
