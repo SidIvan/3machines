@@ -33,19 +33,19 @@ func NewMetrics(cfg *conf.AppConfig) *Metrics {
 		})
 	}
 	for symbol, _ := range cfg.BinanceHttpConfig.Pair2Period {
-		metrics.NumReceivedDeltas[model.SymbolFromString(symbol)] = promauto.NewCounter(prometheus.CounterOpts{
+		metrics.NumDeltasSuccessReconnects[model.SymbolFromString(symbol)] = promauto.NewCounter(prometheus.CounterOpts{
 			Namespace: "binance_deltas",
 			Name:      fmt.Sprintf("success_deltas_reconnects_%s", symbol),
 		})
 	}
 	for symbol, _ := range cfg.BinanceHttpConfig.Pair2Period {
-		metrics.NumReceivedDeltas[model.SymbolFromString(symbol)] = promauto.NewCounter(prometheus.CounterOpts{
+		metrics.NumDeltasFailedReconnects[model.SymbolFromString(symbol)] = promauto.NewCounter(prometheus.CounterOpts{
 			Namespace: "binance_deltas",
 			Name:      fmt.Sprintf("failed_deltas_reconnects_%s", symbol),
 		})
 	}
 	for symbol, _ := range cfg.BinanceHttpConfig.SnapshotPeriod {
-		metrics.NumReceivedDeltas[model.SymbolFromString(symbol)] = promauto.NewCounter(prometheus.CounterOpts{
+		metrics.NumReceivedSnapshotParts[model.SymbolFromString(symbol)] = promauto.NewCounter(prometheus.CounterOpts{
 			Namespace: "binance_snapshots",
 			Name:      fmt.Sprintf("received_snapshot_part_ctr_%s", symbol),
 		})
