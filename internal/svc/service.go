@@ -178,33 +178,37 @@ func (s *DeltaReceiverSvc) sendSnapshot(ctx context.Context, snapshot []model.De
 }
 
 func (s *DeltaReceiverSvc) sendDeltas(ctx context.Context, deltas []model.Delta, symbol model.Symbol) {
-	if len(deltas) == 0 {
-		s.log.Info("empty deltas batch")
+	lastSavedTs := s.globalRepo.GetLastSavedTimestamp(context.Background(), symbol)
+	for i := 0; i < len(deltas); {
+		if lastSavedTs.UnixMilli() >= deltas[i].Timestamp {
+			i++
+			continue
+		}
+		curTime := time.Now().UnixMilli()
+		s.log.Info(fmt.Sprintf("sending batch of %d deltas, send timestamp %d", len(deltas), curTime))
+		for i := 0; i < 3; i++ {
+			if s.globalRepo.SendDeltas(ctx, deltas) {
+				s.log.Info(fmt.Sprintf("successfully sended to Ch, send timestamp %d", curTime))
+				return
+			}
+			s.log.Warn(fmt.Sprintf("failed send to Ch, try to reconnect %d [%s]", curTime, symbol))
+			s.globalRepo.Reconnect(ctx)
+		}
+		s.log.Warn(fmt.Sprintf("failed send to Ch, try save to mongo send timestamp %d [%s]", curTime, symbol))
+		for i := 0; i < 3; i++ {
+			if s.localRepo.SaveDeltas(ctx, deltas) {
+				s.log.Info(fmt.Sprintf("successfully saved to mongo, send timestamp %d", curTime))
+				return
+			}
+			s.log.Warn(fmt.Sprintf("failed save to mongo, try to reconnect timestamp %d", curTime))
+			s.localRepo.Reconnect(ctx)
+		}
+		s.log.Warn(fmt.Sprintf("failed save to mongo, attempting save to file, send timestamp %d", curTime))
+		// УСЁ ПРОПАЛО
+		s.saveDeltasToFile(deltas)
 		return
 	}
-	curTime := time.Now().UnixMilli()
-	s.log.Info(fmt.Sprintf("sending batch of %d deltas, send timestamp %d", len(deltas), curTime))
-	for i := 0; i < 3; i++ {
-		if s.globalRepo.SendDeltas(ctx, deltas) {
-			s.log.Info(fmt.Sprintf("successfully sended to Ch, send timestamp %d", curTime))
-			return
-		}
-		s.log.Warn(fmt.Sprintf("failed send to Ch, try to reconnect %d [%s]", curTime, symbol))
-		s.globalRepo.Reconnect(ctx)
-	}
-	s.log.Warn(fmt.Sprintf("failed send to Ch, try save to mongo send timestamp %d [%s]", curTime, symbol))
-	for i := 0; i < 3; i++ {
-		if s.localRepo.SaveDeltas(ctx, deltas) {
-			s.log.Info(fmt.Sprintf("successfully saved to mongo, send timestamp %d", curTime))
-			return
-		}
-		s.log.Warn(fmt.Sprintf("failed save to mongo, try to reconnect timestamp %d", curTime))
-		s.localRepo.Reconnect(ctx)
-	}
-	s.log.Warn(fmt.Sprintf("failed save to mongo, attempting save to file, send timestamp %d", curTime))
-	// УСЁ ПРОПАЛО
-	s.saveDeltasToFile(deltas)
-	return
+	s.log.Info("empty deltas batch")
 }
 
 func (s *DeltaReceiverSvc) saveSnapshotToFile(snapshot []model.DepthSnapshotPart) {
