@@ -162,6 +162,7 @@ func (s ClickhouseRepo) SendSnapshot(ctx context.Context, snapshot []model.Depth
 func (s ClickhouseRepo) GetLastSavedTimestamp(ctx context.Context, symb model.Symbol) time.Time {
 	timestampResp := new(proto.ColDateTime64).WithPrecision(3)
 	latestTimestamp := time.Unix(0, 0)
+	s.clientH.mut.Lock()
 	if err := s.clientH.client.Do(ctx, ch.Query{
 		Body: fmt.Sprintf("SELECT %s from %s.%s WHERE %s = '%s' ORDER BY %s LIMIT 1",
 			TimestampCol, s.cfg.DatabaseName, s.cfg.DeltaTable, SymbolCol, symb, TimestampCol),
@@ -177,5 +178,6 @@ func (s ClickhouseRepo) GetLastSavedTimestamp(ctx context.Context, symb model.Sy
 	}); err != nil {
 		s.logger.Error(err.Error())
 	}
+	s.clientH.mut.Unlock()
 	return latestTimestamp
 }
