@@ -4,6 +4,7 @@ import (
 	"DeltaReceiver/internal/app"
 	"DeltaReceiver/internal/conf"
 	"context"
+	"flag"
 	"gopkg.in/yaml.v3"
 	"log"
 	"os"
@@ -13,7 +14,9 @@ import (
 )
 
 func main() {
-	cfgData, err := os.ReadFile("test.yaml")
+	cfgPath := flag.String("cfg", "test.yaml", "path to config file")
+	flag.Parse()
+	cfgData, err := os.ReadFile(*cfgPath)
 	if err != nil {
 		log.Println(err.Error())
 		return
