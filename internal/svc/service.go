@@ -78,8 +78,6 @@ func NewDeltaReceiverSvc(config *conf.AppConfig, binanceClient BinanceClient, de
 	}
 }
 
-const fullSnapshotDepth = 100
-
 func (s *DeltaReceiverSvc) CronGetAndStoreFullSnapshot(pair string, periodM int16) {
 	for {
 		ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
@@ -90,7 +88,7 @@ func (s *DeltaReceiverSvc) CronGetAndStoreFullSnapshot(pair string, periodM int1
 }
 
 func (s *DeltaReceiverSvc) GetAndStoreFullSnapshot(ctx context.Context, pair string) {
-	snapshot, err := s.binanceClient.GetFullSnapshot(ctx, pair, fullSnapshotDepth)
+	snapshot, err := s.binanceClient.GetFullSnapshot(ctx, pair, s.cfg.FullSnapshotDepth)
 	if err != nil {
 		s.log.Error(err.Error())
 		return

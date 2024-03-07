@@ -2,6 +2,8 @@ global.db.batch.size:
   10000
 get.full.snapshot.period.m:
   10000
+full.snapshot.depth:
+  100
 reconnect.period.m:
   15
 
@@ -77,6 +79,7 @@ binance.client:
     grteur: 100
   snapshot.periods:
     BTCUSDT: 1440
+
 
 global.repo.config:
   base.uri:

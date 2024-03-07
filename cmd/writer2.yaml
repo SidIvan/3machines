@@ -2,8 +2,10 @@ global.db.batch.size:
   10000
 get.full.snapshot.period.m:
   10000
+full.snapshot.depth:
+  100
 reconnect.period.m:
-  15
+  720
 
 local.repo.config:
   delta.collection.name:
@@ -58,23 +60,23 @@ binance.client:
     xmrbtc: 100
     trxtry: 100
   snapshot.periods:
-    PEPETRY: 100
-    BONDUSDT: 100
-    DCRUSDT: 100
-    LINKETH: 100
-    RARETRY: 100
-    BELUSDT: 100
-    BALUSDT: 100
-    BTCPLN: 100
-    MANTABNB: 100
-    DEXEUSDT: 100
-    SCRTUSDT: 100
-    CHZBTC: 100
-    LPTBNB: 100
-    LOKABTC: 100
-    CHESSBTC: 100
-    BNBUPUSDT: 100
-    GRTEUR: 100
+    PEPETRY: 1440
+    BONDUSDT: 1440
+    DCRUSDT: 1440
+    LINKETH: 1440
+    RARETRY: 1440
+    BELUSDT: 1440
+    BALUSDT: 1440
+    BTCPLN: 1440
+    MANTABNB: 1440
+    DEXEUSDT: 1440
+    SCRTUSDT: 1440
+    CHZBTC: 1440
+    LPTBNB: 1440
+    LOKABTC: 1440
+    CHESSBTC: 1440
+    BNBUPUSDT: 1440
+    GRTEUR: 1440
 
 global.repo.config:
   base.uri:

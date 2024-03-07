@@ -2,8 +2,10 @@ global.db.batch.size:
   10000
 get.full.snapshot.period.m:
   10000
+full.snapshot.depth:
+  100
 reconnect.period.m:
-  15
+  720
 
 local.repo.config:
   delta.collection.name:
