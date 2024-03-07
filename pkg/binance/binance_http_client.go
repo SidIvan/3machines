@@ -35,7 +35,7 @@ func (s BinanceHttpClient) GetFullSnapshot(ctx context.Context, symbol model.Sym
 	if isBanned() {
 		return nil, RequestRejectedErr
 	}
-	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
 	defer cancel()
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("%sapi/v3/depth?symbol=%s&limit=%d", s.baseUri, symbolToURIForSnapshot(symbol), depthLimit), http.NoBody)
 	if err != nil {

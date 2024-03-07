@@ -103,7 +103,7 @@ global.repo.config:
     port:
       9000
   timeoutS:
-    3
+    5
   database.name:
     db
   delta.table.name:
