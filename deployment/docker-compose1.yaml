@@ -10,7 +10,7 @@ services:
   service:
     build:
       context: "."
-      dockerfile: "run.Dockerfile"
+      dockerfile: "run1.Dockerfile"
     user: root
     restart: unless-stopped
     depends_on:

@@ -1,0 +1,110 @@
+global.db.batch.size:
+  10000
+get.full.snapshot.period.m:
+  10000
+reconnect.period.m:
+  15
+
+local.repo.config:
+  delta.collection.name:
+    deltas
+  snapshot.collection.name:
+    snapshots
+  mongo:
+    timeout.sec:
+      1
+    database.name:
+      db
+    num.conn.retries:
+      3
+    uri:
+      schema:
+        mongodb://
+      host:
+        mongodb
+      port:
+        27017
+
+binance.client:
+  delta.stream.url:
+    schema:
+      wss://
+    host:
+      stream.binance.com
+    port:
+      9443
+  http.base.uri.config:
+    schema:
+      https://
+    host:
+      api.binance.com
+    port:
+      443
+  delta.pairs:
+    btcusdt: 100
+    btcfdusd: 100
+    jupusdt: 100
+    1000satsusdt: 100
+    solusdt: 100
+    ethfdusd: 100
+    seiusdt: 100
+    avaxusdt: 100
+    tiausdt: 100
+    runeusdt: 100
+    fttusdt: 100
+    rndrusdt: 100
+    fdusdusdt: 100
+    usdcusdt: 100
+    xmrbtc: 100
+    trxtry: 100
+    arkmusdt: 100
+    pepetry: 100
+    bondusdt: 100
+    dcrusdt: 100
+    linketh: 100
+    raretry: 100
+    belusdt: 100
+    balusdt: 100
+    btcpln: 100
+    mantabnb: 100
+    dexeusdt: 100
+    scrtusdt: 100
+    chzbtc: 100
+    lptbnb: 100
+    lokabtc: 100
+    chessbtc: 100
+    bnbupusdt: 100
+    grteur: 100
+  snapshot.periods:
+    BTCUSDT: 1440
+    BTCFDUSD: 1440
+    JUPUSDT: 1440
+    1000satsusdt: 1440
+    SOLUSDT: 1440
+    ETHFDUSD: 1440
+    SEIUSDT: 1440
+    AVAXUSDT: 1440
+    TIAUSDT: 1440
+    RUNEUSDT: 1440
+    FTTUSDT: 1440
+    RNDRUST: 1440
+    FDUSDUSDT: 1440
+    USDCUSDT: 1440
+    XMRBTC: 1440
+    TRXTRY: 1440
+    ARKMUSDT: 1440
+
+global.repo.config:
+  base.uri:
+    host:
+      176.113.80.155
+    port:
+      9000
+  timeoutS:
+    3
+  database.name:
+    db
+  delta.table.name:
+    binance
+  snapshot.table.name:
+    binance_snapshots
