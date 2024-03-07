@@ -3,7 +3,7 @@ global.db.batch.size:
 get.full.snapshot.period.m:
   10000
 full.snapshot.depth:
-  100
+  5000
 reconnect.period.m:
   720
 
