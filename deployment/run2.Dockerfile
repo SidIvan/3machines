@@ -4,7 +4,7 @@ FROM debian:latest
 WORKDIR /app
 
 COPY --from=build:develop /build/app ./app
-COPY --from=build:develop /build/cmd/test.yaml ./test.yaml
+COPY --from=build:develop /build/cmd/writer2.yaml ./writer2.yaml
 RUN mkdir /app/log
 RUN touch /app/log/writer.log
 
