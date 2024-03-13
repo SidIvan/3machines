@@ -1,8 +1,10 @@
 package svc
 
 import (
+	"DeltaReceiver/internal/cache"
 	"DeltaReceiver/internal/conf"
 	"DeltaReceiver/internal/model"
+	bmodel "DeltaReceiver/pkg/binance/model"
 	"DeltaReceiver/pkg/log"
 	"context"
 	"encoding/json"
@@ -18,6 +20,7 @@ import (
 
 type BinanceClient interface {
 	GetFullSnapshot(ctx context.Context, pair string, depth int) ([]model.DepthSnapshotPart, error)
+	GetFullExchangeInfo(context.Context) (*bmodel.ExchangeInfo, error)
 }
 
 type LocalRepo interface {
@@ -32,6 +35,7 @@ type GlobalRepo interface {
 	SendDeltas(context.Context, []model.Delta) bool
 	SendSnapshot(context.Context, []model.DepthSnapshotPart) bool
 	Reconnect(ctx context.Context)
+	SendFullExchangeInfo(ctx context.Context, exInfo *bmodel.ExchangeInfo) bool
 }
 
 type DeltaReceiver interface {
@@ -58,10 +62,11 @@ type DeltaReceiverSvc struct {
 	cfg            *conf.AppConfig
 	shutdown       *atomic.Bool
 	dRecWg         *sync.WaitGroup
+	exInfoCache    *cache.ExchangeInfoCache
 }
 
 func NewDeltaReceiverSvc(config *conf.AppConfig, binanceClient BinanceClient, deltaReceivers []DeltaReceiver, localRepo LocalRepo,
-	globalRepo GlobalRepo, metricsHolder MetricsHolder) *DeltaReceiverSvc {
+	globalRepo GlobalRepo, metricsHolder MetricsHolder, exInfo *bmodel.ExchangeInfo) *DeltaReceiverSvc {
 	var shutdown atomic.Bool
 	var dRecWg sync.WaitGroup
 	shutdown.Store(false)
@@ -75,6 +80,29 @@ func NewDeltaReceiverSvc(config *conf.AppConfig, binanceClient BinanceClient, de
 		cfg:            config,
 		shutdown:       &shutdown,
 		dRecWg:         &dRecWg,
+		exInfoCache:    cache.NewExchangeInfoCache(exInfo),
+	}
+}
+
+func (s *DeltaReceiverSvc) CronExchangeInfoUpdatesStoring() {
+	for {
+		time.Sleep(time.Duration(s.cfg.ExchangeInfoUpdPerM) * time.Minute)
+		ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+		exInfo, err := s.binanceClient.GetFullExchangeInfo(ctx)
+		cancel()
+		if err != nil {
+			s.log.Error(err.Error())
+		} else if !bmodel.EqualsExchangeInfos(s.exInfoCache.GetVal(), exInfo) {
+			for i := 0; i < 3; i++ {
+				if s.globalRepo.SendFullExchangeInfo(ctx, exInfo) {
+					s.log.Info(fmt.Sprintf("successfully sended exchange info to Ch "))
+					break
+				}
+				s.log.Warn(fmt.Sprintf("failed send exchange info to Ch, try to reconnect"))
+				s.globalRepo.Reconnect(ctx)
+			}
+		}
+
 	}
 }
 
