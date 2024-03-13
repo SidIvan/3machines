@@ -113,4 +113,4 @@ global.repo.config:
   snapshot.table.name:
     binance_snapshots
   ex.info.table:
-    ex_info
+    exchange_info
