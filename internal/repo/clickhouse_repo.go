@@ -232,8 +232,9 @@ func (s ClickhouseRepo) GetLastFullExchangeInfo(ctx context.Context) *bmodel.Exc
 		},
 		OnResult: func(ctx context.Context, block proto.Block) error {
 			if block.Rows != 0 {
-				err := json.Unmarshal([]byte(resp.First()), &exInfo)
-				s.logger.Error(err.Error())
+				if err := json.Unmarshal([]byte(resp.First()), &exInfo); err != nil {
+					s.logger.Error(err.Error())
+				}
 			} else {
 				s.logger.Warn("empty get latest exchange info response")
 			}
