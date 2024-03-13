@@ -94,12 +94,17 @@ func (s *DeltaReceiverSvc) CronExchangeInfoUpdatesStoring() {
 			s.log.Error(err.Error())
 		} else if !bmodel.EqualsExchangeInfos(s.exInfoCache.GetVal(), exInfo) {
 			for i := 0; i < 3; i++ {
+				ctx, cancel = context.WithTimeout(context.Background(), 20*time.Second)
 				if s.globalRepo.SendFullExchangeInfo(ctx, exInfo) {
 					s.log.Info(fmt.Sprintf("successfully sended exchange info to Ch "))
+					cancel()
 					break
 				}
+				cancel()
 				s.log.Warn(fmt.Sprintf("failed send exchange info to Ch, try to reconnect"))
+				ctx, cancel = context.WithTimeout(context.Background(), 20*time.Second)
 				s.globalRepo.Reconnect(ctx)
+				cancel()
 			}
 			s.exInfoCache.SetVal(exInfo)
 		}
