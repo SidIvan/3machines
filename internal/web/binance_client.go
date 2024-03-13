@@ -40,3 +40,7 @@ func (s BinanceClient) GetFullSnapshot(ctx context.Context, pair string, depth i
 	}
 	return snapshotParts, nil
 }
+
+func (s BinanceClient) GetFullExchangeInfo(ctx context.Context) (*bmodel.ExchangeInfo, error) {
+	return s.client.GetFullExchangeInfo(ctx)
+}
