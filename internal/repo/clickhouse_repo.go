@@ -235,8 +235,6 @@ func (s ClickhouseRepo) GetLastFullExchangeInfo(ctx context.Context) *bmodel.Exc
 				if err := json.Unmarshal([]byte(resp.First()), &exInfo); err != nil {
 					s.logger.Error(err.Error())
 				}
-			} else {
-				s.logger.Warn("empty get latest exchange info response")
 			}
 			return nil
 		},
@@ -244,5 +242,8 @@ func (s ClickhouseRepo) GetLastFullExchangeInfo(ctx context.Context) *bmodel.Exc
 		s.logger.Error(err.Error())
 	}
 	s.clientH.mut.Unlock()
+	if exInfo.Timezone == "" {
+		s.logger.Warn("empty get latest exchange info response")
+	}
 	return &exInfo
 }
