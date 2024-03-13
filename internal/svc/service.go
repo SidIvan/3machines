@@ -101,6 +101,7 @@ func (s *DeltaReceiverSvc) CronExchangeInfoUpdatesStoring() {
 				s.log.Warn(fmt.Sprintf("failed send exchange info to Ch, try to reconnect"))
 				s.globalRepo.Reconnect(ctx)
 			}
+			s.exInfoCache.SetVal(exInfo)
 		}
 
 	}
