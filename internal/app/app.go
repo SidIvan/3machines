@@ -22,6 +22,7 @@ type App struct {
 }
 
 func NewApp(cfg *conf.AppConfig) *App {
+	logger := log.GetLogger("App")
 	globalRepo := repo.NewClickhouseRepo(cfg.GlobalRepoConfig)
 	localRepo := repo.NewLocalMongoRepo(cfg.LocalRepoCfg)
 	binanceClient := web.NewBinanceClient(cfg.BinanceHttpConfig)
@@ -36,13 +37,13 @@ func NewApp(cfg *conf.AppConfig) *App {
 		var err error
 		exInfo, err = binanceClient.GetFullExchangeInfo(context.Background())
 		if err != nil {
-			panic(err)
+			logger.Error(err.Error())
 		}
 		globalRepo.SendFullExchangeInfo(context.Background(), exInfo)
 	}
 	deltaRecSvc := svc.NewDeltaReceiverSvc(cfg, binanceClient, deltaReceivers, localRepo, globalRepo, metricsHolder, exInfo)
 	return &App{
-		logger:      log.GetLogger("App"),
+		logger:      logger,
 		deltaRecSvc: deltaRecSvc,
 		cfg:         cfg,
 	}
@@ -70,6 +71,7 @@ func (s *App) Start() {
 	for pair, period := range s.cfg.BinanceHttpConfig.SnapshotPeriod {
 		go s.deltaRecSvc.CronGetAndStoreFullSnapshot(pair, period)
 	}
+	go s.deltaRecSvc.CronExchangeInfoUpdatesStoring()
 	time.Sleep(1 * time.Second)
 	s.logger.Info("App started")
 }
