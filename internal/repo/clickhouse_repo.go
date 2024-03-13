@@ -3,8 +3,10 @@ package repo
 import (
 	"DeltaReceiver/internal/conf"
 	"DeltaReceiver/internal/model"
+	bmodel "DeltaReceiver/pkg/binance/model"
 	"DeltaReceiver/pkg/log"
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/ClickHouse/ch-go"
 	"github.com/ClickHouse/ch-go/proto"
@@ -180,4 +182,66 @@ func (s ClickhouseRepo) GetLastSavedTimestamp(ctx context.Context, symb model.Sy
 	}
 	s.clientH.mut.Unlock()
 	return latestTimestamp
+}
+
+const ExchangeInfoCol = "exchange_info"
+
+func (s ClickhouseRepo) prepareExchangeInfoInsertBlock(exInfo *bmodel.ExchangeInfo) proto.Input {
+	timestampCol := new(proto.ColDateTime64).WithPrecision(3)
+	var exCol proto.ColStr
+	timestampCol.Append(time.UnixMilli(exInfo.ServerTime))
+	payload, err := json.Marshal(exInfo)
+	if err != nil {
+		s.logger.Error(err.Error())
+		return nil
+	}
+	exCol.Append(string(payload))
+	return proto.Input{
+		{Name: TimestampCol, Data: timestampCol},
+		{Name: ExchangeInfoCol, Data: &exCol},
+	}
+}
+
+func (s ClickhouseRepo) SendFullExchangeInfo(ctx context.Context, exInfo *bmodel.ExchangeInfo) bool {
+	input := s.prepareExchangeInfoInsertBlock(exInfo)
+	if input == nil {
+		return false
+	}
+	s.clientH.mut.Lock()
+	err := s.clientH.client.Do(ctx, ch.Query{
+		Body:  fmt.Sprintf("INSERT INTO %s.%s VALUES", s.cfg.DatabaseName, s.cfg.ExchangeInfoTable),
+		Input: input,
+	})
+	s.clientH.mut.Unlock()
+	if err != nil {
+		s.logger.Error(err.Error())
+		return false
+	}
+	return true
+}
+
+func (s ClickhouseRepo) GetLastFullExchangeInfo(ctx context.Context) *bmodel.ExchangeInfo {
+	var resp proto.ColStr
+	var exInfo bmodel.ExchangeInfo
+	s.clientH.mut.Lock()
+	if err := s.clientH.client.Do(ctx, ch.Query{
+		Body: fmt.Sprintf("SELECT %s from %s.%s ORDER BY %s LIMIT 1",
+			ExchangeInfoCol, s.cfg.DatabaseName, s.cfg.ExchangeInfoTable, TimestampCol),
+		Result: proto.Results{
+			{Name: ExchangeInfoCol, Data: &resp},
+		},
+		OnResult: func(ctx context.Context, block proto.Block) error {
+			if block.Rows != 0 {
+				err := json.Unmarshal([]byte(resp.First()), &exInfo)
+				s.logger.Error(err.Error())
+			} else {
+				s.logger.Warn("empty get latest exchange info response")
+			}
+			return nil
+		},
+	}); err != nil {
+		s.logger.Error(err.Error())
+	}
+	s.clientH.mut.Unlock()
+	return &exInfo
 }

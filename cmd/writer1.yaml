@@ -6,6 +6,8 @@ full.snapshot.depth:
   5000
 reconnect.period.m:
   720
+ex.info.upd.per.m:
+  5
 
 local.repo.config:
   delta.collection.name:
@@ -110,3 +112,5 @@ global.repo.config:
     binance
   snapshot.table.name:
     binance_snapshots
+  ex.info.table:
+    exchange_info

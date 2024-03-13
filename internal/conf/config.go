@@ -14,6 +14,7 @@ type AppConfig struct {
 	ReconnectPeriodM       int16                            `yaml:"reconnect.period.m"`
 	LocalRepoCfg           *LocalRepoConfig                 `yaml:"local.repo.config"`
 	GlobalRepoConfig       *GlobalRepoConfig                `yaml:"global.repo.config"`
+	ExchangeInfoUpdPerM    int                              `yaml:"ex.info.upd.per.m"`
 }
 
 type LocalRepoConfig struct {
@@ -23,9 +24,10 @@ type LocalRepoConfig struct {
 }
 
 type GlobalRepoConfig struct {
-	URI           *conf2.BaseUriConfig `yaml:"base.uri"`
-	TimeoutS      int                  `yaml:"timeoutS"`
-	DatabaseName  string               `yaml:"database.name"`
-	DeltaTable    string               `yaml:"delta.table.name"`
-	SnapshotTable string               `yaml:"snapshot.table.name"`
+	URI               *conf2.BaseUriConfig `yaml:"base.uri"`
+	TimeoutS          int                  `yaml:"timeoutS"`
+	DatabaseName      string               `yaml:"database.name"`
+	DeltaTable        string               `yaml:"delta.table.name"`
+	SnapshotTable     string               `yaml:"snapshot.table.name"`
+	ExchangeInfoTable string               `yaml:"ex.info.table"`
 }

@@ -31,6 +31,46 @@ func symbolToURIForSnapshot(symbol model.Symbol) string {
 	return strings.ToUpper(string(symbol))
 }
 
+func (s BinanceHttpClient) GetFullExchangeInfo(ctx context.Context) (*model.ExchangeInfo, error) {
+	if isBanned() {
+		return nil, RequestRejectedErr
+	}
+	ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
+	defer cancel()
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("%sapi/v3/exchangeInfo", s.baseUri), http.NoBody)
+	if err != nil {
+		s.logger.Error(err.Error())
+		return nil, err
+	}
+	resp, err := s.client.Do(req)
+	if err != nil {
+		s.logger.Error(err.Error())
+		return nil, err
+	}
+	if resp.StatusCode == http.StatusTeapot {
+		return nil, banBinanceRequests(resp, TeapotErr)
+	}
+	if resp.StatusCode == http.StatusTooManyRequests {
+		return nil, banBinanceRequests(resp, WeightLimitExceededErr)
+	}
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		s.logger.Error(err.Error())
+		return nil, err
+	}
+	var exInfo model.ExchangeInfo
+	err = json.Unmarshal(respBody, &exInfo)
+	if err != nil {
+		s.logger.Error(err.Error())
+		return nil, err
+	}
+	err = resp.Body.Close()
+	if err != nil {
+		s.logger.Warn(err.Error())
+	}
+	return &exInfo, nil
+}
+
 func (s BinanceHttpClient) GetFullSnapshot(ctx context.Context, symbol model.Symbol, depthLimit int) (*model.DepthSnapshot, error) {
 	if isBanned() {
 		return nil, RequestRejectedErr
