@@ -32,14 +32,12 @@ func NewApp(cfg *conf.AppConfig) *App {
 	}
 	validateSnapshotScheduling(cfg)
 	exInfo := globalRepo.GetLastFullExchangeInfo(context.Background())
-	if exInfo == nil {
+	if exInfo.Timezone == "" {
 		var err error
 		exInfo, err = binanceClient.GetFullExchangeInfo(context.Background())
 		if err != nil {
 			panic(err)
 		}
-	}
-	if exInfo.Timezone == "" {
 		globalRepo.SendFullExchangeInfo(context.Background(), exInfo)
 	}
 	deltaRecSvc := svc.NewDeltaReceiverSvc(cfg, binanceClient, deltaReceivers, localRepo, globalRepo, metricsHolder, exInfo)
