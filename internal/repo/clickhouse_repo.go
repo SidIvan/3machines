@@ -228,7 +228,7 @@ func (s ClickhouseRepo) GetLastFullExchangeInfo(ctx context.Context) *bmodel.Exc
 		Body: fmt.Sprintf("SELECT %s from %s.%s ORDER BY %s LIMIT 1",
 			ExchangeInfoCol, s.cfg.DatabaseName, s.cfg.ExchangeInfoTable, TimestampCol),
 		Result: proto.Results{
-			{Name: TimestampCol, Data: &resp},
+			{Name: ExchangeInfoCol, Data: &resp},
 		},
 		OnResult: func(ctx context.Context, block proto.Block) error {
 			if block.Rows != 0 {
