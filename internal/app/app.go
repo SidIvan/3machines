@@ -31,7 +31,18 @@ func NewApp(cfg *conf.AppConfig) *App {
 		deltaReceivers = append(deltaReceivers, web.NewDeltaReceiverWs(cfg.BinanceHttpConfig, pair, period, cfg.ReconnectPeriodM))
 	}
 	validateSnapshotScheduling(cfg)
-	deltaRecSvc := svc.NewDeltaReceiverSvc(cfg, binanceClient, deltaReceivers, localRepo, globalRepo, metricsHolder)
+	exInfo := globalRepo.GetLastFullExchangeInfo(context.Background())
+	if exInfo == nil {
+		var err error
+		exInfo, err = binanceClient.GetFullExchangeInfo(context.Background())
+		if err != nil {
+			panic(err)
+		}
+	}
+	if exInfo.Timezone == "" {
+		globalRepo.SendFullExchangeInfo(context.Background(), exInfo)
+	}
+	deltaRecSvc := svc.NewDeltaReceiverSvc(cfg, binanceClient, deltaReceivers, localRepo, globalRepo, metricsHolder, exInfo)
 	return &App{
 		logger:      log.GetLogger("App"),
 		deltaRecSvc: deltaRecSvc,
