@@ -217,6 +217,7 @@ func (s *DeltaReceiverSvc) sendDeltas(ctx context.Context, deltas []model.Delta,
 			continue
 		}
 		curTime := time.Now().UnixMilli()
+		deltas = deltas[i:]
 		s.log.Info(fmt.Sprintf("sending batch of %d deltas, send timestamp %d", len(deltas), curTime))
 		for i := 0; i < 3; i++ {
 			if s.globalRepo.SendDeltas(ctx, deltas) {

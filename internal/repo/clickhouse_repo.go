@@ -128,6 +128,7 @@ func prepareFullSnapshotInsertBlock(snapshotParts []model.DepthSnapshotPart) pro
 
 func (s ClickhouseRepo) SendDeltas(ctx context.Context, deltas []model.Delta) bool {
 	if len(deltas) == 0 {
+		s.logger.Warn("empty deltas batch")
 		return true
 	}
 	input := prepareDeltasInsertBlock(deltas)
@@ -141,6 +142,7 @@ func (s ClickhouseRepo) SendDeltas(ctx context.Context, deltas []model.Delta) bo
 		s.logger.Error(err.Error())
 		return false
 	}
+	s.clientH.client.Close()
 	return true
 }
 
