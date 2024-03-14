@@ -109,7 +109,7 @@ global.repo.config:
   database.name:
     db
   delta.table.name:
-    binance
+    tmp_binance
   snapshot.table.name:
     binance_snapshots
   ex.info.table:

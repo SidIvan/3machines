@@ -72,7 +72,7 @@ func prepareDeltasInsertBlock(deltas []model.Delta) proto.Input {
 	var countCol proto.ColStr
 	var updateIdCol proto.ColInt64
 	var firstUpdateIdCol proto.ColInt64
-	var symbCol proto.ColEnum
+	var symbCol proto.ColStr
 	for _, delta := range deltas {
 		timestampCol.Append(time.UnixMilli(delta.Timestamp))
 		if delta.T {
