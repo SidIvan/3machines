@@ -35,7 +35,8 @@ type GlobalRepo interface {
 	SendDeltas(context.Context, []model.Delta) bool
 	SendSnapshot(context.Context, []model.DepthSnapshotPart) bool
 	Reconnect(ctx context.Context)
-	SendFullExchangeInfo(ctx context.Context, exInfo *bmodel.ExchangeInfo) bool
+	SendFullExchangeInfoIfNeed(ctx context.Context, exInfo *bmodel.ExchangeInfo) bool
+	GetLastFullExchangeInfoHash(ctx context.Context) uint64
 }
 
 type DeltaReceiver interface {
@@ -95,8 +96,7 @@ func (s *DeltaReceiverSvc) CronExchangeInfoUpdatesStoring() {
 		} else if !bmodel.EqualsExchangeInfos(s.exInfoCache.GetVal(), exInfo) {
 			for i := 0; i < 3; i++ {
 				ctx, cancel = context.WithTimeout(context.Background(), 20*time.Second)
-				if s.globalRepo.SendFullExchangeInfo(ctx, exInfo) {
-					s.log.Info(fmt.Sprintf("successfully sended exchange info to Ch "))
+				if s.globalRepo.SendFullExchangeInfoIfNeed(ctx, exInfo) {
 					cancel()
 					break
 				}

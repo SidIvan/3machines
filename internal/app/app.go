@@ -39,7 +39,7 @@ func NewApp(cfg *conf.AppConfig) *App {
 		if err != nil {
 			logger.Error(err.Error())
 		}
-		globalRepo.SendFullExchangeInfo(context.Background(), exInfo)
+		globalRepo.SendFullExchangeInfoIfNeed(context.Background(), exInfo)
 	}
 	deltaRecSvc := svc.NewDeltaReceiverSvc(cfg, binanceClient, deltaReceivers, localRepo, globalRepo, metricsHolder, exInfo)
 	return &App{

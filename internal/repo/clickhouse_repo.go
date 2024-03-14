@@ -11,6 +11,8 @@ import (
 	"github.com/ClickHouse/ch-go"
 	"github.com/ClickHouse/ch-go/proto"
 	"go.uber.org/zap"
+	"hash/fnv"
+	"strconv"
 	"sync"
 	"time"
 )
@@ -184,11 +186,26 @@ func (s ClickhouseRepo) GetLastSavedTimestamp(ctx context.Context, symb model.Sy
 	return latestTimestamp
 }
 
-const ExchangeInfoCol = "exchange_info"
+const (
+	ExchangeInfoCol = "exchange_info"
+	HashCol         = "hash"
+)
+
+func exInfoHash(exInfo *bmodel.ExchangeInfo) uint64 {
+	payload, _ := json.Marshal(exInfo)
+	return exInfoStringHash(string(payload))
+}
+
+func exInfoStringHash(s string) uint64 {
+	h := fnv.New64()
+	_, _ = h.Write([]byte(s))
+	return h.Sum64()
+}
 
 func (s ClickhouseRepo) prepareExchangeInfoInsertBlock(exInfo *bmodel.ExchangeInfo) proto.Input {
 	timestampCol := new(proto.ColDateTime64).WithPrecision(3)
 	var exCol proto.ColStr
+	var hashCol proto.ColUInt64
 	timestampCol.Append(time.UnixMilli(exInfo.ServerTime))
 	payload, err := json.Marshal(exInfo)
 	if err != nil {
@@ -196,13 +213,21 @@ func (s ClickhouseRepo) prepareExchangeInfoInsertBlock(exInfo *bmodel.ExchangeIn
 		return nil
 	}
 	exCol.Append(string(payload))
+	hashCol.Append(exInfoStringHash(string(payload)))
 	return proto.Input{
 		{Name: TimestampCol, Data: timestampCol},
 		{Name: ExchangeInfoCol, Data: &exCol},
+		{Name: HashCol, Data: &hashCol},
 	}
 }
 
-func (s ClickhouseRepo) SendFullExchangeInfo(ctx context.Context, exInfo *bmodel.ExchangeInfo) bool {
+func (s ClickhouseRepo) SendFullExchangeInfoIfNeed(ctx context.Context, exInfo *bmodel.ExchangeInfo) bool {
+	curHash := exInfoHash(exInfo)
+	lastHash := s.GetLastFullExchangeInfoHash(ctx)
+	if curHash == lastHash {
+		s.logger.Info("Exchange info has not updated")
+		return true
+	}
 	input := s.prepareExchangeInfoInsertBlock(exInfo)
 	if input == nil {
 		return false
@@ -217,7 +242,38 @@ func (s ClickhouseRepo) SendFullExchangeInfo(ctx context.Context, exInfo *bmodel
 		s.logger.Error(err.Error())
 		return false
 	}
+	s.logger.Info(fmt.Sprintf("successfully sended exchange info to Ch "))
 	return true
+}
+
+func (s ClickhouseRepo) GetLastFullExchangeInfoHash(ctx context.Context) uint64 {
+	var resp proto.ColStr
+	var hash uint64
+	s.clientH.mut.Lock()
+	if err := s.clientH.client.Do(ctx, ch.Query{
+		Body: fmt.Sprintf("SELECT %s from %s.%s ORDER BY %s LIMIT 1",
+			HashCol, s.cfg.DatabaseName, s.cfg.ExchangeInfoTable, TimestampCol),
+		Result: proto.Results{
+			{Name: HashCol, Data: &resp},
+		},
+		OnResult: func(ctx context.Context, block proto.Block) error {
+			if block.Rows != 0 {
+				var err error
+				hash, err = strconv.ParseUint(resp.First(), 10, 64)
+				if err != nil {
+					s.logger.Warn(err.Error())
+				}
+			}
+			return nil
+		},
+	}); err != nil {
+		s.logger.Error(err.Error())
+	}
+	s.clientH.mut.Unlock()
+	if hash == 0 {
+		s.logger.Warn("empty get latest exchange info hash response")
+	}
+	return hash
 }
 
 func (s ClickhouseRepo) GetLastFullExchangeInfo(ctx context.Context) *bmodel.ExchangeInfo {
