@@ -12,7 +12,6 @@ import (
 	"github.com/ClickHouse/ch-go/proto"
 	"go.uber.org/zap"
 	"hash/fnv"
-	"strconv"
 	"sync"
 	"time"
 )
@@ -247,7 +246,7 @@ func (s ClickhouseRepo) SendFullExchangeInfoIfNeed(ctx context.Context, exInfo *
 }
 
 func (s ClickhouseRepo) GetLastFullExchangeInfoHash(ctx context.Context) uint64 {
-	var resp proto.ColStr
+	var resp proto.ColUInt64
 	var hash uint64
 	s.clientH.mut.Lock()
 	if err := s.clientH.client.Do(ctx, ch.Query{
@@ -258,11 +257,7 @@ func (s ClickhouseRepo) GetLastFullExchangeInfoHash(ctx context.Context) uint64 
 		},
 		OnResult: func(ctx context.Context, block proto.Block) error {
 			if block.Rows != 0 {
-				var err error
-				hash, err = strconv.ParseUint(resp.First(), 10, 64)
-				if err != nil {
-					s.logger.Warn(err.Error())
-				}
+				hash = resp.Row(0)
 			}
 			return nil
 		},
