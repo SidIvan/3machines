@@ -33,15 +33,15 @@ type ClickhouseRepo struct {
 }
 
 func (s ClickhouseRepo) Reconnect(ctx context.Context) {
-	//s.clientH.mut.Lock()
-	//defer s.clientH.mut.Unlock()
-	//if client, err := ch.Dial(ctx, ch.Options{
-	//	Address: s.cfg.URI.GetAddress(),
-	//}); err != nil {
-	//	s.logger.Error(err.Error())
-	//} else {
-	//	s.clientH.client = client
-	//}
+	s.clientH.mut.Lock()
+	defer s.clientH.mut.Unlock()
+	if client, err := ch.Dial(ctx, ch.Options{
+		Address: s.cfg.URI.GetAddress(),
+	}); err != nil {
+		s.logger.Error(err.Error())
+	} else {
+		s.clientH.client = client
+	}
 }
 
 func NewClickhouseRepo(cfg *conf.GlobalRepoConfig) *ClickhouseRepo {
@@ -142,7 +142,6 @@ func (s ClickhouseRepo) SendDeltas(ctx context.Context, deltas []model.Delta) bo
 		s.logger.Error(err.Error())
 		return false
 	}
-	s.clientH.client.Close()
 	return true
 }
 
