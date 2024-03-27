@@ -40,6 +40,14 @@ func (s ClickhouseRepo) Reconnect(ctx context.Context) {
 	}); err != nil {
 		s.logger.Error(err.Error())
 	} else {
+		for i := 0; i < 3; i++ {
+			err = s.clientH.client.Close()
+			if err != nil {
+				s.logger.Error(err.Error())
+			} else {
+				break
+			}
+		}
 		s.clientH.client = client
 	}
 }
