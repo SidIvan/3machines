@@ -118,7 +118,7 @@ func (s ClickhouseRepo) SendBookTicks(ctx context.Context, ticks []bmodel.Symbol
 	}
 	input := prepareBookTickerInsertBlock(ticks)
 	err := s.clientH.Do(ctx, ch.Query{
-		Body:  fmt.Sprintf("INSERT INTO %s.%s VALUES", s.cfg.DatabaseName, s.cfg.DeltaTable),
+		Body:  fmt.Sprintf("INSERT INTO %s.%s VALUES", s.cfg.DatabaseName, s.cfg.BookTickerTable),
 		Input: input,
 	})
 	if err != nil {
