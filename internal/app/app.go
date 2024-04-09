@@ -1,6 +1,7 @@
 package app
 
 import (
+	"DeltaReceiver/internal/cache"
 	"DeltaReceiver/internal/conf"
 	"DeltaReceiver/internal/metrics"
 	"DeltaReceiver/internal/repo"
@@ -10,15 +11,21 @@ import (
 	"context"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.uber.org/zap"
-	"math"
 	"net/http"
 	"time"
 )
 
 type App struct {
-	logger      *zap.Logger
-	deltaRecSvc *svc.DeltaReceiverSvc
-	cfg         *conf.AppConfig
+	logger        *zap.Logger
+	deltaRecSvc   *svc.DeltaReceiverSvc
+	snapshotSvc   *svc.SnapshotSvc
+	exInfoSvc     *svc.ExchangeInfoSvc
+	bookTickerSvc *svc.BookTickerSvc
+	globalRepo    svc.GlobalRepo
+	localRepo     svc.LocalRepo
+	exInfoCache   *cache.ExchangeInfoCache
+	binanceClient svc.BinanceClient
+	cfg           *conf.AppConfig
 }
 
 func NewApp(cfg *conf.AppConfig) *App {
@@ -27,39 +34,44 @@ func NewApp(cfg *conf.AppConfig) *App {
 	localRepo := repo.NewLocalMongoRepo(cfg.LocalRepoCfg)
 	binanceClient := web.NewBinanceClient(cfg.BinanceHttpConfig)
 	metricsHolder := metrics.NewMetrics(cfg)
-	var deltaReceivers []svc.DeltaReceiver
-	for pair, period := range cfg.BinanceHttpConfig.Pair2Period {
-		deltaReceivers = append(deltaReceivers, web.NewDeltaReceiverWs(cfg.BinanceHttpConfig, pair, period, cfg.ReconnectPeriodM))
-	}
-	validateSnapshotScheduling(cfg)
-	exInfo := globalRepo.GetLastFullExchangeInfo(context.Background())
-	if exInfo.Timezone == "" {
-		var err error
-		exInfo, err = binanceClient.GetFullExchangeInfo(context.Background())
-		if err != nil {
-			logger.Error(err.Error())
-		}
-		globalRepo.SendFullExchangeInfoIfNeed(context.Background(), exInfo)
-	}
-	deltaRecSvc := svc.NewDeltaReceiverSvc(cfg, binanceClient, deltaReceivers, localRepo, globalRepo, metricsHolder, exInfo)
+	exInfoCache := cache.NewExchangeInfoCache()
+	deltaRecSvc := svc.NewDeltaReceiverSvc(cfg, binanceClient, localRepo, globalRepo, metricsHolder, exInfoCache)
+	snapshotSvc := svc.NewSnapshotSvc(cfg, binanceClient, localRepo, globalRepo, metricsHolder, exInfoCache)
+	exInfoSvc := svc.NewExchangeInfoSvc(cfg, binanceClient, localRepo, globalRepo, metricsHolder, exInfoCache)
+	bookTickerSvc := svc.NewBookerTickSvc(cfg, binanceClient, localRepo, globalRepo, metricsHolder)
 	return &App{
-		logger:      logger,
-		deltaRecSvc: deltaRecSvc,
-		cfg:         cfg,
-	}
-}
-
-func validateSnapshotScheduling(cfg *conf.AppConfig) {
-	numSnapsPerDay := 0.
-	for _, period := range cfg.BinanceHttpConfig.SnapshotPeriod {
-		numSnapsPerDay += math.Ceil(1440. / float64(period))
-	}
-	if numSnapsPerDay > 20 {
-		panic("large amount of get full snapshot requests")
+		logger:        logger,
+		deltaRecSvc:   deltaRecSvc,
+		snapshotSvc:   snapshotSvc,
+		exInfoSvc:     exInfoSvc,
+		bookTickerSvc: bookTickerSvc,
+		globalRepo:    globalRepo,
+		localRepo:     localRepo,
+		exInfoCache:   exInfoCache,
+		binanceClient: binanceClient,
+		cfg:           cfg,
 	}
 }
 
 func (s *App) Start() {
+	baseContext := context.Background()
+	if err := s.globalRepo.Connect(baseContext); err != nil {
+		panic(err)
+	}
+	if err := s.localRepo.Connect(baseContext); err != nil {
+		panic(err)
+	}
+	exInfo := s.globalRepo.GetLastFullExchangeInfo(context.Background())
+	if exInfo.Timezone == "" {
+		var err error
+		exInfo, err = s.binanceClient.GetFullExchangeInfo(context.Background())
+		if err != nil {
+			panic(err)
+		}
+		if err = s.globalRepo.SendFullExchangeInfo(baseContext, exInfo); err != nil {
+			panic(err)
+		}
+	}
 	go func() {
 		http.Handle("/metrics", promhttp.Handler())
 		err := http.ListenAndServe(":9001", nil)
@@ -67,17 +79,19 @@ func (s *App) Start() {
 			panic(err)
 		}
 	}()
-	go s.deltaRecSvc.ReceiveDeltasPairs()
-	for pair, period := range s.cfg.BinanceHttpConfig.SnapshotPeriod {
-		go s.deltaRecSvc.CronGetAndStoreFullSnapshot(pair, period)
-	}
-	go s.deltaRecSvc.CronExchangeInfoUpdatesStoring()
+	ctx := context.Background()
+	go s.deltaRecSvc.ReceiveDeltasPairs(ctx)
+	go s.snapshotSvc.StartReceiveAndSaveSnapshots(ctx)
+	go s.exInfoSvc.StartReceiveExInfo(ctx)
 	time.Sleep(1 * time.Second)
 	s.logger.Info("App started")
 }
 
 func (s *App) Stop(ctx context.Context) {
 	s.logger.Info("Begin of graceful shutdown")
-	s.deltaRecSvc.Shutdown(ctx)
+	go s.deltaRecSvc.Shutdown(ctx)
+	go s.snapshotSvc.Shutdown(ctx)
+	go s.exInfoSvc.Shutdown(ctx)
+	go s.bookTickerSvc.Shutdown(ctx)
 	s.logger.Info("End of graceful shutdown")
 }

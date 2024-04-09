@@ -11,7 +11,6 @@ import (
 	"github.com/ClickHouse/ch-go"
 	"github.com/ClickHouse/ch-go/proto"
 	"go.uber.org/zap"
-	"hash/fnv"
 	"sync"
 	"time"
 )
@@ -32,13 +31,14 @@ type ClickhouseRepo struct {
 	cfg     *conf.GlobalRepoConfig
 }
 
-func (s ClickhouseRepo) Reconnect(ctx context.Context) {
+func (s ClickhouseRepo) Reconnect(ctx context.Context) error {
 	s.clientH.mut.Lock()
 	defer s.clientH.mut.Unlock()
 	if client, err := ch.Dial(ctx, ch.Options{
 		Address: s.cfg.URI.GetAddress(),
 	}); err != nil {
 		s.logger.Error(err.Error())
+		return err
 	} else {
 		for i := 0; i < 3; i++ {
 			err = s.clientH.client.Close()
@@ -49,28 +49,78 @@ func (s ClickhouseRepo) Reconnect(ctx context.Context) {
 			}
 		}
 		s.clientH.client = client
+		return err
 	}
 }
 
 func NewClickhouseRepo(cfg *conf.GlobalRepoConfig) *ClickhouseRepo {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(cfg.TimeoutS)*time.Second)
-	defer cancel()
 	logger := log.GetLogger("ClickhouseRepo")
-	client, err := ch.Dial(ctx, ch.Options{
-		Address: cfg.URI.GetAddress(),
-	})
-	if err != nil {
-		logger.Error(err.Error())
-		return nil
-	}
 	return &ClickhouseRepo{
 		logger: logger,
 		clientH: &chClientHolder{
-			client: client,
-			mut:    sync.Mutex{},
+			mut: sync.Mutex{},
 		},
 		cfg: cfg,
 	}
+}
+
+func (s ClickhouseRepo) Connect(ctx context.Context) error {
+	client, err := ch.Dial(ctx, ch.Options{
+		Address: s.cfg.URI.GetAddress(),
+	})
+	if err != nil {
+		s.logger.Error(err.Error())
+		return err
+	}
+	s.clientH = &chClientHolder{
+		client: client,
+		mut:    sync.Mutex{},
+	}
+	return nil
+}
+
+func prepareBookTickerInsertBlock(ticks []bmodel.SymbolTick) proto.Input {
+	timestampCol := new(proto.ColDateTime64).WithPrecision(3)
+	var symbolCol proto.ColStr
+	var bidPriceCol proto.ColStr
+	var bidQuantityCol proto.ColStr
+	var askPriceCol proto.ColStr
+	var askQuantityCol proto.ColStr
+	cutTime := time.Now()
+	for _, tick := range ticks {
+		timestampCol.Append(cutTime)
+		symbolCol.Append(tick.Symbol)
+		bidPriceCol.Append(tick.BidPrice)
+		bidQuantityCol.Append(tick.BidQuantity)
+		askPriceCol.Append(tick.AskPrice)
+		askQuantityCol.Append(tick.AskQuantity)
+	}
+	return proto.Input{
+		{Name: TimestampCol, Data: timestampCol},
+		{Name: "bid_price", Data: &bidPriceCol},
+		{Name: "bid_quantity", Data: &bidQuantityCol},
+		{Name: "ask_price", Data: &askPriceCol},
+		{Name: "ask_quantity", Data: &askQuantityCol},
+		{Name: SymbolCol, Data: &symbolCol},
+	}
+}
+
+func (s ClickhouseRepo) SendBookTicks(ctx context.Context, ticks []bmodel.SymbolTick) error {
+	if len(ticks) == 0 {
+		s.logger.Warn("empty ticks slice")
+		return nil
+	}
+	input := prepareBookTickerInsertBlock(ticks)
+	s.clientH.mut.Lock()
+	err := s.clientH.client.Do(ctx, ch.Query{
+		Body:  fmt.Sprintf("INSERT INTO %s.%s VALUES", s.cfg.DatabaseName, s.cfg.DeltaTable),
+		Input: input,
+	})
+	s.clientH.mut.Unlock()
+	if err != nil {
+		return fmt.Errorf("error while sending deltas %w", err)
+	}
+	return nil
 }
 
 func prepareDeltasInsertBlock(deltas []model.Delta) proto.Input {
@@ -111,7 +161,7 @@ func prepareFullSnapshotInsertBlock(snapshotParts []model.DepthSnapshotPart) pro
 	var typeCol proto.ColEnum
 	var priceCol proto.ColStr
 	var countCol proto.ColStr
-	var symbCol proto.ColEnum
+	var symbCol proto.ColStr
 	for _, part := range snapshotParts {
 		timestampCol.Append(time.UnixMilli(part.Timestamp))
 		if part.T {
@@ -122,7 +172,7 @@ func prepareFullSnapshotInsertBlock(snapshotParts []model.DepthSnapshotPart) pro
 		priceCol.Append(part.Price)
 		countCol.Append(part.Count)
 		updateIdCol.Append(part.LastUpdateId)
-		symbCol.Append(string(part.Symbol))
+		symbCol.Append(part.Symbol)
 	}
 	return proto.Input{
 		{Name: TimestampCol, Data: timestampCol},
@@ -134,10 +184,10 @@ func prepareFullSnapshotInsertBlock(snapshotParts []model.DepthSnapshotPart) pro
 	}
 }
 
-func (s ClickhouseRepo) SendDeltas(ctx context.Context, deltas []model.Delta) bool {
+func (s ClickhouseRepo) SendDeltas(ctx context.Context, deltas []model.Delta) error {
 	if len(deltas) == 0 {
 		s.logger.Warn("empty deltas batch")
-		return true
+		return nil
 	}
 	input := prepareDeltasInsertBlock(deltas)
 	s.clientH.mut.Lock()
@@ -147,15 +197,14 @@ func (s ClickhouseRepo) SendDeltas(ctx context.Context, deltas []model.Delta) bo
 	})
 	s.clientH.mut.Unlock()
 	if err != nil {
-		s.logger.Error(err.Error())
-		return false
+		return fmt.Errorf("error while sending deltas %w", err)
 	}
-	return true
+	return nil
 }
 
-func (s ClickhouseRepo) SendSnapshot(ctx context.Context, snapshot []model.DepthSnapshotPart) bool {
+func (s ClickhouseRepo) SendSnapshot(ctx context.Context, snapshot []model.DepthSnapshotPart) error {
 	if len(snapshot) == 0 {
-		return true
+		return nil
 	}
 	input := prepareFullSnapshotInsertBlock(snapshot)
 	s.clientH.mut.Lock()
@@ -165,10 +214,9 @@ func (s ClickhouseRepo) SendSnapshot(ctx context.Context, snapshot []model.Depth
 	})
 	s.clientH.mut.Unlock()
 	if err != nil {
-		s.logger.Error(err.Error())
-		return false
+		return fmt.Errorf("error while sending snapshot %w", err)
 	}
-	return true
+	return nil
 }
 
 func (s ClickhouseRepo) GetLastSavedTimestamp(ctx context.Context, symb model.Symbol) time.Time {
@@ -199,17 +247,6 @@ const (
 	HashCol         = "hash"
 )
 
-func exInfoHash(exInfo *bmodel.ExchangeInfo) uint64 {
-	payload, _ := json.Marshal(exInfo)
-	return exInfoStringHash(string(payload))
-}
-
-func exInfoStringHash(s string) uint64 {
-	h := fnv.New64()
-	_, _ = h.Write([]byte(s))
-	return h.Sum64()
-}
-
 func (s ClickhouseRepo) prepareExchangeInfoInsertBlock(exInfo *bmodel.ExchangeInfo) proto.Input {
 	timestampCol := new(proto.ColDateTime64).WithPrecision(3)
 	var exCol proto.ColStr
@@ -221,7 +258,7 @@ func (s ClickhouseRepo) prepareExchangeInfoInsertBlock(exInfo *bmodel.ExchangeIn
 		return nil
 	}
 	exCol.Append(string(payload))
-	hashCol.Append(exInfoStringHash(string(payload)))
+	hashCol.Append(exInfo.ExInfoHash())
 	return proto.Input{
 		{Name: TimestampCol, Data: timestampCol},
 		{Name: ExchangeInfoCol, Data: &exCol},
@@ -229,17 +266,14 @@ func (s ClickhouseRepo) prepareExchangeInfoInsertBlock(exInfo *bmodel.ExchangeIn
 	}
 }
 
-func (s ClickhouseRepo) SendFullExchangeInfoIfNeed(ctx context.Context, exInfo *bmodel.ExchangeInfo) bool {
-	curHash := exInfoHash(exInfo)
+func (s ClickhouseRepo) SendFullExchangeInfo(ctx context.Context, exInfo *bmodel.ExchangeInfo) error {
+	curHash := exInfo.ExInfoHash()
 	lastHash := s.GetLastFullExchangeInfoHash(ctx)
 	if curHash == lastHash {
 		s.logger.Info("Exchange info has not updated")
-		return true
+		return nil
 	}
 	input := s.prepareExchangeInfoInsertBlock(exInfo)
-	if input == nil {
-		return false
-	}
 	s.clientH.mut.Lock()
 	err := s.clientH.client.Do(ctx, ch.Query{
 		Body:  fmt.Sprintf("INSERT INTO %s.%s VALUES", s.cfg.DatabaseName, s.cfg.ExchangeInfoTable),
@@ -247,11 +281,10 @@ func (s ClickhouseRepo) SendFullExchangeInfoIfNeed(ctx context.Context, exInfo *
 	})
 	s.clientH.mut.Unlock()
 	if err != nil {
-		s.logger.Error(err.Error())
-		return false
+		return fmt.Errorf("error while sending exchange info %w", err)
 	}
 	s.logger.Info(fmt.Sprintf("successfully sended exchange info to Ch "))
-	return true
+	return nil
 }
 
 func (s ClickhouseRepo) GetLastFullExchangeInfoHash(ctx context.Context) uint64 {

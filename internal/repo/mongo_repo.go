@@ -3,10 +3,11 @@ package repo
 import (
 	appConf "DeltaReceiver/internal/conf"
 	"DeltaReceiver/internal/model"
+	bmodel "DeltaReceiver/pkg/binance/model"
 	"DeltaReceiver/pkg/log"
-	"DeltaReceiver/pkg/mongo"
 	"context"
-	"go.mongodb.org/mongo-driver/bson"
+	"fmt"
+	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.uber.org/zap"
 	"time"
@@ -16,56 +17,82 @@ type LocalMongoRepo struct {
 	logger             *zap.Logger
 	BinanceDeltasCol   *mongo.Collection
 	BinanceSnapshotCol *mongo.Collection
+	ExInfoCol          *mongo.Collection
+	BookTickerCol      *mongo.Collection
 	cfg                *appConf.LocalRepoConfig
+	timeoutS           time.Duration
 }
 
 func NewLocalMongoRepo(cfg *appConf.LocalRepoConfig) *LocalMongoRepo {
 	logger := log.GetLogger("LocalMongoRepo")
-	repo := &LocalMongoRepo{
-		logger: logger,
-		cfg:    cfg,
+	return &LocalMongoRepo{
+		logger:   logger,
+		cfg:      cfg,
+		timeoutS: time.Duration(cfg.MongoConfig.TimeoutS) * time.Second,
 	}
-	repoRes := repo.initCollections(context.Background())
-	repo = &repoRes
-	return repo
 }
 
-func (s LocalMongoRepo) initCollections(ctx context.Context) LocalMongoRepo {
-	if db, ok := mongo.ConnectMongo(s.logger, s.cfg.MongoConfig); ok {
-		s.BinanceDeltasCol = mongo.NewMongoCollection(s.logger, s.cfg.MongoConfig, db.Collection(s.cfg.DeltaColName))
-		s.BinanceSnapshotCol = mongo.NewMongoCollection(s.logger, s.cfg.MongoConfig, db.Collection(s.cfg.SnapshotColName))
+func (s LocalMongoRepo) Connect(ctx context.Context) error {
+	s.logger.Debug("start connection to mongo")
+	ctx, cancel := context.WithTimeout(ctx, time.Duration(s.cfg.MongoConfig.TimeoutS)*time.Second)
+	defer cancel()
+	client, err := mongo.Connect(ctx, options.Client().ApplyURI(s.cfg.MongoConfig.URI.GetBaseUri()))
+	if err != nil {
+		return fmt.Errorf("error while connecting to mongo %w", err)
 	}
-	return s
+	ctx, cancel = context.WithTimeout(context.Background(), time.Duration(s.cfg.MongoConfig.TimeoutS)*time.Second)
+	defer cancel()
+	err = client.Ping(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("error while pinging to mongo %w", err)
+	}
+	s.logger.Debug("successfully connected to mongo")
+	db := client.Database(s.cfg.MongoConfig.DatabaseName)
+	s.BinanceSnapshotCol = db.Collection(s.cfg.SnapshotColName)
+	s.BinanceDeltasCol = db.Collection(s.cfg.DeltaColName)
+	s.ExInfoCol = db.Collection(s.cfg.ExInfoColName)
+	s.BookTickerCol = db.Collection(s.cfg.BookTickerColName)
+	return nil
 }
 
 func (s LocalMongoRepo) Reconnect(ctx context.Context) {
 	s.logger.Debug("reconnecting to mongo")
-	s.initCollections(ctx)
+	s.BookTickerCol.Database().Client().Disconnect(ctx)
+	if err := s.Connect(ctx); err != nil {
+		s.logger.Error(err.Error())
+		return
+	}
 	s.logger.Debug("successfully reconnected to mongo")
 }
 
-func (s LocalMongoRepo) SaveDeltas(ctx context.Context, deltas []model.Delta) bool {
-	for _, delta := range deltas {
-		if _, ok := s.BinanceDeltasCol.InsertDocument(delta); !ok {
-			return false
-		}
+func (s LocalMongoRepo) SaveDeltas(ctx context.Context, deltas []model.Delta) error {
+	_, err := s.BinanceDeltasCol.InsertMany(ctx, []interface{}{deltas})
+	if err != nil {
+		err = fmt.Errorf("error while inserting deltas %w", err)
 	}
-	return true
+	return err
 }
 
-func (s LocalMongoRepo) SaveSnapshot(ctx context.Context, snapshot []model.DepthSnapshotPart) bool {
-	for _, snapshotPart := range snapshot {
-		if _, ok := s.BinanceSnapshotCol.InsertDocument(snapshotPart); !ok {
-			return false
-		}
+func (s LocalMongoRepo) SaveSnapshot(ctx context.Context, snapshot []model.DepthSnapshotPart) error {
+	_, err := s.BinanceSnapshotCol.InsertMany(ctx, []interface{}{snapshot})
+	if err != nil {
+		err = fmt.Errorf("error while inserting snapshot %w", err)
 	}
-	return true
+	return err
 }
 
-func (s LocalMongoRepo) GetLastSavedTimestamp(ctx context.Context, symb model.Symbol) time.Time {
-	delta := s.BinanceDeltasCol.GetAllWithFilterAndOptionsAndContext(ctx, bson.D{{"symb", symb}}, options.Find().SetSort(bson.D{{"timestamp", -1}}))
-	if len(delta) == 0 {
-		return time.Unix(0, 0)
+func (s LocalMongoRepo) SaveExchangeInfo(ctx context.Context, exInfo *bmodel.ExchangeInfo) error {
+	_, err := s.ExInfoCol.InsertOne(ctx, exInfo)
+	if err != nil {
+		err = fmt.Errorf("error while inserting exchange info %w", err)
 	}
-	return time.UnixMilli(delta[0].(model.Delta).Timestamp)
+	return err
+}
+
+func (s LocalMongoRepo) SaveBookTicker(ctx context.Context, ticks []bmodel.SymbolTick) error {
+	_, err := s.ExInfoCol.InsertMany(ctx, []interface{}{ticks})
+	if err != nil {
+		err = fmt.Errorf("error while inserting exchange info %w", err)
+	}
+	return err
 }

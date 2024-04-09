@@ -1,6 +1,7 @@
 package web
 
 import (
+	"DeltaReceiver/internal/cache"
 	"DeltaReceiver/internal/model"
 	"DeltaReceiver/pkg/binance"
 	bmodel "DeltaReceiver/pkg/binance/model"
@@ -12,8 +13,9 @@ import (
 )
 
 type BinanceClient struct {
-	logger *zap.Logger
-	client *binance.BinanceHttpClient
+	logger      *zap.Logger
+	client      *binance.BinanceHttpClient
+	exInfoCache *cache.ExchangeInfoCache
 }
 
 func NewBinanceClient(cfg *binance.BinanceHttpClientConfig) *BinanceClient {
@@ -23,24 +25,37 @@ func NewBinanceClient(cfg *binance.BinanceHttpClientConfig) *BinanceClient {
 	}
 }
 
-func (s BinanceClient) GetFullSnapshot(ctx context.Context, pair string, depth int) ([]model.DepthSnapshotPart, error) {
-	s.logger.Info(fmt.Sprintf("get full shapshot [%s]", pair))
-	snapshot, err := s.client.GetFullSnapshot(ctx, bmodel.Symbol(pair), depth)
+func (s BinanceClient) GetFullSnapshot(ctx context.Context, symbol string, depth int) ([]model.DepthSnapshotPart, string, error) {
+	s.logger.Info(fmt.Sprintf("get full shapshot [%s]", symbol))
+	snapshot, curLimit, err := s.client.GetFullSnapshot(ctx, symbol, depth, s.exInfoCache.GetVal().GetSuffixOfLimitHeader())
 	if err != nil {
 		s.logger.Error(err.Error())
-		return nil, err
+		return nil, curLimit, err
 	}
 	timestamp := time.Now().UnixMilli()
 	var snapshotParts []model.DepthSnapshotPart
 	for _, bid := range snapshot.Bids {
-		snapshotParts = append(snapshotParts, model.NewDepthSnapshotPart(snapshot.LastUpdateId, true, bid[0], bid[1], model.SymbolFromString(pair), timestamp))
+		snapshotParts = append(snapshotParts, model.NewDepthSnapshotPart(snapshot.LastUpdateId, true, bid[0], bid[1], symbol, timestamp))
 	}
 	for _, ask := range snapshot.Asks {
-		snapshotParts = append(snapshotParts, model.NewDepthSnapshotPart(snapshot.LastUpdateId, false, ask[0], ask[1], model.SymbolFromString(pair), timestamp))
+		snapshotParts = append(snapshotParts, model.NewDepthSnapshotPart(snapshot.LastUpdateId, false, ask[0], ask[1], symbol, timestamp))
 	}
-	return snapshotParts, nil
+	return snapshotParts, curLimit, nil
 }
 
 func (s BinanceClient) GetFullExchangeInfo(ctx context.Context) (*bmodel.ExchangeInfo, error) {
-	return s.client.GetFullExchangeInfo(ctx)
+	exInfo, err := s.client.GetFullExchangeInfo(ctx)
+	if err != nil {
+		s.exInfoCache.SetVal(exInfo)
+	}
+	return exInfo, err
+}
+
+func (s BinanceClient) GetBookTicks(ctx context.Context) ([]bmodel.SymbolTick, error) {
+	s.logger.Info("get full book ticker")
+	ticks, err := s.client.GetBookTicker(ctx)
+	if err == nil {
+		s.logger.Info("successfully got book ticker")
+	}
+	return ticks, err
 }

@@ -7,10 +7,10 @@ type Delta struct {
 	UpdateId      int64  `json:"updateId" bson:"updateId"`
 	FirstUpdateId int64  `json:"firstUpdateId" bson:"firstUpdateId"`
 	T             bool   `json:"type" bson:"type"`
-	Symbol        Symbol `json:"symbol" bson:"symbol"`
+	Symbol        string `json:"symbol" bson:"symbol"`
 }
 
-func NewDelta(timestamp int64, price, count string, updateId, firstUpdateId int64, t bool, symbol Symbol) Delta {
+func NewDelta(timestamp int64, price, count string, updateId, firstUpdateId int64, t bool, symbol string) Delta {
 	return Delta{
 		Timestamp:     timestamp,
 		Price:         price,

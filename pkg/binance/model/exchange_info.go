@@ -2,7 +2,11 @@ package model
 
 import (
 	"encoding/json"
+	"fmt"
+	"hash/fnv"
 	"reflect"
+	"strings"
+	"time"
 )
 
 type ExchangeInfo struct {
@@ -40,6 +44,52 @@ type RateLimitInfo struct {
 	Interval    string `json:"interval"`
 	IntervalNum int    `json:"intervalNum"`
 	Limit       int    `json:"limit"`
+}
+
+func ExInfoStringHash(s string) uint64 {
+	h := fnv.New64()
+	_, _ = h.Write([]byte(s))
+	return h.Sum64()
+}
+
+func (s *ExchangeInfo) ExInfoHash() uint64 {
+	payload, _ := json.Marshal(s)
+	return ExInfoStringHash(string(payload))
+}
+
+func (s *ExchangeInfo) GetRequestWeightLimitDuration() time.Duration {
+	for _, rateLimit := range s.RateLimits {
+		if rateLimit.Type == "REQUEST_WEIGHT" {
+			if rateLimit.Interval == "SECOND" {
+				return time.Duration(rateLimit.IntervalNum) * time.Second
+			} else if rateLimit.Interval == "MINUTE" {
+				return time.Duration(rateLimit.IntervalNum) * time.Minute
+			} else if rateLimit.Interval == "HOUR" {
+				return time.Duration(rateLimit.IntervalNum) * time.Hour
+			} else if rateLimit.Interval == "DAY" {
+				return time.Duration(rateLimit.IntervalNum) * 24 * time.Hour
+			}
+		}
+	}
+	return 0
+}
+
+func (s *ExchangeInfo) GetRequestWeightLimit() int {
+	for _, rateLimit := range s.RateLimits {
+		if rateLimit.Type == "REQUEST_WEIGHT" {
+			return rateLimit.Limit
+		}
+	}
+	return 0
+}
+
+func (s *ExchangeInfo) GetSuffixOfLimitHeader() string {
+	for _, rateLimit := range s.RateLimits {
+		if rateLimit.Type == "REQUEST_WEIGHT" {
+			return strings.ToLower(fmt.Sprintf("%d%c", rateLimit.IntervalNum, rateLimit.Interval[0]))
+		}
+	}
+	return ""
 }
 
 func EqualsExchangeInfos(info1 *ExchangeInfo, info2 *ExchangeInfo) bool {

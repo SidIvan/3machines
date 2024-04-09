@@ -1,0 +1,108 @@
+package svc
+
+import (
+	"DeltaReceiver/internal/cache"
+	"DeltaReceiver/internal/conf"
+	bmodel "DeltaReceiver/pkg/binance/model"
+	"DeltaReceiver/pkg/log"
+	"context"
+	"encoding/json"
+	"fmt"
+	"go.uber.org/zap"
+	"os"
+	"strconv"
+	"sync/atomic"
+	"time"
+)
+
+type ExchangeInfoSvc struct {
+	logger        *zap.Logger
+	binanceClient BinanceClient
+	localRepo     LocalRepo
+	globalRepo    GlobalRepo
+	metricsHolder MetricsHolder
+	cfg           *conf.AppConfig
+	shutdown      *atomic.Bool
+	exInfoCache   *cache.ExchangeInfoCache
+}
+
+func NewExchangeInfoSvc(config *conf.AppConfig, binanceClient BinanceClient, localRepo LocalRepo, globalRepo GlobalRepo, metricsHolder MetricsHolder, infoCache *cache.ExchangeInfoCache) *ExchangeInfoSvc {
+	var shutdown atomic.Bool
+	shutdown.Store(false)
+	return &ExchangeInfoSvc{
+		logger:        log.GetLogger("ExchangeInfoSvc"),
+		binanceClient: binanceClient,
+		metricsHolder: metricsHolder,
+		localRepo:     localRepo,
+		globalRepo:    globalRepo,
+		cfg:           config,
+		shutdown:      &shutdown,
+		exInfoCache:   infoCache,
+	}
+}
+
+func (s *ExchangeInfoSvc) StartReceiveExInfo(ctx context.Context) {
+	for {
+		if s.shutdown.Load() {
+			return
+		}
+		time.Sleep(time.Duration(s.cfg.ExchangeInfoUpdPerM) * time.Minute)
+		ctxWithTimeout, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+		exInfo, err := s.binanceClient.GetFullExchangeInfo(ctxWithTimeout)
+		s.logger.Info(fmt.Sprintf("got exchange info with hash %d", exInfo.ExInfoHash()))
+		cancel()
+		if err != nil {
+			s.logger.Error(err.Error())
+		} else if !bmodel.EqualsExchangeInfos(s.exInfoCache.GetVal(), exInfo) {
+			s.logger.Info("exchange info changed, attempt to send")
+			if err = s.SaveExchangeInfo(ctx, exInfo); err != nil {
+				s.logger.Error(err.Error())
+			}
+		} else {
+			s.logger.Info("exchange info did not change")
+		}
+	}
+}
+
+func (s *ExchangeInfoSvc) SaveExchangeInfo(ctx context.Context, exInfo *bmodel.ExchangeInfo) error {
+	s.logger.Info("sending exchange info")
+	for i := 0; i < 3; i++ {
+		if err := s.globalRepo.SendFullExchangeInfo(ctx, exInfo); err == nil {
+			s.logger.Info("successfully sended to Ch")
+			return nil
+		} else {
+			s.logger.Warn("failed send to Ch, retry")
+			s.globalRepo.Reconnect(ctx)
+		}
+	}
+	s.logger.Warn("failed send to Ch, try save to mongo")
+	for i := 0; i < 3; i++ {
+		if err := s.localRepo.SaveExchangeInfo(ctx, exInfo); err == nil {
+			s.logger.Info("successfully saved to mongo")
+			return nil
+		}
+		s.logger.Warn("failed save to mongo, retry")
+	}
+	s.logger.Warn("failed save to mongo, attempting save to file")
+	// УСЁ ПРОПАЛО
+	return s.saveExchangeInfoToFile(exInfo)
+}
+
+func (s *ExchangeInfoSvc) saveExchangeInfoToFile(ticks *bmodel.ExchangeInfo) error {
+	file, err := os.Create("exchange_info" + strconv.FormatInt(time.Now().UnixMilli(), 10))
+	if err != nil {
+		s.logger.Error(err.Error())
+		return err
+	}
+	data, _ := json.Marshal(ticks)
+	if _, err = file.Write(data); err != nil {
+		s.logger.Error(err.Error())
+		return err
+	}
+	file.Close()
+	return nil
+}
+
+func (s *ExchangeInfoSvc) Shutdown(ctx context.Context) {
+	s.shutdown.Store(true)
+}

@@ -10,9 +10,8 @@ type ExchangeInfoCache struct {
 	mut sync.Mutex
 }
 
-func NewExchangeInfoCache(val *model.ExchangeInfo) *ExchangeInfoCache {
+func NewExchangeInfoCache() *ExchangeInfoCache {
 	return &ExchangeInfoCache{
-		val: val,
 		mut: sync.Mutex{},
 	}
 }

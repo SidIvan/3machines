@@ -14,6 +14,10 @@ local.repo.config:
     deltas
   snapshot.collection.name:
     snapshots
+  exchange.info.collection.name:
+    exchange_info
+  book.ticker.collection.name:
+    binance_order_books_tops
   mongo:
     timeout.sec:
       1
@@ -44,59 +48,6 @@ binance.client:
       api.binance.com
     port:
       443
-  delta.pairs:
-    btcusdt: 100
-    btcfdusd: 100
-    jupusdt: 100
-    1000satsusdt: 100
-    solusdt: 100
-    ethfdusd: 100
-    seiusdt: 100
-    avaxusdt: 100
-    tiausdt: 100
-    runeusdt: 100
-    fttusdt: 100
-    rndrusdt: 100
-    fdusdusdt: 100
-    usdcusdt: 100
-    xmrbtc: 100
-    trxtry: 100
-    arkmusdt: 100
-    pepetry: 100
-    bondusdt: 100
-    dcrusdt: 100
-    linketh: 100
-    raretry: 100
-    belusdt: 100
-    balusdt: 100
-    btcpln: 100
-    mantabnb: 100
-    dexeusdt: 100
-    scrtusdt: 100
-    chzbtc: 100
-    lptbnb: 100
-    lokabtc: 100
-    chessbtc: 100
-    bnbupusdt: 100
-    grteur: 100
-  snapshot.periods:
-    BTCUSDT: 1440
-    BTCFDUSD: 1440
-    JUPUSDT: 1440
-    1000SATSUSDT: 1440
-    SOLUSDT: 1440
-    ETHFDUSD: 1440
-    SEIUSDT: 1440
-    AVAXUSDT: 1440
-    TIAUSDT: 1440
-    RUNEUSDT: 1440
-    FTTUSDT: 1440
-    RNDRUSDT: 1440
-    FDUSDUSDT: 1440
-    USDCUSDT: 1440
-    XMRBTC: 1440
-    TRXTRY: 1440
-    ARKMUSDT: 1440
 
 global.repo.config:
   base.uri:
@@ -114,3 +65,5 @@ global.repo.config:
     binance_snapshots
   ex.info.table:
     exchange_info
+  book.ticker.table:
+    binance_order_books_tops

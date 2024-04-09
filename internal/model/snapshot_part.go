@@ -5,11 +5,11 @@ type DepthSnapshotPart struct {
 	T            bool   `json:"is_bid" bson:"is_bid"`
 	Price        string `json:"price" bson:"price"`
 	Count        string `json:"count" bson:"count"`
-	Symbol       Symbol `json:"symbol" bson:"symbol"`
+	Symbol       string `json:"symbol" bson:"symbol"`
 	Timestamp    int64  `json:"timestamp" bson:"timestamp"`
 }
 
-func NewDepthSnapshotPart(lastUpdateId int64, t bool, price, count string, symb Symbol, timestamp int64) DepthSnapshotPart {
+func NewDepthSnapshotPart(lastUpdateId int64, t bool, price, count string, symb string, timestamp int64) DepthSnapshotPart {
 	return DepthSnapshotPart{
 		LastUpdateId: lastUpdateId,
 		T:            t,

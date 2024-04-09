@@ -8,141 +8,110 @@ import (
 	"fmt"
 	"github.com/gorilla/websocket"
 	"go.uber.org/zap"
-	"math"
 	"net/http"
+	"strings"
 	"sync"
 	"sync/atomic"
 )
 
-type ReconMutex struct {
-	lastUpdId *atomic.Int64
-	ch        chan struct{}
-}
-
 type DeltaReceiveClient struct {
-	logger     *zap.Logger
-	baseUri    string
-	pair       string
-	period     int16
-	shutdown   *atomic.Bool
-	dialer     *websocket.Conn
-	dialerMut  *sync.Mutex
-	reconMutex *ReconMutex
+	logger    *zap.Logger
+	baseUri   string
+	symbols   []string
+	shutdown  *atomic.Bool
+	dialer    *websocket.Conn
+	dialerMut *sync.Mutex
 }
 
-func (s *DeltaReceiveClient) setDialer(dialer *websocket.Conn) {
-	_, msg, err := dialer.ReadMessage()
-	if err != nil {
-		s.logger.Error(err.Error())
-		return
-	}
-	var deltaMsg model.DeltaMessage
-	err = json.Unmarshal(msg, &deltaMsg)
-	if err != nil {
-		s.logger.Error(err.Error())
-		return
-	}
-	s.reconMutex.lastUpdId.Store(deltaMsg.UpdateId)
-	<-s.reconMutex.ch
-	s.dialerMut.Lock()
-	defer s.dialerMut.Unlock()
-	if s.dialer != nil {
-		err := s.dialer.Close()
-		if err != nil {
-			return
-		}
-	}
-	s.dialer = dialer
-}
-
-func NewDeltaReceiveClient(cfg *BinanceHttpClientConfig, pair string, period int16) *DeltaReceiveClient {
+func NewDeltaReceiveClient(cfg *BinanceHttpClientConfig, symbols []string) *DeltaReceiveClient {
 	var mut sync.Mutex
 	var shutdown atomic.Bool
-	var lastUpdId atomic.Int64
-	lastUpdId.Store(math.MaxInt64)
-	ch := make(chan struct{})
 	shutdown.Store(false)
 	client := DeltaReceiveClient{
-		logger:    log.GetLogger("DeltaReceiveClient [" + pair + "]"),
+		logger:    log.GetLogger("DeltaReceiveClient"),
 		baseUri:   cfg.DeltaStreamBaseUriConfig.GetBaseUri(),
-		period:    period,
-		pair:      pair,
+		symbols:   symbols,
 		dialerMut: &mut,
 		shutdown:  &shutdown,
-		reconMutex: &ReconMutex{
-			lastUpdId: &lastUpdId,
-			ch:        ch,
-		},
 	}
 	return &client
 }
 
-func (s *DeltaReceiveClient) Reconnect() error {
+func (s *DeltaReceiveClient) formWSUri() string {
+	return fmt.Sprintf("%sws/%s@depth@100ms", s.baseUri, strings.Join(s.symbols, "@depth@100ms/"))
+}
+
+func (s *DeltaReceiveClient) Connect(ctx context.Context) error {
+	s.dialerMut.Lock()
+	defer s.dialerMut.Unlock()
+	d := websocket.Dialer{
+		Proxy: http.ProxyFromEnvironment,
+	}
+	dialer, resp, err := d.Dial(s.formWSUri(), nil)
+	if resp.StatusCode == http.StatusTeapot {
+		return banBinanceRequests(resp, TeapotErr)
+	}
+	if resp.StatusCode == http.StatusTooManyRequests {
+		return banBinanceRequests(resp, WeightLimitExceededErr)
+	}
+	if err != nil {
+		s.logger.Error(err.Error())
+		return err
+	}
+	s.dialer = dialer
+	return nil
+}
+
+func (s *DeltaReceiveClient) Reconnect(ctx context.Context) error {
 	s.logger.Debug("start of reconnecting")
 	if s.shutdown.Load() {
 		s.logger.Warn("graceful shutdown processing")
 		return nil
 	}
-	if dialer, err := s.getDialer(); dialer != nil {
-		if s.shutdown.Load() {
-			s.logger.Warn("graceful shutdown processing")
-			return nil
+	for i := 0; i < 3; i++ {
+		if err := s.dialer.Close(); err != nil {
+			s.logger.Warn(fmt.Errorf("connection was not closed %w", err).Error())
+		} else {
+			break
 		}
-		s.setDialer(dialer)
-	} else {
+	}
+	if err := s.Connect(ctx); err != nil {
+		s.logger.Warn(fmt.Errorf("connection was not reset %w", err).Error())
 		return err
 	}
-	s.logger.Debug("successfully reconnected")
 	return nil
 }
 
-func (s *DeltaReceiveClient) getDialer() (*websocket.Conn, error) {
-	d := websocket.Dialer{
-		Proxy: http.ProxyFromEnvironment,
-	}
-	dialer, resp, err := d.Dial(fmt.Sprintf("%sws/%s@depth@%dms", s.baseUri, s.pair, s.period), nil)
-	if resp.StatusCode == http.StatusTeapot {
-		return nil, banBinanceRequests(resp, TeapotErr)
-	}
-	if resp.StatusCode == http.StatusTooManyRequests {
-		return nil, banBinanceRequests(resp, WeightLimitExceededErr)
-	}
-	if err != nil {
-		s.logger.Error(err.Error())
-		return nil, err
-	}
-	return dialer, nil
-}
-
-func (s *DeltaReceiveClient) ReceiveDeltaMessage(ctx context.Context) *model.DeltaMessage {
+func (s *DeltaReceiveClient) ReceiveDeltaMessage(ctx context.Context) (*model.DeltaMessage, error) {
 	if isBanned() || s.shutdown.Load() {
-		return nil
+		return nil, nil
 	}
-	s.dialerMut.Lock()
 	if s.dialer == nil {
-		dialer, _ := s.getDialer()
-		s.dialer = dialer
-	}
-	_, msg, err := s.dialer.ReadMessage()
-	s.dialerMut.Unlock()
-	if err != nil {
-		if s.shutdown.Load() {
-			return nil
+		if err := s.Connect(ctx); err != nil {
+			return nil, err
 		}
-		s.logger.Error(err.Error())
-		return nil
 	}
-	var deltaMsg model.DeltaMessage
-	err = json.Unmarshal(msg, &deltaMsg)
-	if err != nil {
-		s.logger.Error(err.Error())
-		return nil
+	for i := 0; ; i++ {
+		s.dialerMut.Lock()
+		_, msg, err := s.dialer.ReadMessage()
+		s.dialerMut.Unlock()
+		if err == nil {
+			var deltaMsg model.DeltaMessage
+			err = json.Unmarshal(msg, &deltaMsg)
+			if err != nil {
+				s.logger.Error(err.Error())
+				return nil, fmt.Errorf("error while unmarshaling delta message %w", err)
+			}
+			return &deltaMsg, nil
+		}
+		if s.shutdown.Load() {
+			return nil, nil
+		}
+		s.logger.Warn("error while getting delta message, reconnect")
+		if err = s.Reconnect(ctx); err != nil && i == 3 {
+			return nil, err
+		}
 	}
-	if s.reconMutex.lastUpdId.Load() <= deltaMsg.FirstUpdateId {
-		s.reconMutex.lastUpdId.Store(math.MaxInt64)
-		s.reconMutex.ch <- struct{}{}
-	}
-	return &deltaMsg
 }
 
 func (s *DeltaReceiveClient) Shutdown(ctx context.Context) {

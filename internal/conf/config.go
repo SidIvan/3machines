@@ -18,9 +18,11 @@ type AppConfig struct {
 }
 
 type LocalRepoConfig struct {
-	DeltaColName    string                `yaml:"delta.collection.name"`
-	SnapshotColName string                `yaml:"snapshot.collection.name"`
-	MongoConfig     *conf.MongoRepoConfig `yaml:"mongo"`
+	DeltaColName      string                `yaml:"delta.collection.name"`
+	SnapshotColName   string                `yaml:"snapshot.collection.name"`
+	ExInfoColName     string                `yaml:"exchange.info.collection.name"`
+	BookTickerColName string                `yaml:"book.ticker.collection.name"`
+	MongoConfig       *conf.MongoRepoConfig `yaml:"mongo"`
 }
 
 type GlobalRepoConfig struct {
@@ -30,4 +32,5 @@ type GlobalRepoConfig struct {
 	DeltaTable        string               `yaml:"delta.table.name"`
 	SnapshotTable     string               `yaml:"snapshot.table.name"`
 	ExchangeInfoTable string               `yaml:"ex.info.table"`
+	BookTickerTable   string               `yaml:"binance_order_books_tops"`
 }
