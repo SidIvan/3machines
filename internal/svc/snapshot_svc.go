@@ -51,6 +51,9 @@ func (s *SnapshotSvc) StartReceiveAndSaveSnapshots(ctx context.Context) {
 		curTime := time.Now()
 		s.logger.Info(fmt.Sprintf("start updating scheduling map, %d snapshots scheduled now", len(s.snapshotSchedules)))
 		for _, symbolInfo := range exInfo.Symbols {
+			if symbolInfo.Status != "TRADING" {
+				continue
+			}
 			symbol := symbolInfo.Symbol
 			timeToGetSnapshot, ok := s.snapshotSchedules[symbol]
 			if !ok {
@@ -67,8 +70,11 @@ func (s *SnapshotSvc) StartReceiveAndSaveSnapshots(ctx context.Context) {
 				return
 			}
 			limit, _ := s.ReceiveAndSaveSnapshot(ctx, symbol)
+			s.logger.Debug(fmt.Sprintf("current limit is %s when allowed %d", limit, exInfo.GetRequestWeightLimit()))
 			if tmp, _ := strconv.Atoi(limit); limit != "" && tmp*10 > exInfo.GetRequestWeightLimit()*8 {
-				time.Sleep(exInfo.GetRequestWeightLimitDuration())
+				sleepTime := exInfo.GetRequestWeightLimitDuration()
+				s.logger.Debug(fmt.Sprintf("sleeping snapshot service for %s", sleepTime))
+				time.Sleep(sleepTime)
 			}
 		}
 	}
