@@ -63,18 +63,14 @@ func (s *App) Start() {
 		s.logger.Error(err.Error())
 		return
 	}
-	exInfo := s.globalRepo.GetLastFullExchangeInfo(context.Background())
-	if exInfo.Timezone == "" {
-		var err error
-		exInfo, err = s.binanceClient.GetFullExchangeInfo(context.Background())
-		if err != nil {
-			s.logger.Error(err.Error())
-			return
-		}
-		if err = s.globalRepo.SendFullExchangeInfo(baseContext, exInfo); err != nil {
-			s.logger.Error(err.Error())
-			return
-		}
+	exInfo, err := s.binanceClient.GetFullExchangeInfo(context.Background())
+	if err != nil {
+		s.logger.Error(err.Error())
+		return
+	}
+	if err = s.globalRepo.SendFullExchangeInfo(baseContext, exInfo); err != nil {
+		s.logger.Error(err.Error())
+		return
 	}
 	go func() {
 		http.Handle("/metrics", promhttp.Handler())
