@@ -141,7 +141,7 @@ func (s BinanceHttpClient) GetFullSnapshot(ctx context.Context, symbol string, d
 		s.logger.Error(err.Error())
 		return nil, "", err
 	}
-	return &snapshot, resp.Header.Get(fmt.Sprintf("X-Mbx-Used-Weight-%s:", headerType)), nil
+	return &snapshot, resp.Header.Get(fmt.Sprintf("X-Mbx-Used-Weight-%s", headerType)), nil
 }
 
 var (

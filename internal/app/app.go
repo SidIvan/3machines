@@ -7,6 +7,7 @@ import (
 	"DeltaReceiver/internal/repo"
 	"DeltaReceiver/internal/svc"
 	"DeltaReceiver/internal/web"
+	"DeltaReceiver/pkg/binance"
 	"DeltaReceiver/pkg/log"
 	"context"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -29,6 +30,7 @@ type App struct {
 }
 
 func NewApp(cfg *conf.AppConfig) *App {
+	binance.InitLogger()
 	logger := log.GetLogger("App")
 	exInfoCache := cache.NewExchangeInfoCache()
 	globalRepo := repo.NewClickhouseRepo(cfg.GlobalRepoConfig)
