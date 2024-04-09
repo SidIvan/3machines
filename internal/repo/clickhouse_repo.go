@@ -22,7 +22,7 @@ const (
 
 type chClientHolder struct {
 	client *ch.Client
-	mut    sync.Mutex
+	mut    *sync.Mutex
 }
 
 func (s *chClientHolder) SetNewClient(client *ch.Client) {
@@ -67,7 +67,7 @@ func NewClickhouseRepo(cfg *conf.GlobalRepoConfig) *ClickhouseRepo {
 	return &ClickhouseRepo{
 		logger: logger,
 		clientH: &chClientHolder{
-			mut: sync.Mutex{},
+			mut: &sync.Mutex{},
 		},
 		cfg: cfg,
 	}
