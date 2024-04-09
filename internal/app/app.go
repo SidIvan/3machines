@@ -9,7 +9,6 @@ import (
 	"DeltaReceiver/internal/web"
 	"DeltaReceiver/pkg/log"
 	"context"
-	"fmt"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.uber.org/zap"
 	"net/http"
@@ -73,8 +72,6 @@ func (s *App) Start() {
 		s.logger.Error(err.Error())
 		return
 	}
-	fmt.Println(s.exInfoCache.GetVal())
-	fmt.Println(s.exInfoCache.GetVal() == nil)
 	go func() {
 		http.Handle("/metrics", promhttp.Handler())
 		err := http.ListenAndServe(":9001", nil)

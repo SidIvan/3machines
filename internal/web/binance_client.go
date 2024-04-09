@@ -46,9 +46,7 @@ func (s BinanceClient) GetFullSnapshot(ctx context.Context, symbol string, depth
 
 func (s BinanceClient) GetFullExchangeInfo(ctx context.Context) (*bmodel.ExchangeInfo, error) {
 	exInfo, err := s.client.GetFullExchangeInfo(ctx)
-	fmt.Println(exInfo)
-	fmt.Println(err.Error())
-	if err != nil {
+	if err == nil {
 		s.exInfoCache.SetVal(exInfo)
 	}
 	return exInfo, err
