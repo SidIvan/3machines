@@ -43,43 +43,54 @@ func NewDeltaReceiverSvc(config *conf.AppConfig, binanceClient BinanceClient, lo
 	}
 }
 
+func (s *DeltaReceiverSvc) getNewReceivers(ctx context.Context) []*DeltaReceiver {
+	if s.shutdown.Load() {
+		return nil
+	}
+	var symbols []string
+	for _, symbolInfo := range s.exInfoCache.GetVal().Symbols {
+		if symbolInfo.Status == "TRADING" {
+			symbols = append(symbols, strings.ToLower(symbolInfo.Symbol))
+		}
+	}
+	s.logger.Info(fmt.Sprintf("start get deltas of %d different symbols", len(symbols)))
+	var newReceivers []*DeltaReceiver
+	for i := 0; i < len(symbols)/40; i++ {
+		var symbolsForReceiver []string
+		for j := 0; j*40+i < len(symbols); j++ {
+			symbolsForReceiver = append(symbolsForReceiver, symbols[j*40+i])
+		}
+		if newReceiver := NewDeltaReceiver(s.cfg.BinanceHttpConfig, symbolsForReceiver, s.localRepo, s.globalRepo); newReceiver != nil {
+			newReceivers = append(newReceivers, newReceiver)
+		}
+	}
+	for _, receiver := range newReceivers {
+		for k := 0; k < 3; k++ {
+			if err := receiver.StartReceiveDeltas(ctx); err == nil {
+				break
+			} else {
+				s.logger.Error(err.Error())
+			}
+		}
+	}
+	return newReceivers
+}
+
+func (s *DeltaReceiverSvc) grasefullyReconnectReceivers(ctx context.Context) {
+	newReceivers := s.getNewReceivers(ctx)
+	for _, receiver := range s.deltaReceivers {
+		ctxWithTimeout, cancel := context.WithTimeout(ctx, 10*time.Second)
+		receiver.Shutdown(ctxWithTimeout)
+		cancel()
+	}
+	s.deltaReceivers = newReceivers
+}
+
 func (s *DeltaReceiverSvc) ReceiveDeltasPairs(ctx context.Context) {
+	s.deltaReceivers = s.getNewReceivers(ctx)
 	for {
-		if s.shutdown.Load() {
-			return
-		}
-		var symbols []string
-		for _, symbolInfo := range s.exInfoCache.GetVal().Symbols {
-			if symbolInfo.Status == "TRADING" {
-				symbols = append(symbols, strings.ToLower(symbolInfo.Symbol))
-			}
-		}
-		s.logger.Info(fmt.Sprintf("start get deltas of %d different symbols", len(symbols)))
-		var newReceivers []*DeltaReceiver
-		for i := 0; i < len(symbols)/40; i++ {
-			var symbolsForReceiver []string
-			for j := 0; j*40+i < len(symbols); j++ {
-				symbolsForReceiver = append(symbolsForReceiver, symbols[j*40+i])
-			}
-			if newReceiver := NewDeltaReceiver(s.cfg.BinanceHttpConfig, symbolsForReceiver, s.localRepo, s.globalRepo); newReceiver != nil {
-				newReceivers = append(newReceivers, newReceiver)
-			}
-		}
-		for _, receiver := range newReceivers {
-			for k := 0; k < 3; k++ {
-				if err := receiver.StartReceiveDeltas(ctx); err == nil {
-					break
-				} else {
-					s.logger.Error(err.Error())
-				}
-			}
-		}
-		for _, receiver := range s.deltaReceivers {
-			ctxWithTimeout, cancel := context.WithTimeout(ctx, 10*time.Second)
-			receiver.Shutdown(ctxWithTimeout)
-			cancel()
-		}
-		s.deltaReceivers = newReceivers
+		time.Sleep(time.Duration(s.cfg.ReconnectPeriodM) * time.Minute)
+		s.grasefullyReconnectReceivers(ctx)
 	}
 }
 

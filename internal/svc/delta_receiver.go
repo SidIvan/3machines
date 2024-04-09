@@ -57,7 +57,9 @@ func (s *DeltaReceiver) ReceiveAndSend(ctx context.Context) {
 		if err != nil {
 			s.logger.Error(err.Error())
 		} else {
-			s.SendBatch(ctx, batch)
+			if err = s.SendBatch(ctx, batch); err != nil {
+				s.logger.Error(err.Error())
+			}
 		}
 	}
 }
@@ -91,6 +93,7 @@ func (s *DeltaReceiver) SendBatch(ctx context.Context, deltas []model.Delta) err
 			s.logger.Info(fmt.Sprintf("successfully sended to Ch, send timestamp %d", curTime))
 			return nil
 		} else {
+			s.logger.Error(err.Error())
 			s.logger.Warn(fmt.Sprintf("failed send to Ch, retry, timestamp %d", curTime))
 			s.globalRepo.Reconnect(ctx)
 		}
@@ -100,8 +103,10 @@ func (s *DeltaReceiver) SendBatch(ctx context.Context, deltas []model.Delta) err
 		if err := s.localRepo.SaveDeltas(ctx, deltas); err == nil {
 			s.logger.Info(fmt.Sprintf("successfully saved to mongo, send timestamp %d", curTime))
 			return nil
+		} else {
+			s.logger.Warn(fmt.Sprintf("failed save to mongo, retry, timestamp %d", curTime))
+			s.logger.Error(err.Error())
 		}
-		s.logger.Warn(fmt.Sprintf("failed save to mongo, retry, timestamp %d", curTime))
 	}
 	s.logger.Warn(fmt.Sprintf("failed save to mongo, attempting save to file, send timestamp %d", curTime))
 	// УСЁ ПРОПАЛО
