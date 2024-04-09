@@ -58,7 +58,7 @@ func (s *BookTickerSvc) SaveTicks(ctx context.Context, ticks []bmodel.SymbolTick
 	s.logger.Info("sending book ticker")
 	for i := 0; i < 3; i++ {
 		if err := s.globalRepo.SendBookTicks(ctx, ticks); err == nil {
-			s.logger.Info("successfully sended to Ch")
+			s.logger.Info("successfully sent to Ch")
 			return nil
 		} else {
 			s.logger.Error(err.Error())

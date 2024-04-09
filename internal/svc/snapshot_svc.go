@@ -108,7 +108,7 @@ func (s *SnapshotSvc) SaveSnapshot(ctx context.Context, snapshot []model.DepthSn
 	s.logger.Info(fmt.Sprintf("sending snapshot of %d parts [%s]", len(snapshot), snapshot[0].Symbol))
 	for i := 0; i < 3; i++ {
 		if err := s.globalRepo.SendSnapshot(ctx, snapshot); err != nil {
-			s.logger.Info(fmt.Sprintf("successfully sended to Ch [%s]", snapshot[0].Symbol))
+			s.logger.Info(fmt.Sprintf("successfully sent to Ch [%s]", snapshot[0].Symbol))
 			return nil
 		} else {
 			s.logger.Error(err.Error())

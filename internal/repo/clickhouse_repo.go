@@ -64,10 +64,11 @@ func (s ClickhouseRepo) Reconnect(ctx context.Context) error {
 
 func NewClickhouseRepo(cfg *conf.GlobalRepoConfig) *ClickhouseRepo {
 	logger := log.GetLogger("ClickhouseRepo")
+	var mutex sync.Mutex
 	return &ClickhouseRepo{
 		logger: logger,
 		clientH: &chClientHolder{
-			mut: &sync.Mutex{},
+			mut: &mutex,
 		},
 		cfg: cfg,
 	}

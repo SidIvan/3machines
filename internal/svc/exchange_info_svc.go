@@ -68,7 +68,7 @@ func (s *ExchangeInfoSvc) SaveExchangeInfo(ctx context.Context, exInfo *bmodel.E
 	s.logger.Info("sending exchange info")
 	for i := 0; i < 3; i++ {
 		if err := s.globalRepo.SendFullExchangeInfo(ctx, exInfo); err == nil {
-			s.logger.Info("successfully sended to Ch")
+			s.logger.Info("successfully sent to Ch")
 			return nil
 		} else {
 			s.logger.Warn("failed send to Ch, retry")

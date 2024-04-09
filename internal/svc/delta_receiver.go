@@ -90,7 +90,7 @@ func (s *DeltaReceiver) SendBatch(ctx context.Context, deltas []model.Delta) err
 	s.logger.Info(fmt.Sprintf("sending batch of %d deltas, send timestamp %d", len(deltas), curTime))
 	for i := 0; i < 3; i++ {
 		if err := s.globalRepo.SendDeltas(ctx, deltas); err == nil {
-			s.logger.Info(fmt.Sprintf("successfully sended to Ch, send timestamp %d", curTime))
+			s.logger.Info(fmt.Sprintf("successfully sent to Ch, send timestamp %d", curTime))
 			return nil
 		} else {
 			s.logger.Error(err.Error())
