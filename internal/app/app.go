@@ -13,6 +13,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.uber.org/zap"
 	"net/http"
+	"sync"
 	"time"
 )
 
@@ -92,9 +93,24 @@ func (s *App) Start() {
 
 func (s *App) Stop(ctx context.Context) {
 	s.logger.Info("Begin of graceful shutdown")
-	go s.deltaRecSvc.Shutdown(ctx)
-	go s.snapshotSvc.Shutdown(ctx)
-	go s.exInfoSvc.Shutdown(ctx)
-	go s.bookTickerSvc.Shutdown(ctx)
+	var wg sync.WaitGroup
+	wg.Add(4)
+	go func() {
+		s.deltaRecSvc.Shutdown(ctx)
+		wg.Done()
+	}()
+	go func() {
+		s.snapshotSvc.Shutdown(ctx)
+		wg.Done()
+	}()
+	func() {
+		s.exInfoSvc.Shutdown(ctx)
+		wg.Done()
+	}()
+	func() {
+		s.bookTickerSvc.Shutdown(ctx)
+		wg.Done()
+	}()
+	wg.Wait()
 	s.logger.Info("End of graceful shutdown")
 }

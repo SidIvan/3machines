@@ -122,7 +122,7 @@ func (s ClickhouseRepo) SendBookTicks(ctx context.Context, ticks []bmodel.Symbol
 		Input: input,
 	})
 	if err != nil {
-		return fmt.Errorf("error while sending deltas %w", err)
+		return fmt.Errorf("error while sending ticks %w", err)
 	}
 	return nil
 }

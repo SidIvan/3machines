@@ -55,7 +55,7 @@ func (s *BookTickerSvc) StartReceiveOrderBooksTops(ctx context.Context) {
 }
 
 func (s *BookTickerSvc) SaveTicks(ctx context.Context, ticks []bmodel.SymbolTick) error {
-	s.logger.Info("sending bock ticker")
+	s.logger.Info("sending book ticker")
 	for i := 0; i < 3; i++ {
 		if err := s.globalRepo.SendBookTicks(ctx, ticks); err == nil {
 			s.logger.Info("successfully sended to Ch")
