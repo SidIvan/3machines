@@ -18,10 +18,11 @@ type BinanceClient struct {
 	exInfoCache *cache.ExchangeInfoCache
 }
 
-func NewBinanceClient(cfg *binance.BinanceHttpClientConfig) *BinanceClient {
+func NewBinanceClient(cfg *binance.BinanceHttpClientConfig, exInfoCache *cache.ExchangeInfoCache) *BinanceClient {
 	return &BinanceClient{
-		logger: log.GetLogger("BinanceClient"),
-		client: binance.NewBinanceHttpClient(cfg),
+		logger:      log.GetLogger("BinanceClient"),
+		client:      binance.NewBinanceHttpClient(cfg),
+		exInfoCache: exInfoCache,
 	}
 }
 

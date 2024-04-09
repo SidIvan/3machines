@@ -30,11 +30,11 @@ type App struct {
 
 func NewApp(cfg *conf.AppConfig) *App {
 	logger := log.GetLogger("App")
+	exInfoCache := cache.NewExchangeInfoCache()
 	globalRepo := repo.NewClickhouseRepo(cfg.GlobalRepoConfig)
 	localRepo := repo.NewLocalMongoRepo(cfg.LocalRepoCfg)
-	binanceClient := web.NewBinanceClient(cfg.BinanceHttpConfig)
+	binanceClient := web.NewBinanceClient(cfg.BinanceHttpConfig, exInfoCache)
 	metricsHolder := metrics.NewMetrics(cfg)
-	exInfoCache := cache.NewExchangeInfoCache()
 	deltaRecSvc := svc.NewDeltaReceiverSvc(cfg, binanceClient, localRepo, globalRepo, metricsHolder, exInfoCache)
 	snapshotSvc := svc.NewSnapshotSvc(cfg, binanceClient, localRepo, globalRepo, metricsHolder, exInfoCache)
 	exInfoSvc := svc.NewExchangeInfoSvc(cfg, binanceClient, localRepo, globalRepo, metricsHolder, exInfoCache)
