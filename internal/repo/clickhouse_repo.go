@@ -72,10 +72,7 @@ func (s ClickhouseRepo) Connect(ctx context.Context) error {
 		s.logger.Error(err.Error())
 		return err
 	}
-	s.clientH = &chClientHolder{
-		client: client,
-		mut:    sync.Mutex{},
-	}
+	s.clientH.client = client
 	return nil
 }
 
