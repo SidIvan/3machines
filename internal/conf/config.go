@@ -32,5 +32,5 @@ type GlobalRepoConfig struct {
 	DeltaTable        string               `yaml:"delta.table.name"`
 	SnapshotTable     string               `yaml:"snapshot.table.name"`
 	ExchangeInfoTable string               `yaml:"ex.info.table"`
-	BookTickerTable   string               `yaml:"binance_order_books_tops"`
+	BookTickerTable   string               `yaml:"binance.order.books.tops"`
 }
