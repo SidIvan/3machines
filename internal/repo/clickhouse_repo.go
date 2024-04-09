@@ -25,6 +25,25 @@ type chClientHolder struct {
 	mut    sync.Mutex
 }
 
+func (s *chClientHolder) SetNewClient(client *ch.Client) {
+	s.mut.Lock()
+	if s.client != nil {
+		for i := 0; i < 3; i++ {
+			if s.client.Close() == nil {
+				break
+			}
+		}
+	}
+	s.client = client
+	s.mut.Unlock()
+}
+
+func (s *chClientHolder) Do(ctx context.Context, query ch.Query) error {
+	s.mut.Lock()
+	defer s.mut.Unlock()
+	return s.client.Do(ctx, query)
+}
+
 type ClickhouseRepo struct {
 	clientH *chClientHolder
 	logger  *zap.Logger
@@ -32,23 +51,13 @@ type ClickhouseRepo struct {
 }
 
 func (s ClickhouseRepo) Reconnect(ctx context.Context) error {
-	s.clientH.mut.Lock()
-	defer s.clientH.mut.Unlock()
 	if client, err := ch.Dial(ctx, ch.Options{
 		Address: s.cfg.URI.GetAddress(),
 	}); err != nil {
 		s.logger.Error(err.Error())
 		return err
 	} else {
-		for i := 0; i < 3; i++ {
-			err = s.clientH.client.Close()
-			if err != nil {
-				s.logger.Error(err.Error())
-			} else {
-				break
-			}
-		}
-		s.clientH.client = client
+		s.clientH.SetNewClient(client)
 		return err
 	}
 }
@@ -72,7 +81,7 @@ func (s ClickhouseRepo) Connect(ctx context.Context) error {
 		s.logger.Error(err.Error())
 		return err
 	}
-	s.clientH.client = client
+	s.clientH.SetNewClient(client)
 	return nil
 }
 
@@ -108,12 +117,10 @@ func (s ClickhouseRepo) SendBookTicks(ctx context.Context, ticks []bmodel.Symbol
 		return nil
 	}
 	input := prepareBookTickerInsertBlock(ticks)
-	s.clientH.mut.Lock()
-	err := s.clientH.client.Do(ctx, ch.Query{
+	err := s.clientH.Do(ctx, ch.Query{
 		Body:  fmt.Sprintf("INSERT INTO %s.%s VALUES", s.cfg.DatabaseName, s.cfg.DeltaTable),
 		Input: input,
 	})
-	s.clientH.mut.Unlock()
 	if err != nil {
 		return fmt.Errorf("error while sending deltas %w", err)
 	}
@@ -187,12 +194,10 @@ func (s ClickhouseRepo) SendDeltas(ctx context.Context, deltas []model.Delta) er
 		return nil
 	}
 	input := prepareDeltasInsertBlock(deltas)
-	s.clientH.mut.Lock()
-	err := s.clientH.client.Do(ctx, ch.Query{
+	err := s.clientH.Do(ctx, ch.Query{
 		Body:  fmt.Sprintf("INSERT INTO %s.%s VALUES", s.cfg.DatabaseName, s.cfg.DeltaTable),
 		Input: input,
 	})
-	s.clientH.mut.Unlock()
 	if err != nil {
 		return fmt.Errorf("error while sending deltas %w", err)
 	}
@@ -204,12 +209,10 @@ func (s ClickhouseRepo) SendSnapshot(ctx context.Context, snapshot []model.Depth
 		return nil
 	}
 	input := prepareFullSnapshotInsertBlock(snapshot)
-	s.clientH.mut.Lock()
-	err := s.clientH.client.Do(ctx, ch.Query{
+	err := s.clientH.Do(ctx, ch.Query{
 		Body:  fmt.Sprintf("INSERT INTO %s.%s VALUES", s.cfg.DatabaseName, s.cfg.SnapshotTable),
 		Input: input,
 	})
-	s.clientH.mut.Unlock()
 	if err != nil {
 		return fmt.Errorf("error while sending snapshot %w", err)
 	}
@@ -219,8 +222,7 @@ func (s ClickhouseRepo) SendSnapshot(ctx context.Context, snapshot []model.Depth
 func (s ClickhouseRepo) GetLastSavedTimestamp(ctx context.Context, symb model.Symbol) time.Time {
 	timestampResp := new(proto.ColDateTime64).WithPrecision(3)
 	latestTimestamp := time.Unix(0, 0)
-	s.clientH.mut.Lock()
-	if err := s.clientH.client.Do(ctx, ch.Query{
+	if err := s.clientH.Do(ctx, ch.Query{
 		Body: fmt.Sprintf("SELECT %s from %s.%s WHERE %s = '%s' ORDER BY %s LIMIT 1",
 			TimestampCol, s.cfg.DatabaseName, s.cfg.DeltaTable, SymbolCol, symb, TimestampCol),
 		Result: proto.Results{
@@ -235,7 +237,6 @@ func (s ClickhouseRepo) GetLastSavedTimestamp(ctx context.Context, symb model.Sy
 	}); err != nil {
 		s.logger.Error(err.Error())
 	}
-	s.clientH.mut.Unlock()
 	return latestTimestamp
 }
 
@@ -271,12 +272,10 @@ func (s ClickhouseRepo) SendFullExchangeInfo(ctx context.Context, exInfo *bmodel
 		return nil
 	}
 	input := s.prepareExchangeInfoInsertBlock(exInfo)
-	s.clientH.mut.Lock()
-	err := s.clientH.client.Do(ctx, ch.Query{
+	err := s.clientH.Do(ctx, ch.Query{
 		Body:  fmt.Sprintf("INSERT INTO %s.%s VALUES", s.cfg.DatabaseName, s.cfg.ExchangeInfoTable),
 		Input: input,
 	})
-	s.clientH.mut.Unlock()
 	if err != nil {
 		return fmt.Errorf("error while sending exchange info %w", err)
 	}
@@ -287,8 +286,7 @@ func (s ClickhouseRepo) SendFullExchangeInfo(ctx context.Context, exInfo *bmodel
 func (s ClickhouseRepo) GetLastFullExchangeInfoHash(ctx context.Context) uint64 {
 	var resp proto.ColUInt64
 	var hash uint64
-	s.clientH.mut.Lock()
-	if err := s.clientH.client.Do(ctx, ch.Query{
+	if err := s.clientH.Do(ctx, ch.Query{
 		Body: fmt.Sprintf("SELECT %s from %s.%s ORDER BY %s LIMIT 1",
 			HashCol, s.cfg.DatabaseName, s.cfg.ExchangeInfoTable, TimestampCol),
 		Result: proto.Results{
@@ -303,7 +301,6 @@ func (s ClickhouseRepo) GetLastFullExchangeInfoHash(ctx context.Context) uint64 
 	}); err != nil {
 		s.logger.Error(err.Error())
 	}
-	s.clientH.mut.Unlock()
 	if hash == 0 {
 		s.logger.Warn("empty get latest exchange info hash response")
 	}
@@ -313,8 +310,7 @@ func (s ClickhouseRepo) GetLastFullExchangeInfoHash(ctx context.Context) uint64 
 func (s ClickhouseRepo) GetLastFullExchangeInfo(ctx context.Context) *bmodel.ExchangeInfo {
 	var resp proto.ColStr
 	var exInfo bmodel.ExchangeInfo
-	s.clientH.mut.Lock()
-	if err := s.clientH.client.Do(ctx, ch.Query{
+	if err := s.clientH.Do(ctx, ch.Query{
 		Body: fmt.Sprintf("SELECT %s from %s.%s ORDER BY %s LIMIT 1",
 			ExchangeInfoCol, s.cfg.DatabaseName, s.cfg.ExchangeInfoTable, TimestampCol),
 		Result: proto.Results{
@@ -331,7 +327,6 @@ func (s ClickhouseRepo) GetLastFullExchangeInfo(ctx context.Context) *bmodel.Exc
 	}); err != nil {
 		s.logger.Error(err.Error())
 	}
-	s.clientH.mut.Unlock()
 	if exInfo.Timezone == "" {
 		s.logger.Warn("empty get latest exchange info response")
 	}

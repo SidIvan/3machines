@@ -85,6 +85,7 @@ func (s *App) Start() {
 	go s.deltaRecSvc.ReceiveDeltasPairs(ctx)
 	go s.snapshotSvc.StartReceiveAndSaveSnapshots(ctx)
 	go s.exInfoSvc.StartReceiveExInfo(ctx)
+	go s.bookTickerSvc.StartReceiveOrderBooksTops(ctx)
 	time.Sleep(1 * time.Second)
 	s.logger.Info("App started")
 }
