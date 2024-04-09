@@ -26,9 +26,13 @@ type LocalMongoRepo struct {
 func NewLocalMongoRepo(cfg *appConf.LocalRepoConfig) *LocalMongoRepo {
 	logger := log.GetLogger("LocalMongoRepo")
 	return &LocalMongoRepo{
-		logger:   logger,
-		cfg:      cfg,
-		timeoutS: time.Duration(cfg.MongoConfig.TimeoutS) * time.Second,
+		logger:             logger,
+		cfg:                cfg,
+		BinanceSnapshotCol: &mongo.Collection{},
+		BinanceDeltasCol:   &mongo.Collection{},
+		ExInfoCol:          &mongo.Collection{},
+		BookTickerCol:      &mongo.Collection{},
+		timeoutS:           time.Duration(cfg.MongoConfig.TimeoutS) * time.Second,
 	}
 }
 
