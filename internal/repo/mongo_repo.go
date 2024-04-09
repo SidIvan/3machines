@@ -70,7 +70,7 @@ func (s LocalMongoRepo) Reconnect(ctx context.Context) {
 }
 
 func (s LocalMongoRepo) SaveDeltas(ctx context.Context, deltas []model.Delta) error {
-	_, err := s.BinanceDeltasCol.InsertMany(ctx, []interface{}{deltas})
+	_, err := s.BinanceDeltasCol.InsertMany(ctx, formDocuments(deltas))
 	if err != nil {
 		err = fmt.Errorf("error while inserting deltas %w", err)
 	}
@@ -78,7 +78,7 @@ func (s LocalMongoRepo) SaveDeltas(ctx context.Context, deltas []model.Delta) er
 }
 
 func (s LocalMongoRepo) SaveSnapshot(ctx context.Context, snapshot []model.DepthSnapshotPart) error {
-	_, err := s.BinanceSnapshotCol.InsertMany(ctx, []interface{}{snapshot})
+	_, err := s.BinanceSnapshotCol.InsertMany(ctx, formDocuments(snapshot))
 	if err != nil {
 		err = fmt.Errorf("error while inserting snapshot %w", err)
 	}
@@ -94,9 +94,17 @@ func (s LocalMongoRepo) SaveExchangeInfo(ctx context.Context, exInfo *bmodel.Exc
 }
 
 func (s LocalMongoRepo) SaveBookTicker(ctx context.Context, ticks []bmodel.SymbolTick) error {
-	_, err := s.ExInfoCol.InsertMany(ctx, []interface{}{ticks})
+	_, err := s.ExInfoCol.InsertMany(ctx, formDocuments(ticks))
 	if err != nil {
-		err = fmt.Errorf("error while inserting exchange info %w", err)
+		err = fmt.Errorf("error while inserting ticks %w", err)
 	}
 	return err
+}
+
+func formDocuments[T any](entries []T) []any {
+	var documents []interface{}
+	for _, entry := range entries {
+		documents = append(documents, entry)
+	}
+	return documents
 }
