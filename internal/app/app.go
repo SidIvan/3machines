@@ -56,20 +56,24 @@ func NewApp(cfg *conf.AppConfig) *App {
 func (s *App) Start() {
 	baseContext := context.Background()
 	if err := s.globalRepo.Connect(baseContext); err != nil {
-		panic(err)
+		s.logger.Error(err.Error())
+		return
 	}
 	if err := s.localRepo.Connect(baseContext); err != nil {
-		panic(err)
+		s.logger.Error(err.Error())
+		return
 	}
 	exInfo := s.globalRepo.GetLastFullExchangeInfo(context.Background())
 	if exInfo.Timezone == "" {
 		var err error
 		exInfo, err = s.binanceClient.GetFullExchangeInfo(context.Background())
 		if err != nil {
-			panic(err)
+			s.logger.Error(err.Error())
+			return
 		}
 		if err = s.globalRepo.SendFullExchangeInfo(baseContext, exInfo); err != nil {
-			panic(err)
+			s.logger.Error(err.Error())
+			return
 		}
 	}
 	go func() {
