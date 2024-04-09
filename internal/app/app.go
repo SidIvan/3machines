@@ -41,7 +41,7 @@ func NewApp(cfg *conf.AppConfig) *App {
 	deltaRecSvc := svc.NewDeltaReceiverSvc(cfg, binanceClient, localRepo, globalRepo, metricsHolder, exInfoCache)
 	snapshotSvc := svc.NewSnapshotSvc(cfg, binanceClient, localRepo, globalRepo, metricsHolder, exInfoCache)
 	exInfoSvc := svc.NewExchangeInfoSvc(cfg, binanceClient, localRepo, globalRepo, metricsHolder, exInfoCache)
-	bookTickerSvc := svc.NewBookerTickSvc(cfg, binanceClient, localRepo, globalRepo, metricsHolder)
+	bookTickerSvc := svc.NewBookTickerSvc(cfg, binanceClient, localRepo, globalRepo, metricsHolder, exInfoCache)
 	return &App{
 		logger:        logger,
 		deltaRecSvc:   deltaRecSvc,
@@ -82,10 +82,10 @@ func (s *App) Start() {
 			panic(err)
 		}
 	}()
-	//go s.deltaRecSvc.ReceiveDeltasPairs(baseContext)
+	go s.deltaRecSvc.ReceiveDeltasPairs(baseContext)
 	go s.snapshotSvc.StartReceiveAndSaveSnapshots(baseContext)
-	//go s.exInfoSvc.StartReceiveExInfo(baseContext)
-	//go s.bookTickerSvc.StartReceiveOrderBooksTops(baseContext)
+	go s.exInfoSvc.StartReceiveExInfo(baseContext)
+	go s.bookTickerSvc.StartReceiveOrderBooksTops(baseContext)
 	time.Sleep(1 * time.Second)
 	s.logger.Info("App started")
 }

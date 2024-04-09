@@ -1,30 +1,34 @@
 package svc
 
 import (
+	"DeltaReceiver/internal/cache"
 	"DeltaReceiver/internal/conf"
-	bmodel "DeltaReceiver/pkg/binance/model"
 	"DeltaReceiver/pkg/log"
 	"context"
-	"encoding/json"
+	"fmt"
 	"go.uber.org/zap"
-	"os"
-	"strconv"
+	"strings"
+	"sync"
 	"sync/atomic"
 	"time"
 )
 
 type BookTickerSvc struct {
-	logger        *zap.Logger
-	binanceClient BinanceClient
-	localRepo     LocalRepo
-	globalRepo    GlobalRepo
-	metricsHolder MetricsHolder
-	cfg           *conf.AppConfig
-	shutdown      *atomic.Bool
+	logger          *zap.Logger
+	binanceClient   BinanceClient
+	tickerReceivers []*TickerReceiver
+	localRepo       LocalRepo
+	globalRepo      GlobalRepo
+	metricsHolder   MetricsHolder
+	cfg             *conf.AppConfig
+	shutdown        *atomic.Bool
+	dRecWg          *sync.WaitGroup
+	exInfoCache     *cache.ExchangeInfoCache
 }
 
-func NewBookerTickSvc(config *conf.AppConfig, binanceClient BinanceClient, localRepo LocalRepo, globalRepo GlobalRepo, metricsHolder MetricsHolder) *BookTickerSvc {
+func NewBookTickerSvc(config *conf.AppConfig, binanceClient BinanceClient, localRepo LocalRepo, globalRepo GlobalRepo, metricsHolder MetricsHolder, exInfoCache *cache.ExchangeInfoCache) *BookTickerSvc {
 	var shutdown atomic.Bool
+	var dRecWg sync.WaitGroup
 	shutdown.Store(false)
 	return &BookTickerSvc{
 		logger:        log.GetLogger("BookTickerSvc"),
@@ -34,66 +38,66 @@ func NewBookerTickSvc(config *conf.AppConfig, binanceClient BinanceClient, local
 		globalRepo:    globalRepo,
 		cfg:           config,
 		shutdown:      &shutdown,
+		dRecWg:        &dRecWg,
+		exInfoCache:   exInfoCache,
 	}
 }
 
-func (s *BookTickerSvc) StartReceiveOrderBooksTops(ctx context.Context) {
-	for {
-		if s.shutdown.Load() {
-			return
+func (s *BookTickerSvc) getNewReceivers(ctx context.Context) []*TickerReceiver {
+	if s.shutdown.Load() {
+		return nil
+	}
+	var symbols []string
+	for _, symbolInfo := range s.exInfoCache.GetVal().Symbols {
+		if symbolInfo.Status == "TRADING" {
+			symbols = append(symbols, strings.ToLower(symbolInfo.Symbol))
 		}
-		if ticks, err := s.binanceClient.GetBookTicks(ctx); err != nil {
-			s.logger.Error(err.Error())
-		} else {
-			err = s.SaveTicks(ctx, ticks)
-			if err != nil {
+	}
+	s.logger.Info(fmt.Sprintf("start get ticks of %d different symbols", len(symbols)))
+	var newReceivers []*TickerReceiver
+	numTickerReceivers := 3
+	for i := 0; i < len(symbols)/numTickerReceivers; i++ {
+		var symbolsForReceiver []string
+		for j := 0; j*numTickerReceivers+i < len(symbols); j++ {
+			symbolsForReceiver = append(symbolsForReceiver, symbols[j*numTickerReceivers+i])
+		}
+		if newReceiver := NewTickerReceiver(s.cfg.BinanceHttpConfig, symbolsForReceiver, s.localRepo, s.globalRepo); newReceiver != nil {
+			newReceivers = append(newReceivers, newReceiver)
+		}
+	}
+	for _, receiver := range newReceivers {
+		for k := 0; k < 3; k++ {
+			if err := receiver.StartReceiveTicks(ctx); err == nil {
+				break
+			} else {
 				s.logger.Error(err.Error())
 			}
 		}
-		time.Sleep(time.Minute * 1)
 	}
+	return newReceivers
 }
 
-func (s *BookTickerSvc) SaveTicks(ctx context.Context, ticks []bmodel.SymbolTick) error {
-	s.logger.Info("sending book ticker")
-	for i := 0; i < 3; i++ {
-		if err := s.globalRepo.SendBookTicks(ctx, ticks); err == nil {
-			s.logger.Info("successfully sent to Ch")
-			return nil
-		} else {
-			s.logger.Error(err.Error())
-			s.logger.Warn("failed send to Ch, retry")
-			s.globalRepo.Reconnect(ctx)
-		}
+func (s *BookTickerSvc) grasefullyReconnectReceivers(ctx context.Context) {
+	newReceivers := s.getNewReceivers(ctx)
+	for _, receiver := range s.tickerReceivers {
+		ctxWithTimeout, cancel := context.WithTimeout(ctx, 10*time.Second)
+		receiver.Shutdown(ctxWithTimeout)
+		cancel()
 	}
-	s.logger.Warn("failed send to Ch, try save to mongo")
-	for i := 0; i < 3; i++ {
-		if err := s.localRepo.SaveBookTicker(ctx, ticks); err == nil {
-			s.logger.Info("successfully saved to mongo")
-			return nil
-		}
-		s.logger.Warn("failed save to mongo, retry")
-	}
-	s.logger.Warn("failed save to mongo, attempting save to file")
-	// УСЁ ПРОПАЛО
-	return s.saveTicksToFile(ticks)
+	s.tickerReceivers = newReceivers
 }
 
-func (s *BookTickerSvc) saveTicksToFile(deltas []bmodel.SymbolTick) error {
-	file, err := os.Create("ticks" + strconv.FormatInt(time.Now().UnixMilli(), 10))
-	if err != nil {
-		s.logger.Error(err.Error())
-		return err
+func (s *BookTickerSvc) StartReceiveOrderBooksTops(ctx context.Context) {
+	s.tickerReceivers = s.getNewReceivers(ctx)
+	for {
+		time.Sleep(time.Duration(s.cfg.ReconnectPeriodM) * time.Minute)
+		s.grasefullyReconnectReceivers(ctx)
 	}
-	data, _ := json.Marshal(deltas)
-	if _, err = file.Write(data); err != nil {
-		s.logger.Error(err.Error())
-		return err
-	}
-	file.Close()
-	return nil
 }
 
 func (s *BookTickerSvc) Shutdown(ctx context.Context) {
 	s.shutdown.Store(true)
+	for _, receiver := range s.tickerReceivers {
+		receiver.Shutdown(ctx)
+	}
 }
