@@ -61,6 +61,10 @@ func (s BinanceHttpClient) GetBookTicker(ctx context.Context) ([]model.SymbolTic
 	if err != nil {
 		s.logger.Warn(err.Error())
 	}
+	s.logger.Info(fmt.Sprintf("AXAXAXAXA%s %s %s %s %s", bookTicks[0].AskQuantity, bookTicks[0].BidQuantity, bookTicks[0].AskPrice, bookTicks[0].BidPrice, bookTicks[0].Symbol))
+	s.logger.Info(fmt.Sprintf("AXAXAXAXA%s %s %s %s %s", bookTicks[1].AskQuantity, bookTicks[1].BidQuantity, bookTicks[1].AskPrice, bookTicks[1].BidPrice, bookTicks[1].Symbol))
+	s.logger.Info(fmt.Sprintf("AXAXAXAXA%s %s %s %s %s", bookTicks[2].AskQuantity, bookTicks[2].BidQuantity, bookTicks[2].AskPrice, bookTicks[2].BidPrice, bookTicks[2].Symbol))
+	s.logger.Info(fmt.Sprintf("AXAXAXAXA%d", len(bookTicks)))
 	return bookTicks, nil
 }
 
