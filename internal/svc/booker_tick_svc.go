@@ -61,6 +61,7 @@ func (s *BookTickerSvc) SaveTicks(ctx context.Context, ticks []bmodel.SymbolTick
 			s.logger.Info("successfully sended to Ch")
 			return nil
 		} else {
+			s.logger.Error(err.Error())
 			s.logger.Warn("failed send to Ch, retry")
 			s.globalRepo.Reconnect(ctx)
 		}

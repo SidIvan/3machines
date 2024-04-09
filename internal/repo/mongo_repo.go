@@ -48,10 +48,10 @@ func (s LocalMongoRepo) Connect(ctx context.Context) error {
 	}
 	s.logger.Debug("successfully connected to mongo")
 	db := client.Database(s.cfg.MongoConfig.DatabaseName)
-	s.BinanceSnapshotCol = db.Collection(s.cfg.SnapshotColName)
-	s.BinanceDeltasCol = db.Collection(s.cfg.DeltaColName)
-	s.ExInfoCol = db.Collection(s.cfg.ExInfoColName)
-	s.BookTickerCol = db.Collection(s.cfg.BookTickerColName)
+	*s.BinanceSnapshotCol = *db.Collection(s.cfg.SnapshotColName)
+	*s.BinanceDeltasCol = *db.Collection(s.cfg.DeltaColName)
+	*s.ExInfoCol = *db.Collection(s.cfg.ExInfoColName)
+	*s.BookTickerCol = *db.Collection(s.cfg.BookTickerColName)
 	return nil
 }
 
