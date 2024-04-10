@@ -9,9 +9,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/ClickHouse/ch-go"
+	"github.com/ClickHouse/ch-go/chpool"
 	"github.com/ClickHouse/ch-go/proto"
 	"go.uber.org/zap"
-	"sync"
 	"time"
 )
 
@@ -21,27 +21,24 @@ const (
 )
 
 type chClientHolder struct {
-	client *ch.Client
-	mut    *sync.Mutex
+	connPool *chpool.Pool
+	//mut      *sync.Mutex
 }
 
-func (s *chClientHolder) SetNewClient(client *ch.Client) {
-	s.mut.Lock()
-	if s.client != nil {
-		for i := 0; i < 3; i++ {
-			if s.client.Close() == nil {
-				break
-			}
-		}
-	}
-	s.client = client
-	s.mut.Unlock()
-}
+//func (s *chClientHolder) SetNewClient(client *ch.Client) {
+//	var x chpool.Pool
+//	//s.mut.Lock()
+//	if s.connPool != nil {
+//		s.connPool.Close()
+//	}
+//	s.connPool, err := chpool.New(context.Background(), chpool.Options{})
+//	//s.mut.Unlock()
+//}
 
 func (s *chClientHolder) Do(ctx context.Context, query ch.Query) error {
-	s.mut.Lock()
-	defer s.mut.Unlock()
-	return s.client.Do(ctx, query)
+	//s.mut.Lock()
+	//defer s.mut.Unlock()
+	return s.connPool.Do(ctx, query)
 }
 
 type ClickhouseRepo struct {
@@ -51,38 +48,42 @@ type ClickhouseRepo struct {
 }
 
 func (s ClickhouseRepo) Reconnect(ctx context.Context) error {
-	if client, err := ch.Dial(ctx, ch.Options{
-		Address: s.cfg.URI.GetAddress(),
+	if connPool, err := chpool.Dial(ctx, chpool.Options{
+		ClientOptions: ch.Options{
+			Address: s.cfg.URI.GetAddress(),
+		},
 	}); err != nil {
 		s.logger.Error(err.Error())
 		return err
 	} else {
-		s.clientH.SetNewClient(client)
+		s.clientH.connPool = connPool
 		return err
 	}
 }
 
 func NewClickhouseRepo(cfg *conf.GlobalRepoConfig) *ClickhouseRepo {
 	logger := log.GetLogger("ClickhouseRepo")
-	var mutex sync.Mutex
+	//var mutex sync.Mutex
 	return &ClickhouseRepo{
-		logger: logger,
+		logger:  logger,
 		clientH: &chClientHolder{
-			mut: &mutex,
+			//mut: &mutex,
 		},
 		cfg: cfg,
 	}
 }
 
 func (s ClickhouseRepo) Connect(ctx context.Context) error {
-	client, err := ch.Dial(ctx, ch.Options{
-		Address: s.cfg.URI.GetAddress(),
+	connPool, err := chpool.Dial(ctx, chpool.Options{
+		ClientOptions: ch.Options{
+			Address: s.cfg.URI.GetAddress(),
+		},
 	})
 	if err != nil {
 		s.logger.Error(err.Error())
 		return err
 	}
-	s.clientH.SetNewClient(client)
+	s.clientH.connPool = connPool
 	return nil
 }
 
