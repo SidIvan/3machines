@@ -25,6 +25,7 @@ type SnapshotSvc struct {
 	metricsHolder     MetricsHolder
 	cfg               *conf.AppConfig
 	shutdown          *atomic.Bool
+	done              chan struct{}
 	exInfoCache       *cache.ExchangeInfoCache
 }
 
@@ -40,6 +41,7 @@ func NewSnapshotSvc(config *conf.AppConfig, binanceClient BinanceClient, localRe
 		snapshotSchedules: make(map[string]time.Time),
 		cfg:               config,
 		shutdown:          &shutdown,
+		done:              make(chan struct{}),
 		exInfoCache:       infoCache,
 	}
 }
@@ -67,6 +69,7 @@ func (s *SnapshotSvc) StartReceiveAndSaveSnapshots(ctx context.Context) {
 		s.logger.Info(fmt.Sprintf("start of getting %d snapshots", len(s.snapshotQueue)))
 		for _, symbol := range s.snapshotQueue {
 			if s.shutdown.Load() {
+				s.done <- struct{}{}
 				return
 			}
 			limit, _ := s.ReceiveAndSaveSnapshot(ctx, symbol)
@@ -146,4 +149,5 @@ func (s *SnapshotSvc) saveSnapshotToFile(snapshot []model.DepthSnapshotPart) err
 
 func (s *SnapshotSvc) Shutdown(ctx context.Context) {
 	s.shutdown.Store(true)
+	<-s.done
 }

@@ -23,6 +23,7 @@ type DeltaReceiver struct {
 	globalRepo GlobalRepo
 	symbols    []string
 	shutdown   *atomic.Bool
+	done       chan struct{}
 }
 
 func NewDeltaReceiver(cfg *binance.BinanceHttpClientConfig, symbols []string, localRepo LocalRepo, globalRepo GlobalRepo) *DeltaReceiver {
@@ -38,6 +39,7 @@ func NewDeltaReceiver(cfg *binance.BinanceHttpClientConfig, symbols []string, lo
 		localRepo:  localRepo,
 		globalRepo: globalRepo,
 		shutdown:   &shutdown,
+		done:       make(chan struct{}),
 	}
 }
 
@@ -62,6 +64,7 @@ func (s *DeltaReceiver) ReceiveAndSend(ctx context.Context) {
 			}
 		}
 	}
+	s.done <- struct{}{}
 }
 
 func (s *DeltaReceiver) ReceiveBatch(ctx context.Context) ([]model.Delta, error) {
@@ -131,4 +134,5 @@ func (s *DeltaReceiver) saveDeltasToFile(deltas []model.Delta) error {
 func (s *DeltaReceiver) Shutdown(ctx context.Context) {
 	s.shutdown.Store(true)
 	s.receiver.Shutdown(ctx)
+	<-s.done
 }

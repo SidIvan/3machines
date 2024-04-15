@@ -23,6 +23,7 @@ type ExchangeInfoSvc struct {
 	metricsHolder MetricsHolder
 	cfg           *conf.AppConfig
 	shutdown      *atomic.Bool
+	done          chan struct{}
 	exInfoCache   *cache.ExchangeInfoCache
 }
 
@@ -37,6 +38,7 @@ func NewExchangeInfoSvc(config *conf.AppConfig, binanceClient BinanceClient, loc
 		globalRepo:    globalRepo,
 		cfg:           config,
 		shutdown:      &shutdown,
+		done:          make(chan struct{}),
 		exInfoCache:   infoCache,
 	}
 }
@@ -44,6 +46,7 @@ func NewExchangeInfoSvc(config *conf.AppConfig, binanceClient BinanceClient, loc
 func (s *ExchangeInfoSvc) StartReceiveExInfo(ctx context.Context) {
 	for {
 		if s.shutdown.Load() {
+			s.done <- struct{}{}
 			return
 		}
 		time.Sleep(time.Duration(s.cfg.ExchangeInfoUpdPerM) * time.Minute)
@@ -106,4 +109,5 @@ func (s *ExchangeInfoSvc) saveExchangeInfoToFile(ticks *bmodel.ExchangeInfo) err
 
 func (s *ExchangeInfoSvc) Shutdown(ctx context.Context) {
 	s.shutdown.Store(true)
+	<-s.done
 }

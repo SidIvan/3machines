@@ -100,11 +100,11 @@ func (s *App) Stop(ctx context.Context) {
 		s.snapshotSvc.Shutdown(ctx)
 		wg.Done()
 	}()
-	func() {
+	go func() {
 		s.exInfoSvc.Shutdown(ctx)
 		wg.Done()
 	}()
-	func() {
+	go func() {
 		s.bookTickerSvc.Shutdown(ctx)
 		wg.Done()
 	}()
