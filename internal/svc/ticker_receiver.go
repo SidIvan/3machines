@@ -125,5 +125,7 @@ func (s *TickerReceiver) saveTicksToFile(deltas []bmodel.SymbolTick) error {
 func (s *TickerReceiver) Shutdown(ctx context.Context) {
 	s.shutdown.Store(true)
 	s.receiver.Shutdown(ctx)
+	s.logger.Info("before writing to chan")
 	<-s.done
+	s.logger.Info("after writing to chan")
 }
