@@ -30,7 +30,7 @@ func NewTickerReceiver(cfg *binance.BinanceHttpClientConfig, symbols []string, l
 	var shutdown atomic.Bool
 	shutdown.Store(false)
 	return &TickerReceiver{
-		logger:     log.GetLogger("DeltaReceiver"),
+		logger:     log.GetLogger("TickerReceiver"),
 		receiver:   binance.NewBookTickerClient(cfg, symbols),
 		symbols:    symbols,
 		localRepo:  localRepo,
