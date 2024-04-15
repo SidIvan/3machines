@@ -52,6 +52,7 @@ func (s ClickhouseRepo) Reconnect(ctx context.Context) error {
 		ClientOptions: ch.Options{
 			Address: s.cfg.URI.GetAddress(),
 		},
+		MaxConns: 30,
 	}); err != nil {
 		s.logger.Error(err.Error())
 		return err
@@ -78,6 +79,7 @@ func (s ClickhouseRepo) Connect(ctx context.Context) error {
 		ClientOptions: ch.Options{
 			Address: s.cfg.URI.GetAddress(),
 		},
+		MaxConns: 30,
 	})
 	if err != nil {
 		s.logger.Error(err.Error())
