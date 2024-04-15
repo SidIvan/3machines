@@ -14,7 +14,6 @@ import (
 	"go.uber.org/zap"
 	"net/http"
 	"sync"
-	"time"
 )
 
 type App struct {
@@ -82,12 +81,11 @@ func (s *App) Start() {
 			panic(err)
 		}
 	}()
+	s.logger.Info("App started")
 	go s.deltaRecSvc.ReceiveDeltasPairs(baseContext)
 	go s.snapshotSvc.StartReceiveAndSaveSnapshots(baseContext)
-	//go s.exInfoSvc.StartReceiveExInfo(baseContext)
+	go s.exInfoSvc.StartReceiveExInfo(baseContext)
 	go s.bookTickerSvc.StartReceiveOrderBooksTops(baseContext)
-	time.Sleep(1 * time.Second)
-	s.logger.Info("App started")
 }
 
 func (s *App) Stop(ctx context.Context) {

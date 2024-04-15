@@ -120,6 +120,7 @@ func (s ClickhouseRepo) SendBookTicks(ctx context.Context, ticks []bmodel.Symbol
 		s.logger.Warn("empty ticks slice")
 		return nil
 	}
+	s.logger.Debug(fmt.Sprintf("%d", s.clientH.connPool))
 	input := prepareBookTickerInsertBlock(ticks)
 	err := s.clientH.Do(ctx, ch.Query{
 		Body:  fmt.Sprintf("INSERT INTO %s.%s VALUES", s.cfg.DatabaseName, s.cfg.BookTickerTable),
@@ -198,6 +199,7 @@ func (s ClickhouseRepo) SendDeltas(ctx context.Context, deltas []model.Delta) er
 		return nil
 	}
 	input := prepareDeltasInsertBlock(deltas)
+	s.logger.Debug(fmt.Sprintf("%d", s.clientH.connPool))
 	err := s.clientH.Do(ctx, ch.Query{
 		Body:  fmt.Sprintf("INSERT INTO %s.%s VALUES", s.cfg.DatabaseName, s.cfg.DeltaTable),
 		Input: input,
@@ -213,6 +215,7 @@ func (s ClickhouseRepo) SendSnapshot(ctx context.Context, snapshot []model.Depth
 		return nil
 	}
 	input := prepareFullSnapshotInsertBlock(snapshot)
+	s.logger.Debug(fmt.Sprintf("%d", s.clientH.connPool))
 	err := s.clientH.Do(ctx, ch.Query{
 		Body:  fmt.Sprintf("INSERT INTO %s.%s VALUES", s.cfg.DatabaseName, s.cfg.SnapshotTable),
 		Input: input,
@@ -271,6 +274,7 @@ func (s ClickhouseRepo) prepareExchangeInfoInsertBlock(exInfo *bmodel.ExchangeIn
 func (s ClickhouseRepo) SendFullExchangeInfo(ctx context.Context, exInfo *bmodel.ExchangeInfo) error {
 	curHash := exInfo.ExInfoHash()
 	lastHash := s.GetLastFullExchangeInfoHash(ctx)
+	s.logger.Debug(fmt.Sprintf("%d", s.clientH.connPool))
 	if curHash == lastHash {
 		s.logger.Info("Exchange info has not updated")
 		return nil
