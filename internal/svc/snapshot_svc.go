@@ -114,8 +114,9 @@ func (s *SnapshotSvc) SaveSnapshot(ctx context.Context, snapshot []model.DepthSn
 			s.logger.Error(err.Error())
 			s.logger.Warn(fmt.Sprintf("failed send to Ch, try to reconnect [%s]", snapshot[0].Symbol))
 		}
-		s.globalRepo.Reconnect(ctx)
+		//s.globalRepo.Reconnect(ctx)
 	}
+	s.globalRepo.Reconnect(ctx)
 	s.logger.Warn(fmt.Sprintf("failed send to Ch, try save to mongo [%s]", snapshot[0].Symbol))
 	for i := 0; i < 3; i++ {
 		if err := s.localRepo.SaveSnapshot(ctx, snapshot); err == nil {

@@ -32,6 +32,7 @@ type GlobalRepo interface {
 	GetLastFullExchangeInfoHash(ctx context.Context) uint64
 	GetLastFullExchangeInfo(ctx context.Context) *bmodel.ExchangeInfo
 	SendBookTicks(context.Context, []bmodel.SymbolTick) error
+	Disconnect(ctx context.Context)
 }
 
 type MetricsHolder interface {

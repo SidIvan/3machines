@@ -273,6 +273,10 @@ func (s ClickhouseRepo) prepareExchangeInfoInsertBlock(exInfo *bmodel.ExchangeIn
 	}
 }
 
+func (s ClickhouseRepo) Disconnect(ctx context.Context) {
+	s.clientH.connPool.Close()
+}
+
 func (s ClickhouseRepo) SendFullExchangeInfo(ctx context.Context, exInfo *bmodel.ExchangeInfo) error {
 	curHash := exInfo.ExInfoHash()
 	lastHash := s.GetLastFullExchangeInfoHash(ctx)

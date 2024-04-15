@@ -1,7 +1,4 @@
 run1: clearLog
-	rm /var/log/writer/writer.log
-	touch /var/log/writer/writer.log
-	rm /var/log/writer/.writer.log.swp || true
 	docker compose -f docker-compose1.yaml build --no-cache
 	docker compose -f docker-compose1.yaml up -d --force-recreate
 

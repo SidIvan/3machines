@@ -86,9 +86,10 @@ func (s *TickerReceiver) SendBatch(ctx context.Context, ticks []bmodel.SymbolTic
 		} else {
 			s.logger.Error(err.Error())
 			s.logger.Warn(fmt.Sprintf("failed send to Ch, retry, timestamp %d", curTime))
-			s.globalRepo.Reconnect(ctx)
+			//s.globalRepo.Reconnect(ctx)
 		}
 	}
+	s.globalRepo.Reconnect(ctx)
 	s.logger.Warn(fmt.Sprintf("failed send to Ch, try save to mongo send timestamp %d", curTime))
 	for i := 0; i < 3; i++ {
 		if err := s.localRepo.SaveBookTicker(ctx, ticks); err == nil {

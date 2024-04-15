@@ -109,5 +109,6 @@ func (s *App) Stop(ctx context.Context) {
 		wg.Done()
 	}()
 	wg.Wait()
+	s.globalRepo.Disconnect(context.Background())
 	s.logger.Info("End of graceful shutdown")
 }
