@@ -14,7 +14,7 @@ import (
 	"time"
 )
 
-const BatchSize = 10000
+const BatchSize = 5000
 
 type DeltaReceiver struct {
 	logger     *zap.Logger
