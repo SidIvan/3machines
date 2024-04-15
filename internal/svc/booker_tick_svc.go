@@ -97,6 +97,7 @@ func (s *BookTickerSvc) StartReceiveOrderBooksTops(ctx context.Context) {
 
 func (s *BookTickerSvc) Shutdown(ctx context.Context) {
 	s.shutdown.Store(true)
+	s.logger.Debug(fmt.Sprintf("need to shutdown %d receivers", len(s.tickerReceivers)))
 	for _, receiver := range s.tickerReceivers {
 		receiver.Shutdown(ctx)
 	}

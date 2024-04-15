@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"go.uber.org/zap"
 	"strings"
-	"sync"
 	"sync/atomic"
 	"time"
 )
@@ -22,13 +21,11 @@ type DeltaReceiverSvc struct {
 	metricsHolder  MetricsHolder
 	cfg            *conf.AppConfig
 	shutdown       *atomic.Bool
-	dRecWg         *sync.WaitGroup
 	exInfoCache    *cache.ExchangeInfoCache
 }
 
 func NewDeltaReceiverSvc(config *conf.AppConfig, binanceClient BinanceClient, localRepo LocalRepo, globalRepo GlobalRepo, metricsHolder MetricsHolder, exInfoCache *cache.ExchangeInfoCache) *DeltaReceiverSvc {
 	var shutdown atomic.Bool
-	var dRecWg sync.WaitGroup
 	shutdown.Store(false)
 	return &DeltaReceiverSvc{
 		logger:        log.GetLogger("DeltaReceiverSvc"),
@@ -38,7 +35,6 @@ func NewDeltaReceiverSvc(config *conf.AppConfig, binanceClient BinanceClient, lo
 		globalRepo:    globalRepo,
 		cfg:           config,
 		shutdown:      &shutdown,
-		dRecWg:        &dRecWg,
 		exInfoCache:   exInfoCache,
 	}
 }
@@ -55,10 +51,11 @@ func (s *DeltaReceiverSvc) getNewReceivers(ctx context.Context) []*DeltaReceiver
 	}
 	s.logger.Info(fmt.Sprintf("start get deltas of %d different symbols", len(symbols)))
 	var newReceivers []*DeltaReceiver
-	for i := 0; i < len(symbols)/40; i++ {
+	numReceivers := 40
+	for i := 0; i < len(symbols)/numReceivers; i++ {
 		var symbolsForReceiver []string
-		for j := 0; j*40+i < len(symbols); j++ {
-			symbolsForReceiver = append(symbolsForReceiver, symbols[j*40+i])
+		for j := 0; j*numReceivers+i < len(symbols); j++ {
+			symbolsForReceiver = append(symbolsForReceiver, symbols[j*numReceivers+i])
 		}
 		if newReceiver := NewDeltaReceiver(s.cfg.BinanceHttpConfig, symbolsForReceiver, s.localRepo, s.globalRepo); newReceiver != nil {
 			newReceivers = append(newReceivers, newReceiver)
@@ -96,6 +93,7 @@ func (s *DeltaReceiverSvc) ReceiveDeltasPairs(ctx context.Context) {
 
 func (s *DeltaReceiverSvc) Shutdown(ctx context.Context) {
 	s.shutdown.Store(true)
+	s.logger.Debug(fmt.Sprintf("need to shutdown %d receivers", len(s.deltaReceivers)))
 	for _, receiver := range s.deltaReceivers {
 		receiver.Shutdown(ctx)
 	}

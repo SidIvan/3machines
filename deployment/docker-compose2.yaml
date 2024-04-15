@@ -24,6 +24,7 @@ services:
       - '/var/log/writer:/app/log'
     ports:
       - '9001:9001'
+    stop_grace_period: 120s
 
   mongodb:
     image: mongo
