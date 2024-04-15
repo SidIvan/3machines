@@ -21,6 +21,7 @@ type TickerReceiver struct {
 	globalRepo GlobalRepo
 	symbols    []string
 	shutdown   *atomic.Bool
+	done       chan struct{}
 }
 
 func NewTickerReceiver(cfg *binance.BinanceHttpClientConfig, symbols []string, localRepo LocalRepo, globalRepo GlobalRepo) *TickerReceiver {
@@ -36,6 +37,7 @@ func NewTickerReceiver(cfg *binance.BinanceHttpClientConfig, symbols []string, l
 		localRepo:  localRepo,
 		globalRepo: globalRepo,
 		shutdown:   &shutdown,
+		done:       make(chan struct{}),
 	}
 }
 
@@ -60,6 +62,7 @@ func (s *TickerReceiver) ReceiveAndSend(ctx context.Context) {
 			}
 		}
 	}
+	s.done <- struct{}{}
 }
 
 func (s *TickerReceiver) ReceiveBatch(ctx context.Context) ([]bmodel.SymbolTick, error) {
@@ -86,7 +89,6 @@ func (s *TickerReceiver) SendBatch(ctx context.Context, ticks []bmodel.SymbolTic
 		} else {
 			s.logger.Error(err.Error())
 			s.logger.Warn(fmt.Sprintf("failed send to Ch, retry, timestamp %d", curTime))
-			//s.globalRepo.Reconnect(ctx)
 		}
 	}
 	s.globalRepo.Reconnect(ctx)
@@ -123,4 +125,5 @@ func (s *TickerReceiver) saveTicksToFile(deltas []bmodel.SymbolTick) error {
 func (s *TickerReceiver) Shutdown(ctx context.Context) {
 	s.shutdown.Store(true)
 	s.receiver.Shutdown(ctx)
+	<-s.done
 }

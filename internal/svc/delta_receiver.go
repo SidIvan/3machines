@@ -14,7 +14,7 @@ import (
 	"time"
 )
 
-const BatchSize = 5000
+const BatchSize = 10000
 
 type DeltaReceiver struct {
 	logger     *zap.Logger
@@ -95,7 +95,6 @@ func (s *DeltaReceiver) SendBatch(ctx context.Context, deltas []model.Delta) err
 		} else {
 			s.logger.Error(err.Error())
 			s.logger.Warn(fmt.Sprintf("failed send to Ch, retry, timestamp %d", curTime))
-			//s.globalRepo.Reconnect(ctx)
 		}
 	}
 	s.globalRepo.Reconnect(ctx)
