@@ -100,4 +100,5 @@ func (s *BookTickerSvc) Shutdown(ctx context.Context) {
 	for _, receiver := range s.tickerReceivers {
 		receiver.Shutdown(ctx)
 	}
+	s.logger.Info("successfully shutdown")
 }

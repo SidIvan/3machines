@@ -134,5 +134,7 @@ func (s *DeltaReceiver) saveDeltasToFile(deltas []model.Delta) error {
 func (s *DeltaReceiver) Shutdown(ctx context.Context) {
 	s.shutdown.Store(true)
 	s.receiver.Shutdown(ctx)
+	s.logger.Debug("before writing to chan")
 	<-s.done
+	s.logger.Debug("successfully shutdown")
 }

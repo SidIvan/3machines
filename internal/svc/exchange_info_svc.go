@@ -110,4 +110,5 @@ func (s *ExchangeInfoSvc) saveExchangeInfoToFile(ticks *bmodel.ExchangeInfo) err
 func (s *ExchangeInfoSvc) Shutdown(ctx context.Context) {
 	s.shutdown.Store(true)
 	<-s.done
+	s.logger.Info("successfully shutdown")
 }

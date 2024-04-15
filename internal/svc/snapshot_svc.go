@@ -150,4 +150,5 @@ func (s *SnapshotSvc) saveSnapshotToFile(snapshot []model.DepthSnapshotPart) err
 func (s *SnapshotSvc) Shutdown(ctx context.Context) {
 	s.shutdown.Store(true)
 	<-s.done
+	s.logger.Info("successfully shutdown")
 }

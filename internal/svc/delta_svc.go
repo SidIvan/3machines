@@ -99,4 +99,5 @@ func (s *DeltaReceiverSvc) Shutdown(ctx context.Context) {
 	for _, receiver := range s.deltaReceivers {
 		receiver.Shutdown(ctx)
 	}
+	s.logger.Info("successfully shutdown")
 }
