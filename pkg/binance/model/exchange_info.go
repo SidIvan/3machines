@@ -53,7 +53,9 @@ func ExInfoStringHash(s string) uint64 {
 }
 
 func (s *ExchangeInfo) ExInfoHash() uint64 {
-	payload, _ := json.Marshal(s)
+	tmp := *s
+	tmp.ServerTime = 0
+	payload, _ := json.Marshal(tmp)
 	return ExInfoStringHash(string(payload))
 }
 
