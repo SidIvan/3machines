@@ -82,29 +82,26 @@ func (s *TickerReceiver) ReceiveBatch(ctx context.Context) ([]bmodel.SymbolTick,
 }
 
 func (s *TickerReceiver) SendBatch(ctx context.Context, ticks []bmodel.SymbolTick) error {
-	curTime := time.Now().UnixMilli()
-	s.logger.Info(fmt.Sprintf("sending batch of %d ticks, send timestamp %d", len(ticks), curTime))
 	for i := 0; i < 3; i++ {
 		if err := s.globalRepo.SendBookTicks(ctx, ticks); err == nil {
-			s.logger.Info(fmt.Sprintf("successfully sent to Ch, send timestamp %d", curTime))
 			return nil
 		} else {
 			s.logger.Error(err.Error())
-			s.logger.Warn(fmt.Sprintf("failed send to Ch, retry, timestamp %d", curTime))
+			s.logger.Warn("failed send to Ch, retry")
 		}
 	}
 	s.globalRepo.Reconnect(ctx)
-	s.logger.Warn(fmt.Sprintf("failed send to Ch, try save to mongo send timestamp %d", curTime))
+	s.logger.Warn("failed send to Ch, try save to mongo")
 	for i := 0; i < 3; i++ {
 		if err := s.localRepo.SaveBookTicker(ctx, ticks); err == nil {
-			s.logger.Info(fmt.Sprintf("successfully saved to mongo, send timestamp %d", curTime))
+			s.logger.Info("successfully saved to mongo")
 			return nil
 		} else {
-			s.logger.Warn(fmt.Sprintf("failed save to mongo, retry, timestamp %d", curTime))
+			s.logger.Warn("failed save to mongo, retry")
 			s.logger.Error(err.Error())
 		}
 	}
-	s.logger.Warn(fmt.Sprintf("failed save to mongo, attempting save to file, send timestamp %d", curTime))
+	s.logger.Warn("failed save to mongo, attempting save to file")
 	// УСЁ ПРОПАЛО
 	return s.saveTicksToFile(ticks)
 }
@@ -127,7 +124,6 @@ func (s *TickerReceiver) saveTicksToFile(deltas []bmodel.SymbolTick) error {
 func (s *TickerReceiver) Shutdown(ctx context.Context) {
 	s.shutdown.Store(true)
 	s.receiver.Shutdown(ctx)
-	s.logger.Debug("before writing to chan")
 	<-s.done
 	s.logger.Debug("successfully shutdown")
 }

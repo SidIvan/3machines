@@ -54,6 +54,7 @@ func (s *DeltaReceiver) StartReceiveDeltas(ctx context.Context) error {
 }
 
 func (s *DeltaReceiver) ReceiveAndSend(ctx context.Context) {
+	s.logger.Info(fmt.Sprintf("delta receiver with %d symbols started", len(s.symbols)))
 	for !s.shutdown.Load() {
 		batch, err := s.ReceiveBatch(ctx)
 		if err != nil {
@@ -89,29 +90,26 @@ func (s *DeltaReceiver) ReceiveBatch(ctx context.Context) ([]model.Delta, error)
 }
 
 func (s *DeltaReceiver) SendBatch(ctx context.Context, deltas []model.Delta) error {
-	curTime := time.Now().UnixMilli()
-	s.logger.Info(fmt.Sprintf("sending batch of %d deltas, send timestamp %d", len(deltas), curTime))
 	for i := 0; i < 3; i++ {
 		if err := s.globalRepo.SendDeltas(ctx, deltas); err == nil {
-			s.logger.Info(fmt.Sprintf("successfully sent to Ch, send timestamp %d", curTime))
 			return nil
 		} else {
 			s.logger.Error(err.Error())
-			s.logger.Warn(fmt.Sprintf("failed send to Ch, retry, timestamp %d", curTime))
+			s.logger.Warn("failed send to Ch, retry")
 		}
 	}
 	s.globalRepo.Reconnect(ctx)
-	s.logger.Warn(fmt.Sprintf("failed send to Ch, try save to mongo send timestamp %d", curTime))
+	s.logger.Warn("failed send to Ch, try save to mongo send timestamp")
 	for i := 0; i < 3; i++ {
 		if err := s.localRepo.SaveDeltas(ctx, deltas); err == nil {
-			s.logger.Info(fmt.Sprintf("successfully saved to mongo, send timestamp %d", curTime))
+			s.logger.Info("successfully saved to mongo")
 			return nil
 		} else {
-			s.logger.Warn(fmt.Sprintf("failed save to mongo, retry, timestamp %d", curTime))
+			s.logger.Warn("failed save to mongo, retry")
 			s.logger.Error(err.Error())
 		}
 	}
-	s.logger.Warn(fmt.Sprintf("failed save to mongo, attempting save to file, send timestamp %d", curTime))
+	s.logger.Warn("failed save to mongo, attempting save to file")
 	// УСЁ ПРОПАЛО
 	return s.saveDeltasToFile(deltas)
 }
@@ -134,7 +132,6 @@ func (s *DeltaReceiver) saveDeltasToFile(deltas []model.Delta) error {
 func (s *DeltaReceiver) Shutdown(ctx context.Context) {
 	s.shutdown.Store(true)
 	s.receiver.Shutdown(ctx)
-	s.logger.Debug("before writing to chan")
 	<-s.done
 	s.logger.Debug("successfully shutdown")
 }

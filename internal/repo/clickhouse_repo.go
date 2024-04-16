@@ -22,22 +22,9 @@ const (
 
 type chClientHolder struct {
 	connPool *chpool.Pool
-	//mut      *sync.Mutex
 }
 
-//func (s *chClientHolder) SetNewClient(client *ch.Client) {
-//	var x chpool.Pool
-//	//s.mut.Lock()
-//	if s.connPool != nil {
-//		s.connPool.Close()
-//	}
-//	s.connPool, err := chpool.New(context.Background(), chpool.Options{})
-//	//s.mut.Unlock()
-//}
-
 func (s *chClientHolder) Do(ctx context.Context, query ch.Query) error {
-	//s.mut.Lock()
-	//defer s.mut.Unlock()
 	return s.connPool.Do(ctx, query)
 }
 
@@ -47,13 +34,18 @@ type ClickhouseRepo struct {
 	cfg     *conf.GlobalRepoConfig
 }
 
+const (
+	ChMaxConns = 45
+	ChMinConns = 15
+)
+
 func (s ClickhouseRepo) Reconnect(ctx context.Context) error {
 	if connPool, err := chpool.Dial(ctx, chpool.Options{
 		ClientOptions: ch.Options{
 			Address: s.cfg.URI.GetAddress(),
 		},
-		MaxConns: 30,
-		MinConns: 15,
+		MaxConns: ChMaxConns,
+		MinConns: ChMinConns,
 	}); err != nil {
 		s.logger.Error(err.Error())
 		return err
@@ -65,13 +57,10 @@ func (s ClickhouseRepo) Reconnect(ctx context.Context) error {
 
 func NewClickhouseRepo(cfg *conf.GlobalRepoConfig) *ClickhouseRepo {
 	logger := log.GetLogger("ClickhouseRepo")
-	//var mutex sync.Mutex
 	return &ClickhouseRepo{
 		logger:  logger,
-		clientH: &chClientHolder{
-			//mut: &mutex,
-		},
-		cfg: cfg,
+		clientH: &chClientHolder{},
+		cfg:     cfg,
 	}
 }
 
@@ -80,8 +69,8 @@ func (s ClickhouseRepo) Connect(ctx context.Context) error {
 		ClientOptions: ch.Options{
 			Address: s.cfg.URI.GetAddress(),
 		},
-		MaxConns: 30,
-		MinConns: 15,
+		MaxConns: ChMaxConns,
+		MinConns: ChMinConns,
 	})
 	if err != nil {
 		s.logger.Error(err.Error())
