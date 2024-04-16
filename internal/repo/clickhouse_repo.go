@@ -42,7 +42,9 @@ const (
 func (s ClickhouseRepo) Reconnect(ctx context.Context) error {
 	if connPool, err := chpool.Dial(ctx, chpool.Options{
 		ClientOptions: ch.Options{
-			Address: s.cfg.URI.GetAddress(),
+			Address:     s.cfg.URI.GetAddress(),
+			DialTimeout: 5 * time.Second,
+			ReadTimeout: 5 * time.Second,
 		},
 		MaxConns: ChMaxConns,
 		MinConns: ChMinConns,
@@ -67,7 +69,9 @@ func NewClickhouseRepo(cfg *conf.GlobalRepoConfig) *ClickhouseRepo {
 func (s ClickhouseRepo) Connect(ctx context.Context) error {
 	connPool, err := chpool.Dial(ctx, chpool.Options{
 		ClientOptions: ch.Options{
-			Address: s.cfg.URI.GetAddress(),
+			Address:     s.cfg.URI.GetAddress(),
+			DialTimeout: 5 * time.Second,
+			ReadTimeout: 5 * time.Second,
 		},
 		MaxConns: ChMaxConns,
 		MinConns: ChMinConns,
