@@ -100,14 +100,14 @@ func (s *BookTickerClient) ReceiveTicks(ctx context.Context) (*model.SymbolTick,
 			err = json.Unmarshal(msg, &tick)
 			if err != nil {
 				s.logger.Error(err.Error())
-				return nil, fmt.Errorf("error while unmarshaling delta message %w", err)
+				return nil, fmt.Errorf("error while unmarshaling tick message %w", err)
 			}
 			return &tick, nil
 		}
 		if s.shutdown.Load() {
 			return nil, nil
 		}
-		s.logger.Warn("error while getting delta message, reconnect")
+		s.logger.Warn("error while getting tick message, reconnect")
 		if err = s.Reconnect(ctx); err != nil && i == 3 {
 			return nil, err
 		}
