@@ -51,7 +51,7 @@ func (s *DeltaReceiverSvc) getNewReceivers(ctx context.Context) []*DeltaReceiver
 	}
 	s.logger.Info(fmt.Sprintf("start get deltas of %d different symbols", len(symbols)))
 	var newReceivers []*DeltaReceiver
-	numReceivers := 40
+	numReceivers := 20
 	for i := 0; i < numReceivers; i++ {
 		var symbolsForReceiver []string
 		for j := 0; j*numReceivers+i < len(symbols); j++ {
