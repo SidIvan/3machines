@@ -66,6 +66,10 @@ func (s *SnapshotSvc) StartReceiveAndSaveSnapshots(ctx context.Context) {
 			}
 		}
 		s.logger.Info(fmt.Sprintf("end updating scheduling map, %d snapshots scheduled now", len(s.snapshotSchedules)))
+		if len(s.snapshotQueue) == 0 {
+			time.Sleep(10 * time.Minute)
+			continue
+		}
 		s.logger.Info(fmt.Sprintf("start of getting %d snapshots", len(s.snapshotQueue)))
 		for _, symbol := range s.snapshotQueue {
 			if s.shutdown.Load() {
