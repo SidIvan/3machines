@@ -68,11 +68,15 @@ func (s *TickerReceiver) ReceiveAndSend(ctx context.Context) {
 func (s *TickerReceiver) ReceiveBatch(ctx context.Context) ([]bmodel.SymbolTick, error) {
 	var ticks []bmodel.SymbolTick
 	for !s.shutdown.Load() && len(ticks) <= BatchSize {
-		tick, err := s.receiver.ReceiveTicks(ctx)
+		ctxWithTimeout, cancel := context.WithTimeout(ctx, 5*time.Second)
+		tick, err := s.receiver.ReceiveTicks(ctxWithTimeout)
+		cancel()
 		if err != nil {
 			return nil, fmt.Errorf("%w", err)
 		}
-		ticks = append(ticks, *tick)
+		if tick != nil {
+			ticks = append(ticks, *tick)
+		}
 	}
 	return ticks, nil
 }

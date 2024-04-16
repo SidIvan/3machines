@@ -5,7 +5,7 @@ get.full.snapshot.period.m:
 full.snapshot.depth:
   5000
 reconnect.period.m:
-  2
+  1
 ex.info.upd.per.m:
   5
 
