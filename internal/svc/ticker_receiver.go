@@ -52,6 +52,7 @@ func (s *TickerReceiver) StartReceiveTicks(ctx context.Context) error {
 }
 
 func (s *TickerReceiver) ReceiveAndSend(ctx context.Context) {
+	s.logger.Info(fmt.Sprintf("ticks receiver with %d symbols started", len(s.symbols)))
 	for !s.shutdown.Load() {
 		batch, err := s.ReceiveBatch(ctx)
 		if err != nil {
