@@ -78,7 +78,7 @@ func (s *ExchangeInfoSvc) SaveExchangeInfo(ctx context.Context, exInfo *bmodel.E
 			//s.globalRepo.Reconnect(ctx)
 		}
 	}
-	s.globalRepo.Reconnect(ctx)
+	//s.globalRepo.Reconnect(ctx)
 	s.logger.Warn("failed send to Ch, try save to mongo")
 	for i := 0; i < 3; i++ {
 		if err := s.localRepo.SaveExchangeInfo(ctx, exInfo); err == nil {

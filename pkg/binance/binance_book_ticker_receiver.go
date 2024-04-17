@@ -104,6 +104,7 @@ func (s *BookTickerClient) ReceiveTicks(ctx context.Context) (*model.SymbolTick,
 			}
 			return &tick, nil
 		}
+		s.logger.Warn(err.Error())
 		if s.shutdown.Load() {
 			return nil, nil
 		}
