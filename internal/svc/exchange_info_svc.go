@@ -54,9 +54,14 @@ func (s *ExchangeInfoSvc) StartReceiveExInfo(ctx context.Context) {
 		exInfo, err := s.binanceClient.GetFullExchangeInfo(ctxWithTimeout)
 		s.logger.Info(fmt.Sprintf("got exchange info with hash %d", exInfo.ExInfoHash()))
 		cancel()
+		ctxWithTimeout, cancel = context.WithTimeout(context.Background(), 5*time.Second)
+		lastSavedExInfo := s.globalRepo.GetLastFullExchangeInfo(ctxWithTimeout)
+		cancel()
 		if err != nil {
 			s.logger.Error(err.Error())
-		} else if !bmodel.EqualsExchangeInfos(s.exInfoCache.GetVal(), exInfo) {
+		} else if lastSavedExInfo == nil {
+			s.logger.Error("error while receiving last saved exchange info from clickhouse")
+		} else if !bmodel.EqualsExchangeInfos(lastSavedExInfo, exInfo) {
 			s.logger.Info("exchange info changed, attempt to send")
 			if err = s.SaveExchangeInfo(ctx, exInfo); err != nil {
 				s.logger.Error(err.Error())

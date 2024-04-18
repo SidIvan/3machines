@@ -99,7 +99,7 @@ func (s *DeltaReceiver) SendBatch(ctx context.Context, deltas []model.Delta) err
 		}
 	}
 	s.globalRepo.Reconnect(ctx)
-	s.logger.Warn("failed send to Ch, try save to mongo send timestamp")
+	s.logger.Warn("failed send to Ch, try save to mongo")
 	for i := 0; i < 3; i++ {
 		if err := s.localRepo.SaveDeltas(ctx, deltas); err == nil {
 			s.logger.Info("successfully saved to mongo")
