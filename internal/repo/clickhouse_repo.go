@@ -294,7 +294,7 @@ func (s ClickhouseRepo) GetLastFullExchangeInfoHash(ctx context.Context) uint64 
 	var resp proto.ColUInt64
 	var hash uint64
 	if err := s.clientH.Do(ctx, ch.Query{
-		Body: fmt.Sprintf("SELECT %s from %s.%s ORDER BY %s LIMIT 1",
+		Body: fmt.Sprintf("SELECT %s from %s.%s ORDER BY %s DESC LIMIT 1",
 			HashCol, s.cfg.DatabaseName, s.cfg.ExchangeInfoTable, TimestampCol),
 		Result: proto.Results{
 			{Name: HashCol, Data: &resp},
@@ -318,7 +318,7 @@ func (s ClickhouseRepo) GetLastFullExchangeInfo(ctx context.Context) *bmodel.Exc
 	var resp proto.ColStr
 	var exInfo bmodel.ExchangeInfo
 	if err := s.clientH.Do(ctx, ch.Query{
-		Body: fmt.Sprintf("SELECT %s from %s.%s ORDER BY %s LIMIT 1",
+		Body: fmt.Sprintf("SELECT %s from %s.%s ORDER BY %s DESC LIMIT 1",
 			ExchangeInfoCol, s.cfg.DatabaseName, s.cfg.ExchangeInfoTable, TimestampCol),
 		Result: proto.Results{
 			{Name: ExchangeInfoCol, Data: &resp},
