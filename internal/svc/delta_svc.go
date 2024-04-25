@@ -61,7 +61,7 @@ func (s *DeltaReceiverSvc) getAndActivateNewReceivers(ctx context.Context) []*De
 			newReceivers = append(newReceivers, newReceiver)
 		}
 	}
-	if (len(symbols) >= numReceivers && len(newReceivers) < numReceivers) || (len(newReceivers) < len(symbols)) {
+	if (len(symbols) >= numReceivers && len(newReceivers) < numReceivers) || (len(symbols) < numReceivers && len(newReceivers) < len(symbols)) {
 		s.logger.Error("not enough reveivers")
 		return nil
 	}
