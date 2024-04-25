@@ -12,6 +12,7 @@ import (
 	"github.com/ClickHouse/ch-go/chpool"
 	"github.com/ClickHouse/ch-go/proto"
 	"go.uber.org/zap"
+	"sync"
 	"time"
 )
 
@@ -20,18 +21,30 @@ const (
 	SymbolCol    = "symbol"
 )
 
-type chClientHolder struct {
+type chPoolHolder struct {
+	mut      *sync.RWMutex
 	connPool *chpool.Pool
 }
 
-func (s *chClientHolder) Do(ctx context.Context, query ch.Query) error {
+func (s *chPoolHolder) Do(ctx context.Context, query ch.Query) error {
+	s.mut.RLock()
+	defer s.mut.RUnlock()
 	return s.connPool.Do(ctx, query)
 }
 
+func (s *chPoolHolder) SetPool(newPool *chpool.Pool) {
+	s.mut.Lock()
+	defer s.mut.Unlock()
+	if s.connPool != nil {
+		defer s.connPool.Close()
+	}
+	s.connPool = newPool
+}
+
 type ClickhouseRepo struct {
-	clientH *chClientHolder
-	logger  *zap.Logger
-	cfg     *conf.GlobalRepoConfig
+	pool   *chPoolHolder
+	logger *zap.Logger
+	cfg    *conf.GlobalRepoConfig
 }
 
 const (
@@ -52,17 +65,20 @@ func (s ClickhouseRepo) Reconnect(ctx context.Context) error {
 		s.logger.Error(err.Error())
 		return err
 	} else {
-		s.clientH.connPool = connPool
+		s.pool.SetPool(connPool)
 		return err
 	}
 }
 
 func NewClickhouseRepo(cfg *conf.GlobalRepoConfig) *ClickhouseRepo {
 	logger := log.GetLogger("ClickhouseRepo")
+	var mut sync.RWMutex
 	return &ClickhouseRepo{
-		logger:  logger,
-		clientH: &chClientHolder{},
-		cfg:     cfg,
+		logger: logger,
+		pool: &chPoolHolder{
+			mut: &mut,
+		},
+		cfg: cfg,
 	}
 }
 
@@ -80,7 +96,7 @@ func (s ClickhouseRepo) Connect(ctx context.Context) error {
 		s.logger.Error(err.Error())
 		return err
 	}
-	s.clientH.connPool = connPool
+	s.pool.SetPool(connPool)
 	return nil
 }
 
@@ -115,9 +131,8 @@ func (s ClickhouseRepo) SendBookTicks(ctx context.Context, ticks []bmodel.Symbol
 		s.logger.Warn("empty ticks slice")
 		return nil
 	}
-	//s.logger.Debug(fmt.Sprintf("%d", s.clientH.connPool))
 	input := prepareBookTickerInsertBlock(ticks)
-	err := s.clientH.Do(ctx, ch.Query{
+	err := s.pool.Do(ctx, ch.Query{
 		Body:  fmt.Sprintf("INSERT INTO %s.%s VALUES", s.cfg.DatabaseName, s.cfg.BookTickerTable),
 		Input: input,
 	})
@@ -194,8 +209,8 @@ func (s ClickhouseRepo) SendDeltas(ctx context.Context, deltas []model.Delta) er
 		return nil
 	}
 	input := prepareDeltasInsertBlock(deltas)
-	//s.logger.Debug(fmt.Sprintf("%d", s.clientH.connPool))
-	err := s.clientH.Do(ctx, ch.Query{
+	//s.logger.Debug(fmt.Sprintf("%d", s.pool.connPool))
+	err := s.pool.Do(ctx, ch.Query{
 		Body:  fmt.Sprintf("INSERT INTO %s.%s VALUES", s.cfg.DatabaseName, s.cfg.DeltaTable),
 		Input: input,
 	})
@@ -210,8 +225,8 @@ func (s ClickhouseRepo) SendSnapshot(ctx context.Context, snapshot []model.Depth
 		return nil
 	}
 	input := prepareFullSnapshotInsertBlock(snapshot)
-	//s.logger.Debug(fmt.Sprintf("%d", s.clientH.connPool))
-	err := s.clientH.Do(ctx, ch.Query{
+	//s.logger.Debug(fmt.Sprintf("%d", s.pool.connPool))
+	err := s.pool.Do(ctx, ch.Query{
 		Body:  fmt.Sprintf("INSERT INTO %s.%s VALUES", s.cfg.DatabaseName, s.cfg.SnapshotTable),
 		Input: input,
 	})
@@ -224,7 +239,7 @@ func (s ClickhouseRepo) SendSnapshot(ctx context.Context, snapshot []model.Depth
 func (s ClickhouseRepo) GetLastSavedTimestamp(ctx context.Context, symb model.Symbol) time.Time {
 	timestampResp := new(proto.ColDateTime64).WithPrecision(3)
 	latestTimestamp := time.Unix(0, 0)
-	if err := s.clientH.Do(ctx, ch.Query{
+	if err := s.pool.Do(ctx, ch.Query{
 		Body: fmt.Sprintf("SELECT %s from %s.%s WHERE %s = '%s' ORDER BY %s LIMIT 1",
 			TimestampCol, s.cfg.DatabaseName, s.cfg.DeltaTable, SymbolCol, symb, TimestampCol),
 		Result: proto.Results{
@@ -267,19 +282,19 @@ func (s ClickhouseRepo) prepareExchangeInfoInsertBlock(exInfo *bmodel.ExchangeIn
 }
 
 func (s ClickhouseRepo) Disconnect(ctx context.Context) {
-	s.clientH.connPool.Close()
+	s.pool.connPool.Close()
 }
 
 func (s ClickhouseRepo) SendFullExchangeInfo(ctx context.Context, exInfo *bmodel.ExchangeInfo) error {
 	curHash := exInfo.ExInfoHash()
 	lastHash := s.GetLastFullExchangeInfoHash(ctx)
-	//s.logger.Debug(fmt.Sprintf("%d", s.clientH.connPool))
+	//s.logger.Debug(fmt.Sprintf("%d", s.pool.connPool))
 	if curHash == lastHash {
 		s.logger.Info("Exchange info has not updated")
 		return nil
 	}
 	input := s.prepareExchangeInfoInsertBlock(exInfo)
-	err := s.clientH.Do(ctx, ch.Query{
+	err := s.pool.Do(ctx, ch.Query{
 		Body:  fmt.Sprintf("INSERT INTO %s.%s VALUES", s.cfg.DatabaseName, s.cfg.ExchangeInfoTable),
 		Input: input,
 	})
@@ -293,7 +308,7 @@ func (s ClickhouseRepo) SendFullExchangeInfo(ctx context.Context, exInfo *bmodel
 func (s ClickhouseRepo) GetLastFullExchangeInfoHash(ctx context.Context) uint64 {
 	var resp proto.ColUInt64
 	var hash uint64
-	if err := s.clientH.Do(ctx, ch.Query{
+	if err := s.pool.Do(ctx, ch.Query{
 		Body: fmt.Sprintf("SELECT %s from %s.%s ORDER BY %s DESC LIMIT 1",
 			HashCol, s.cfg.DatabaseName, s.cfg.ExchangeInfoTable, TimestampCol),
 		Result: proto.Results{
@@ -317,7 +332,7 @@ func (s ClickhouseRepo) GetLastFullExchangeInfoHash(ctx context.Context) uint64 
 func (s ClickhouseRepo) GetLastFullExchangeInfo(ctx context.Context) *bmodel.ExchangeInfo {
 	var resp proto.ColStr
 	var exInfo bmodel.ExchangeInfo
-	if err := s.clientH.Do(ctx, ch.Query{
+	if err := s.pool.Do(ctx, ch.Query{
 		Body: fmt.Sprintf("SELECT %s from %s.%s ORDER BY %s DESC LIMIT 1",
 			ExchangeInfoCol, s.cfg.DatabaseName, s.cfg.ExchangeInfoTable, TimestampCol),
 		Result: proto.Results{

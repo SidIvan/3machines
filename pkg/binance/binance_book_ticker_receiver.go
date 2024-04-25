@@ -10,29 +10,25 @@ import (
 	"go.uber.org/zap"
 	"net/http"
 	"strings"
-	"sync"
 	"sync/atomic"
 )
 
 type BookTickerClient struct {
-	logger    *zap.Logger
-	baseUri   string
-	symbols   []string
-	shutdown  *atomic.Bool
-	dialer    *websocket.Conn
-	dialerMut *sync.Mutex
+	logger   *zap.Logger
+	baseUri  string
+	symbols  []string
+	shutdown *atomic.Bool
+	dialer   *websocket.Conn
 }
 
 func NewBookTickerClient(cfg *BinanceHttpClientConfig, symbols []string) *BookTickerClient {
-	var mut sync.Mutex
 	var shutdown atomic.Bool
 	shutdown.Store(false)
 	client := BookTickerClient{
-		logger:    log.GetLogger("DeltaReceiveClient"),
-		baseUri:   cfg.DeltaStreamBaseUriConfig.GetBaseUri(),
-		symbols:   symbols,
-		dialerMut: &mut,
-		shutdown:  &shutdown,
+		logger:   log.GetLogger("DeltaReceiveClient"),
+		baseUri:  cfg.DeltaStreamBaseUriConfig.GetBaseUri(),
+		symbols:  symbols,
+		shutdown: &shutdown,
 	}
 	return &client
 }
@@ -42,8 +38,6 @@ func (s *BookTickerClient) formWSUri() string {
 }
 
 func (s *BookTickerClient) Connect(ctx context.Context) error {
-	s.dialerMut.Lock()
-	defer s.dialerMut.Unlock()
 	d := websocket.Dialer{
 		Proxy: http.ProxyFromEnvironment,
 	}
@@ -92,9 +86,7 @@ func (s *BookTickerClient) ReceiveTicks(ctx context.Context) (*model.SymbolTick,
 		}
 	}
 	for i := 0; ; i++ {
-		s.dialerMut.Lock()
 		_, msg, err := s.dialer.ReadMessage()
-		s.dialerMut.Unlock()
 		if err == nil {
 			var tick model.SymbolTick
 			err = json.Unmarshal(msg, &tick)
@@ -103,6 +95,9 @@ func (s *BookTickerClient) ReceiveTicks(ctx context.Context) (*model.SymbolTick,
 				return nil, fmt.Errorf("error while unmarshaling tick message %w", err)
 			}
 			return &tick, nil
+		}
+		if s.shutdown.Load() {
+			return nil, nil
 		}
 		s.logger.Warn(err.Error())
 		if s.shutdown.Load() {

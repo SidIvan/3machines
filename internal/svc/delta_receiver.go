@@ -59,7 +59,7 @@ func (s *DeltaReceiver) ReceiveAndSend(ctx context.Context) {
 		batch, err := s.ReceiveBatch(ctx)
 		if err != nil {
 			s.logger.Error(err.Error())
-		} else {
+		} else if batch != nil {
 			if err = s.SendBatch(ctx, batch); err != nil {
 				s.logger.Error(err.Error())
 			}
@@ -75,6 +75,9 @@ func (s *DeltaReceiver) ReceiveBatch(ctx context.Context) ([]model.Delta, error)
 		deltaMsg, err := s.receiver.ReceiveDeltaMessage(ctxWithTimeout)
 		cancel()
 		if err != nil {
+			if s.shutdown.Load() {
+				return nil, nil
+			}
 			return nil, fmt.Errorf("%w", err)
 		}
 		if deltaMsg != nil {

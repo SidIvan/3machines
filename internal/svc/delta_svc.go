@@ -39,7 +39,7 @@ func NewDeltaReceiverSvc(config *conf.AppConfig, binanceClient BinanceClient, lo
 	}
 }
 
-func (s *DeltaReceiverSvc) getNewReceivers(ctx context.Context) []*DeltaReceiver {
+func (s *DeltaReceiverSvc) getAndActivateNewReceivers(ctx context.Context) []*DeltaReceiver {
 	if s.shutdown.Load() {
 		return nil
 	}
@@ -61,6 +61,10 @@ func (s *DeltaReceiverSvc) getNewReceivers(ctx context.Context) []*DeltaReceiver
 			newReceivers = append(newReceivers, newReceiver)
 		}
 	}
+	if (len(symbols) >= numReceivers && len(newReceivers) < numReceivers) || (len(newReceivers) < len(symbols)) {
+		s.logger.Error("not enough reveivers")
+		return nil
+	}
 	for _, receiver := range newReceivers {
 		for k := 0; k < 3; k++ {
 			if err := receiver.StartReceiveDeltas(ctx); err == nil {
@@ -73,8 +77,8 @@ func (s *DeltaReceiverSvc) getNewReceivers(ctx context.Context) []*DeltaReceiver
 	return newReceivers
 }
 
-func (s *DeltaReceiverSvc) grasefullyReconnectReceivers(ctx context.Context) {
-	newReceivers := s.getNewReceivers(ctx)
+func (s *DeltaReceiverSvc) gracefullyReconnectReceivers(ctx context.Context) {
+	newReceivers := s.getAndActivateNewReceivers(ctx)
 	for _, receiver := range s.deltaReceivers {
 		ctxWithTimeout, cancel := context.WithTimeout(ctx, 10*time.Second)
 		receiver.Shutdown(ctxWithTimeout)
@@ -84,10 +88,10 @@ func (s *DeltaReceiverSvc) grasefullyReconnectReceivers(ctx context.Context) {
 }
 
 func (s *DeltaReceiverSvc) ReceiveDeltasPairs(ctx context.Context) {
-	s.deltaReceivers = s.getNewReceivers(ctx)
+	s.deltaReceivers = s.getAndActivateNewReceivers(ctx)
 	for {
 		time.Sleep(time.Duration(s.cfg.ReconnectPeriodM) * time.Minute)
-		s.grasefullyReconnectReceivers(ctx)
+		s.gracefullyReconnectReceivers(ctx)
 	}
 }
 
