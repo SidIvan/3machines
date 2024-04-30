@@ -14,6 +14,7 @@ import (
 	"go.uber.org/zap"
 	"net/http"
 	"sync"
+	"time"
 )
 
 type App struct {
@@ -67,6 +68,11 @@ func (s *App) Start() {
 		s.logger.Error(err.Error())
 		return
 	}
+	exInfo, err := s.binanceClient.GetFullExchangeInfo(context.Background())
+	if err != nil {
+		s.logger.Error(err.Error())
+		return
+	}
 	go func() {
 		http.Handle("/metrics", promhttp.Handler())
 		err := http.ListenAndServe(":9001", nil)
@@ -74,11 +80,7 @@ func (s *App) Start() {
 			panic(err)
 		}
 	}()
-	exInfo, err := s.binanceClient.GetFullExchangeInfo(context.Background())
-	if err != nil {
-		s.logger.Error(err.Error())
-		return
-	}
+	time.Sleep(2 * time.Second)
 	if err = s.globalRepo.SendFullExchangeInfo(baseContext, exInfo); err != nil {
 		s.logger.Error(err.Error())
 		return
@@ -88,13 +90,6 @@ func (s *App) Start() {
 		symbols = append(symbols, symbol.Symbol)
 	}
 	s.metrics.UpdateMetrics(exInfo.Symbols)
-	go func() {
-		http.Handle("/metrics", promhttp.Handler())
-		err := http.ListenAndServe(":9001", nil)
-		if err != nil {
-			panic(err)
-		}
-	}()
 	s.logger.Info("App started")
 	go s.deltaRecSvc.ReceiveDeltasPairs(baseContext)
 	go s.snapshotSvc.StartReceiveAndSaveSnapshots(baseContext)
