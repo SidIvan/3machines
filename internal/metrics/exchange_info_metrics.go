@@ -27,15 +27,15 @@ func (s *exInfoMetrics) updateActiveMetrics() {
 	if s.ReceivedExInfo == nil {
 		s.ReceivedExInfo = promauto.NewCounter(prometheus.CounterOpts{
 			Namespace: ExInfoNamespace,
-			Name:      "received_total",
+			Name:      "received",
 		})
 		s.SentExInfo = promauto.NewCounter(prometheus.CounterOpts{
 			Namespace: ExInfoNamespace,
-			Name:      "sent_total",
+			Name:      "sent",
 		})
 		s.SavedExInfo = promauto.NewCounter(prometheus.CounterOpts{
 			Namespace: ExInfoNamespace,
-			Name:      "saved_total",
+			Name:      "saved",
 		})
 	}
 }
