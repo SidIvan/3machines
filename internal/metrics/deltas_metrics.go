@@ -3,12 +3,16 @@ package metrics
 import (
 	"DeltaReceiver/internal/model"
 	"DeltaReceiver/internal/svc"
+	"DeltaReceiver/pkg/log"
 	"fmt"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
+	"go.uber.org/zap"
+	"strings"
 )
 
 type deltaMetrics struct {
+	logger              *zap.Logger
 	ReceivedDeltas      map[string]prometheus.Counter
 	SentDeltas          map[string]prometheus.Counter
 	SavedDeltas         map[string]prometheus.Counter
@@ -19,6 +23,7 @@ type deltaMetrics struct {
 
 func newDeltaMetrics() *deltaMetrics {
 	return &deltaMetrics{
+		logger:         log.GetLogger("DeltaMetricsImpl"),
 		ReceivedDeltas: make(map[string]prometheus.Counter),
 		SentDeltas:     make(map[string]prometheus.Counter),
 		SavedDeltas:    make(map[string]prometheus.Counter),
@@ -70,9 +75,14 @@ func (s *deltaMetrics) ProcessMetrics(deltas []model.Delta, event svc.TypeOfEven
 	}
 }
 
-func (_ *deltaMetrics) processMetrics(deltas []model.Delta, metrics map[string]prometheus.Counter, totalMetric prometheus.Counter) {
+func (s *deltaMetrics) processMetrics(deltas []model.Delta, metrics map[string]prometheus.Counter, totalMetric prometheus.Counter) {
 	for _, delta := range deltas {
-		metrics[delta.Symbol].Inc()
+		metricName := strings.ToUpper(delta.Symbol)
+		if metric, ok := metrics[metricName]; !ok {
+			s.logger.Warn(fmt.Sprintf("try to process non-existense metric [%s]", metricName))
+		} else {
+			metric.Inc()
+		}
 	}
 	totalMetric.Add(float64(len(deltas)))
 }
