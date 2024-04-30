@@ -51,15 +51,15 @@ func (s *ticksMetrics) updateActiveMetrics(symbols []string) {
 		if _, ok := s.ReceivedTicks[metricKey]; !ok {
 			s.ReceivedTicks[symbol] = promauto.NewCounter(prometheus.CounterOpts{
 				Namespace: BinanceTicksNamespace,
-				Name:      fmt.Sprintf("received_counter_%s", metricKey),
+				Name:      fmt.Sprintf("received_%s", metricKey),
 			})
 			s.SentTicks[metricKey] = promauto.NewCounter(prometheus.CounterOpts{
 				Namespace: BinanceTicksNamespace,
-				Name:      fmt.Sprintf("sent_counter_%s", metricKey),
+				Name:      fmt.Sprintf("sent_%s", metricKey),
 			})
 			s.SavedTicks[metricKey] = promauto.NewCounter(prometheus.CounterOpts{
 				Namespace: BinanceTicksNamespace,
-				Name:      fmt.Sprintf("saved_counter_%s", metricKey),
+				Name:      fmt.Sprintf("saved_%s", metricKey),
 			})
 		}
 	}
