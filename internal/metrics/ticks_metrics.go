@@ -35,15 +35,15 @@ func (s *ticksMetrics) updateActiveMetrics(symbols []string) {
 	if s.ReceivedTicksTotal == nil {
 		s.ReceivedTicksTotal = promauto.NewCounter(prometheus.CounterOpts{
 			Namespace: BinanceTicksNamespace,
-			Name:      "received_ticks_total",
+			Name:      "received_total",
 		})
 		s.SentTicksTotal = promauto.NewCounter(prometheus.CounterOpts{
 			Namespace: BinanceTicksNamespace,
-			Name:      "sent_ticks_total",
+			Name:      "sent_total",
 		})
 		s.SavedTicksTotal = promauto.NewCounter(prometheus.CounterOpts{
 			Namespace: BinanceTicksNamespace,
-			Name:      "saved_ticks_total",
+			Name:      "saved_total",
 		})
 	}
 	for _, symbol := range symbols {
@@ -51,15 +51,15 @@ func (s *ticksMetrics) updateActiveMetrics(symbols []string) {
 		if _, ok := s.ReceivedTicks[metricKey]; !ok {
 			s.ReceivedTicks[symbol] = promauto.NewCounter(prometheus.CounterOpts{
 				Namespace: BinanceTicksNamespace,
-				Name:      fmt.Sprintf("received_ticks_counter_%s", metricKey),
+				Name:      fmt.Sprintf("received_counter_%s", metricKey),
 			})
 			s.SentTicks[metricKey] = promauto.NewCounter(prometheus.CounterOpts{
 				Namespace: BinanceTicksNamespace,
-				Name:      fmt.Sprintf("sent_ticks_counter_%s", metricKey),
+				Name:      fmt.Sprintf("sent_counter_%s", metricKey),
 			})
 			s.SavedTicks[metricKey] = promauto.NewCounter(prometheus.CounterOpts{
 				Namespace: BinanceTicksNamespace,
-				Name:      fmt.Sprintf("saved_ticks_counter_%s", metricKey),
+				Name:      fmt.Sprintf("saved_counter_%s", metricKey),
 			})
 		}
 	}

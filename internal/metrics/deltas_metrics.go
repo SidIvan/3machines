@@ -35,15 +35,15 @@ func (s *deltaMetrics) updateActiveMetrics(symbols []string) {
 	if s.ReceivedDeltasTotal == nil {
 		s.ReceivedDeltasTotal = promauto.NewCounter(prometheus.CounterOpts{
 			Namespace: BinanceDeltasNamespace,
-			Name:      "received_deltas_total",
+			Name:      "received_total",
 		})
 		s.SentDeltasTotal = promauto.NewCounter(prometheus.CounterOpts{
 			Namespace: BinanceDeltasNamespace,
-			Name:      "sent_deltas_total",
+			Name:      "sent_total",
 		})
 		s.SavedDeltasTotal = promauto.NewCounter(prometheus.CounterOpts{
 			Namespace: BinanceDeltasNamespace,
-			Name:      "saved_deltas_total",
+			Name:      "saved_total",
 		})
 	}
 	for _, symbol := range symbols {
@@ -51,15 +51,15 @@ func (s *deltaMetrics) updateActiveMetrics(symbols []string) {
 		if _, ok := s.ReceivedDeltas[metricKey]; !ok {
 			s.ReceivedDeltas[symbol] = promauto.NewCounter(prometheus.CounterOpts{
 				Namespace: BinanceDeltasNamespace,
-				Name:      fmt.Sprintf("received_deltas_counter_%s", metricKey),
+				Name:      fmt.Sprintf("received_counter_%s", metricKey),
 			})
 			s.SentDeltas[metricKey] = promauto.NewCounter(prometheus.CounterOpts{
 				Namespace: BinanceDeltasNamespace,
-				Name:      fmt.Sprintf("sent_deltas_counter_%s", metricKey),
+				Name:      fmt.Sprintf("sent_counter_%s", metricKey),
 			})
 			s.SavedDeltas[metricKey] = promauto.NewCounter(prometheus.CounterOpts{
 				Namespace: BinanceDeltasNamespace,
-				Name:      fmt.Sprintf("saved_deltas_counter_%s", metricKey),
+				Name:      fmt.Sprintf("saved_counter_%s", metricKey),
 			})
 		}
 	}
