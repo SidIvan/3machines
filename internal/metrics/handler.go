@@ -67,6 +67,7 @@ func (s *Metrics) UpdateMetrics(symbolInfos []bmodel.SymbolInfo) {
 		symbols = append(symbols, symbol.Symbol)
 	}
 	s.deltasM.updateActiveMetrics(symbols)
+	s.ticksM.updateActiveMetrics(symbols)
 }
 
 func getMetricKey(symbol string) string {
