@@ -57,12 +57,12 @@ func (s *DeltaReceiverSvc) getAndActivateNewReceivers(ctx context.Context) []*De
 		for j := 0; j*numReceivers+i < len(symbols); j++ {
 			symbolsForReceiver = append(symbolsForReceiver, symbols[j*numReceivers+i])
 		}
-		if newReceiver := NewDeltaReceiver(s.cfg.BinanceHttpConfig, symbolsForReceiver, s.localRepo, s.globalRepo); newReceiver != nil {
+		if newReceiver := NewDeltaReceiver(s.cfg.BinanceHttpConfig, symbolsForReceiver, s.localRepo, s.globalRepo, s.metricsHolder); newReceiver != nil {
 			newReceivers = append(newReceivers, newReceiver)
 		}
 	}
 	if (len(symbols) >= numReceivers && len(newReceivers) < numReceivers) || (len(symbols) < numReceivers && len(newReceivers) < len(symbols)) {
-		s.logger.Error("not enough reveivers")
+		s.logger.Error("not enough receivers")
 		return nil
 	}
 	for _, receiver := range newReceivers {
