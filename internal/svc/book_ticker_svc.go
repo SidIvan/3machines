@@ -19,21 +19,21 @@ type BookTickerSvc struct {
 	tickerReceivers []*TickerReceiver
 	localRepo       LocalRepo
 	globalRepo      GlobalRepo
-	metricsHolder   MetricsHolder
+	metrics         MetricsHolder
 	cfg             *conf.AppConfig
 	shutdown        *atomic.Bool
 	dRecWg          *sync.WaitGroup
 	exInfoCache     *cache.ExchangeInfoCache
 }
 
-func NewBookTickerSvc(config *conf.AppConfig, binanceClient BinanceClient, localRepo LocalRepo, globalRepo GlobalRepo, metricsHolder MetricsHolder, exInfoCache *cache.ExchangeInfoCache) *BookTickerSvc {
+func NewBookTickerSvc(config *conf.AppConfig, binanceClient BinanceClient, localRepo LocalRepo, globalRepo GlobalRepo, metrics MetricsHolder, exInfoCache *cache.ExchangeInfoCache) *BookTickerSvc {
 	var shutdown atomic.Bool
 	var dRecWg sync.WaitGroup
 	shutdown.Store(false)
 	return &BookTickerSvc{
 		logger:        log.GetLogger("BookTickerSvc"),
 		binanceClient: binanceClient,
-		metricsHolder: metricsHolder,
+		metrics:       metrics,
 		localRepo:     localRepo,
 		globalRepo:    globalRepo,
 		cfg:           config,
@@ -61,7 +61,7 @@ func (s *BookTickerSvc) getNewReceivers(ctx context.Context) []*TickerReceiver {
 		for j := 0; j*numTickerReceivers+i < len(symbols); j++ {
 			symbolsForReceiver = append(symbolsForReceiver, symbols[j*numTickerReceivers+i])
 		}
-		if newReceiver := NewTickerReceiver(s.cfg.BinanceHttpConfig, symbolsForReceiver, s.localRepo, s.globalRepo); newReceiver != nil {
+		if newReceiver := NewTickerReceiver(s.cfg.BinanceHttpConfig, symbolsForReceiver, s.localRepo, s.globalRepo, s.metrics); newReceiver != nil {
 			newReceivers = append(newReceivers, newReceiver)
 		}
 	}

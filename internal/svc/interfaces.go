@@ -44,7 +44,8 @@ const (
 )
 
 type MetricsHolder interface {
-	ProcessDeltaMetrics(deltas []model.Delta, event TypeOfEvent)
+	ProcessDeltaMetrics([]model.Delta, TypeOfEvent)
+	ProcessTicksMetrics([]bmodel.SymbolTick, TypeOfEvent)
 	UpdateMetrics([]bmodel.SymbolInfo)
 	//IncreaseDeltaCtr(model.Symbol, int)
 	//IncreaseSnapshotPairCtr(model.Symbol, int)

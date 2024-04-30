@@ -8,7 +8,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"go.uber.org/zap"
-	"strings"
 )
 
 type deltaMetrics struct {
@@ -86,8 +85,4 @@ func (s *deltaMetrics) processMetrics(deltas []model.Delta, metrics map[string]p
 		}
 	}
 	totalMetric.Add(float64(len(deltas)))
-}
-
-func getMetricKey(symbol string) string {
-	return strings.ToUpper(symbol)
 }

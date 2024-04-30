@@ -19,12 +19,13 @@ type TickerReceiver struct {
 	receiver   *binance.BookTickerClient
 	localRepo  LocalRepo
 	globalRepo GlobalRepo
+	metrics    MetricsHolder
 	symbols    []string
 	shutdown   *atomic.Bool
 	done       chan struct{}
 }
 
-func NewTickerReceiver(cfg *binance.BinanceHttpClientConfig, symbols []string, localRepo LocalRepo, globalRepo GlobalRepo) *TickerReceiver {
+func NewTickerReceiver(cfg *binance.BinanceHttpClientConfig, symbols []string, localRepo LocalRepo, globalRepo GlobalRepo, metrics MetricsHolder) *TickerReceiver {
 	if len(symbols) == 0 {
 		return nil
 	}
@@ -36,6 +37,7 @@ func NewTickerReceiver(cfg *binance.BinanceHttpClientConfig, symbols []string, l
 		symbols:    symbols,
 		localRepo:  localRepo,
 		globalRepo: globalRepo,
+		metrics:    metrics,
 		shutdown:   &shutdown,
 		done:       make(chan struct{}),
 	}
@@ -58,6 +60,7 @@ func (s *TickerReceiver) ReceiveAndSend(ctx context.Context) {
 		if err != nil {
 			s.logger.Error(err.Error())
 		} else {
+			s.metrics.ProcessTicksMetrics(batch, Receive)
 			if err = s.SendBatch(ctx, batch); err != nil {
 				s.logger.Error(err.Error())
 			}
@@ -85,6 +88,7 @@ func (s *TickerReceiver) ReceiveBatch(ctx context.Context) ([]bmodel.SymbolTick,
 func (s *TickerReceiver) SendBatch(ctx context.Context, ticks []bmodel.SymbolTick) error {
 	for i := 0; i < 3; i++ {
 		if err := s.globalRepo.SendBookTicks(ctx, ticks); err == nil {
+			s.metrics.ProcessTicksMetrics(ticks, Send)
 			return nil
 		} else {
 			s.logger.Error(err.Error())
@@ -96,6 +100,7 @@ func (s *TickerReceiver) SendBatch(ctx context.Context, ticks []bmodel.SymbolTic
 	for i := 0; i < 3; i++ {
 		if err := s.localRepo.SaveBookTicker(ctx, ticks); err == nil {
 			s.logger.Info("successfully saved to mongo")
+			s.metrics.ProcessTicksMetrics(ticks, Save)
 			return nil
 		} else {
 			s.logger.Warn("failed save to mongo, retry")

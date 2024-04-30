@@ -7,17 +7,20 @@ import (
 	bmodel "DeltaReceiver/pkg/binance/model"
 	"DeltaReceiver/pkg/log"
 	"go.uber.org/zap"
+	"strings"
 )
 
 type Metrics struct {
 	logger  *zap.Logger
 	deltasM *deltaMetrics
+	ticksM  *ticksMetrics
 }
 
 func NewMetrics(cfg *conf.AppConfig) *Metrics {
 	metrics := Metrics{
 		logger:  log.GetLogger("PrometheusMetricsHandler"),
 		deltasM: newDeltaMetrics(),
+		ticksM:  newTicksMetrics(),
 	}
 	//for symbol, _ := range cfg.BinanceHttpConfig.Pair2Period {
 	//	metrics.NumReceivedDeltas[model.SymbolFromString(symbol)] = promauto.NewCounter(prometheus.CounterOpts{
@@ -50,10 +53,22 @@ func (s *Metrics) ProcessDeltaMetrics(deltas []model.Delta, event svc.TypeOfEven
 	s.deltasM.ProcessMetrics(deltas, event)
 }
 
+func (s *Metrics) ProcessTicksMetrics(ticks []bmodel.SymbolTick, event svc.TypeOfEvent) {
+	s.ticksM.ProcessMetrics(ticks, event)
+}
+
+func (s *Metrics) ProcessSnapshotMetrics(snapshot []model.DepthSnapshotPart, event svc.TypeOfEvent) {
+
+}
+
 func (s *Metrics) UpdateMetrics(symbolInfos []bmodel.SymbolInfo) {
 	var symbols []string
 	for _, symbol := range symbolInfos {
 		symbols = append(symbols, symbol.Symbol)
 	}
 	s.deltasM.updateActiveMetrics(symbols)
+}
+
+func getMetricKey(symbol string) string {
+	return strings.ToUpper(symbol)
 }
