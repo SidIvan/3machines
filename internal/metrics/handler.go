@@ -16,6 +16,7 @@ type Metrics struct {
 	ticksM    *ticksMetrics
 	snapshotM *snapshotMetrics
 	exInfoM   *exInfoMetrics
+	systemM   *systemMetrics
 }
 
 func NewMetrics(cfg *conf.AppConfig) *Metrics {
@@ -45,11 +46,16 @@ func (s *Metrics) ProcessExInfoMetrics(event svc.TypeOfEvent) {
 	s.exInfoM.ProcessMetrics(event)
 }
 
+func (s *Metrics) ProcessSystemMetrics() {
+	s.systemM.ProcessMetrics()
+}
+
 func (s *Metrics) UpdateMetrics(symbolInfos []bmodel.SymbolInfo) {
 	var symbols []string
 	for _, symbol := range symbolInfos {
 		symbols = append(symbols, symbol.Symbol)
 	}
+	s.systemM.updateMetrics()
 	s.deltasM.updateActiveMetrics(symbols)
 	s.ticksM.updateActiveMetrics(symbols)
 	s.snapshotM.updateActiveMetrics(symbols)

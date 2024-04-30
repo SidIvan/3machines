@@ -48,5 +48,6 @@ type MetricsHolder interface {
 	ProcessTickMetrics([]bmodel.SymbolTick, TypeOfEvent)
 	ProcessSnapshotMetrics([]model.DepthSnapshotPart, TypeOfEvent)
 	ProcessExInfoMetrics(event TypeOfEvent)
+	ProcessSystemMetrics()
 	UpdateMetrics([]bmodel.SymbolInfo)
 }
