@@ -67,6 +67,13 @@ func (s *App) Start() {
 		s.logger.Error(err.Error())
 		return
 	}
+	go func() {
+		http.Handle("/metrics", promhttp.Handler())
+		err := http.ListenAndServe(":9001", nil)
+		if err != nil {
+			panic(err)
+		}
+	}()
 	exInfo, err := s.binanceClient.GetFullExchangeInfo(context.Background())
 	if err != nil {
 		s.logger.Error(err.Error())
