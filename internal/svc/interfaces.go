@@ -47,9 +47,6 @@ type MetricsHolder interface {
 	ProcessDeltaMetrics([]model.Delta, TypeOfEvent)
 	ProcessTickMetrics([]bmodel.SymbolTick, TypeOfEvent)
 	ProcessSnapshotMetrics([]model.DepthSnapshotPart, TypeOfEvent)
+	ProcessExInfoMetrics(event TypeOfEvent)
 	UpdateMetrics([]bmodel.SymbolInfo)
-	//IncreaseDeltaCtr(model.Symbol, int)
-	//IncreaseSnapshotPairCtr(model.Symbol, int)
-	//IncrementSuccessDeltaReconnectCtr(model.Symbol)
-	//IncrementFailedDeltaReconnectCtr(model.Symbol)
 }

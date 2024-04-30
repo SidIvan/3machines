@@ -15,6 +15,7 @@ type Metrics struct {
 	deltasM   *deltaMetrics
 	ticksM    *ticksMetrics
 	snapshotM *snapshotMetrics
+	exInfoM   *exInfoMetrics
 }
 
 func NewMetrics(cfg *conf.AppConfig) *Metrics {
@@ -23,31 +24,8 @@ func NewMetrics(cfg *conf.AppConfig) *Metrics {
 		deltasM:   newDeltaMetrics(),
 		ticksM:    newTicksMetrics(),
 		snapshotM: newSnapshotMetrics(),
+		exInfoM:   newExInfoMetrics(),
 	}
-	//for symbol, _ := range cfg.BinanceHttpConfig.Pair2Period {
-	//	metrics.NumReceivedDeltas[model.SymbolFromString(symbol)] = promauto.NewCounter(prometheus.CounterOpts{
-	//		Namespace: "binance_deltas",
-	//		Name:      fmt.Sprintf("received_deltas_counter_%s", symbol),
-	//	})
-	//}
-	//for symbol, _ := range cfg.BinanceHttpConfig.Pair2Period {
-	//	metrics.NumDeltasSuccessReconnects[model.SymbolFromString(symbol)] = promauto.NewCounter(prometheus.CounterOpts{
-	//		Namespace: "binance_deltas",
-	//		Name:      fmt.Sprintf("success_deltas_reconnects_%s", symbol),
-	//	})
-	//}
-	//for symbol, _ := range cfg.BinanceHttpConfig.Pair2Period {
-	//	metrics.NumDeltasFailedReconnects[model.SymbolFromString(symbol)] = promauto.NewCounter(prometheus.CounterOpts{
-	//		Namespace: "binance_deltas",
-	//		Name:      fmt.Sprintf("failed_deltas_reconnects_%s", symbol),
-	//	})
-	//}
-	//for symbol, _ := range cfg.BinanceHttpConfig.SnapshotPeriod {
-	//	metrics.NumReceivedSnapshotParts[model.SymbolFromString(symbol)] = promauto.NewCounter(prometheus.CounterOpts{
-	//		Namespace: "binance_snapshots",
-	//		Name:      fmt.Sprintf("received_snapshot_part_ctr_%s", symbol),
-	//	})
-	//}
 	return &metrics
 }
 
@@ -63,6 +41,10 @@ func (s *Metrics) ProcessSnapshotMetrics(snapshot []model.DepthSnapshotPart, eve
 	s.snapshotM.ProcessMetrics(snapshot, event)
 }
 
+func (s *Metrics) ProcessExInfoMetrics(event svc.TypeOfEvent) {
+	s.exInfoM.ProcessMetrics(event)
+}
+
 func (s *Metrics) UpdateMetrics(symbolInfos []bmodel.SymbolInfo) {
 	var symbols []string
 	for _, symbol := range symbolInfos {
@@ -71,6 +53,7 @@ func (s *Metrics) UpdateMetrics(symbolInfos []bmodel.SymbolInfo) {
 	s.deltasM.updateActiveMetrics(symbols)
 	s.ticksM.updateActiveMetrics(symbols)
 	s.snapshotM.updateActiveMetrics(symbols)
+	s.exInfoM.updateActiveMetrics()
 }
 
 func getMetricKey(symbol string) string {

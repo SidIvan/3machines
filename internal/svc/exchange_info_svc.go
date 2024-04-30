@@ -54,6 +54,7 @@ func (s *ExchangeInfoSvc) StartReceiveExInfo(ctx context.Context) {
 		exInfo, err := s.binanceClient.GetFullExchangeInfo(ctxWithTimeout)
 		if err == nil {
 			s.metrics.UpdateMetrics(exInfo.Symbols)
+			s.metrics.ProcessExInfoMetrics(Receive)
 		}
 		s.logger.Info(fmt.Sprintf("got exchange info with hash %d", exInfo.ExInfoHash()))
 		cancel()
@@ -80,6 +81,7 @@ func (s *ExchangeInfoSvc) SaveExchangeInfo(ctx context.Context, exInfo *bmodel.E
 	for i := 0; i < 3; i++ {
 		if err := s.globalRepo.SendFullExchangeInfo(ctx, exInfo); err == nil {
 			s.logger.Info("successfully sent to Ch")
+			s.metrics.ProcessExInfoMetrics(Send)
 			return nil
 		} else {
 			s.logger.Warn("failed send to Ch, retry")
@@ -90,6 +92,7 @@ func (s *ExchangeInfoSvc) SaveExchangeInfo(ctx context.Context, exInfo *bmodel.E
 	s.logger.Warn("failed send to Ch, try save to mongo")
 	for i := 0; i < 3; i++ {
 		if err := s.localRepo.SaveExchangeInfo(ctx, exInfo); err == nil {
+			s.metrics.ProcessExInfoMetrics(Save)
 			s.logger.Info("successfully saved to mongo")
 			return nil
 		}
