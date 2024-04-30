@@ -26,6 +26,7 @@ func NewMetrics(cfg *conf.AppConfig) *Metrics {
 		ticksM:    newTicksMetrics(),
 		snapshotM: newSnapshotMetrics(),
 		exInfoM:   newExInfoMetrics(),
+		systemM:   newSystemMetrics(),
 	}
 	return &metrics
 }

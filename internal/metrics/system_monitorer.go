@@ -29,6 +29,10 @@ type systemMetrics struct {
 	freeRamGauge prometheus.Gauge
 }
 
+func newSystemMetrics() *systemMetrics {
+	return &systemMetrics{}
+}
+
 const SystemNamespace = "system"
 
 func (s *systemMetrics) updateMetrics() {
