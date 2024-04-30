@@ -83,7 +83,7 @@ func (s *snapshotMetrics) processMetrics(snapshot []model.DepthSnapshotPart, met
 	if metric, ok := metrics[metricKey]; !ok {
 		s.logger.Warn(fmt.Sprintf("try to process non-existense metric with key [%s]", metricKey))
 	} else {
-		metric.Add(float64(len(snapshot)))
+		metric.Inc()
 	}
 	totalMetric.Inc()
 }
