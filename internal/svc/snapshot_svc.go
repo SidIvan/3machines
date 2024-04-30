@@ -22,7 +22,7 @@ type SnapshotSvc struct {
 	snapshotSchedules map[string]time.Time
 	localRepo         LocalRepo
 	globalRepo        GlobalRepo
-	metricsHolder     MetricsHolder
+	metrics           MetricsHolder
 	cfg               *conf.AppConfig
 	shutdown          *atomic.Bool
 	done              chan struct{}
@@ -35,7 +35,7 @@ func NewSnapshotSvc(config *conf.AppConfig, binanceClient BinanceClient, localRe
 	return &SnapshotSvc{
 		logger:            log.GetLogger("SnapshotSvc"),
 		binanceClient:     binanceClient,
-		metricsHolder:     metricsHolder,
+		metrics:           metricsHolder,
 		localRepo:         localRepo,
 		globalRepo:        globalRepo,
 		snapshotSchedules: make(map[string]time.Time),
@@ -94,6 +94,7 @@ func (s *SnapshotSvc) ReceiveAndSaveSnapshot(ctx context.Context, symbol string)
 		s.snapshotSchedules[symbol] = time.Now().Add(10 * time.Minute)
 		return limit, err
 	}
+	s.metrics.ProcessSnapshotMetrics(snapshot, Receive)
 	if err = s.SaveSnapshot(ctx, snapshot); err != nil {
 		s.logger.Error(fmt.Sprintf("error while saving snapshot %s", symbol))
 		s.snapshotSchedules[symbol] = time.Now().Add(10 * time.Minute)
@@ -116,6 +117,7 @@ func (s *SnapshotSvc) SaveSnapshot(ctx context.Context, snapshot []model.DepthSn
 	for i := 0; i < 3; i++ {
 		if err := s.globalRepo.SendSnapshot(ctx, snapshot); err == nil {
 			s.logger.Info(fmt.Sprintf("successfully sent to Ch [%s]", snapshot[0].Symbol))
+			s.metrics.ProcessSnapshotMetrics(snapshot, Send)
 			return nil
 		} else {
 			s.logger.Error(err.Error())
@@ -127,6 +129,7 @@ func (s *SnapshotSvc) SaveSnapshot(ctx context.Context, snapshot []model.DepthSn
 	s.logger.Warn(fmt.Sprintf("failed send to Ch, try save to mongo [%s]", snapshot[0].Symbol))
 	for i := 0; i < 3; i++ {
 		if err := s.localRepo.SaveSnapshot(ctx, snapshot); err == nil {
+			s.metrics.ProcessSnapshotMetrics(snapshot, Save)
 			s.logger.Info(fmt.Sprintf("successfully saved to mongo [%s]", snapshot[0].Symbol))
 			return nil
 		}

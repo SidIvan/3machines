@@ -60,7 +60,7 @@ func (s *TickerReceiver) ReceiveAndSend(ctx context.Context) {
 		if err != nil {
 			s.logger.Error(err.Error())
 		} else {
-			s.metrics.ProcessTicksMetrics(batch, Receive)
+			s.metrics.ProcessTickMetrics(batch, Receive)
 			if err = s.SendBatch(ctx, batch); err != nil {
 				s.logger.Error(err.Error())
 			}
@@ -88,7 +88,7 @@ func (s *TickerReceiver) ReceiveBatch(ctx context.Context) ([]bmodel.SymbolTick,
 func (s *TickerReceiver) SendBatch(ctx context.Context, ticks []bmodel.SymbolTick) error {
 	for i := 0; i < 3; i++ {
 		if err := s.globalRepo.SendBookTicks(ctx, ticks); err == nil {
-			s.metrics.ProcessTicksMetrics(ticks, Send)
+			s.metrics.ProcessTickMetrics(ticks, Send)
 			return nil
 		} else {
 			s.logger.Error(err.Error())
@@ -100,7 +100,7 @@ func (s *TickerReceiver) SendBatch(ctx context.Context, ticks []bmodel.SymbolTic
 	for i := 0; i < 3; i++ {
 		if err := s.localRepo.SaveBookTicker(ctx, ticks); err == nil {
 			s.logger.Info("successfully saved to mongo")
-			s.metrics.ProcessTicksMetrics(ticks, Save)
+			s.metrics.ProcessTickMetrics(ticks, Save)
 			return nil
 		} else {
 			s.logger.Warn("failed save to mongo, retry")

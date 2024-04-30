@@ -11,16 +11,18 @@ import (
 )
 
 type Metrics struct {
-	logger  *zap.Logger
-	deltasM *deltaMetrics
-	ticksM  *ticksMetrics
+	logger    *zap.Logger
+	deltasM   *deltaMetrics
+	ticksM    *ticksMetrics
+	snapshotM *snapshotMetrics
 }
 
 func NewMetrics(cfg *conf.AppConfig) *Metrics {
 	metrics := Metrics{
-		logger:  log.GetLogger("PrometheusMetricsHandler"),
-		deltasM: newDeltaMetrics(),
-		ticksM:  newTicksMetrics(),
+		logger:    log.GetLogger("PrometheusMetricsHandler"),
+		deltasM:   newDeltaMetrics(),
+		ticksM:    newTicksMetrics(),
+		snapshotM: newSnapshotMetrics(),
 	}
 	//for symbol, _ := range cfg.BinanceHttpConfig.Pair2Period {
 	//	metrics.NumReceivedDeltas[model.SymbolFromString(symbol)] = promauto.NewCounter(prometheus.CounterOpts{
@@ -53,12 +55,12 @@ func (s *Metrics) ProcessDeltaMetrics(deltas []model.Delta, event svc.TypeOfEven
 	s.deltasM.ProcessMetrics(deltas, event)
 }
 
-func (s *Metrics) ProcessTicksMetrics(ticks []bmodel.SymbolTick, event svc.TypeOfEvent) {
+func (s *Metrics) ProcessTickMetrics(ticks []bmodel.SymbolTick, event svc.TypeOfEvent) {
 	s.ticksM.ProcessMetrics(ticks, event)
 }
 
 func (s *Metrics) ProcessSnapshotMetrics(snapshot []model.DepthSnapshotPart, event svc.TypeOfEvent) {
-
+	s.snapshotM.ProcessMetrics(snapshot, event)
 }
 
 func (s *Metrics) UpdateMetrics(symbolInfos []bmodel.SymbolInfo) {
@@ -68,6 +70,7 @@ func (s *Metrics) UpdateMetrics(symbolInfos []bmodel.SymbolInfo) {
 	}
 	s.deltasM.updateActiveMetrics(symbols)
 	s.ticksM.updateActiveMetrics(symbols)
+	s.snapshotM.updateActiveMetrics(symbols)
 }
 
 func getMetricKey(symbol string) string {
