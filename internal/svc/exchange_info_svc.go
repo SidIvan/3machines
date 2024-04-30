@@ -20,20 +20,20 @@ type ExchangeInfoSvc struct {
 	binanceClient BinanceClient
 	localRepo     LocalRepo
 	globalRepo    GlobalRepo
-	metricsHolder MetricsHolder
+	metrics       MetricsHolder
 	cfg           *conf.AppConfig
 	shutdown      *atomic.Bool
 	done          chan struct{}
 	exInfoCache   *cache.ExchangeInfoCache
 }
 
-func NewExchangeInfoSvc(config *conf.AppConfig, binanceClient BinanceClient, localRepo LocalRepo, globalRepo GlobalRepo, metricsHolder MetricsHolder, infoCache *cache.ExchangeInfoCache) *ExchangeInfoSvc {
+func NewExchangeInfoSvc(config *conf.AppConfig, binanceClient BinanceClient, localRepo LocalRepo, globalRepo GlobalRepo, metrics MetricsHolder, infoCache *cache.ExchangeInfoCache) *ExchangeInfoSvc {
 	var shutdown atomic.Bool
 	shutdown.Store(false)
 	return &ExchangeInfoSvc{
 		logger:        log.GetLogger("ExchangeInfoSvc"),
 		binanceClient: binanceClient,
-		metricsHolder: metricsHolder,
+		metrics:       metrics,
 		localRepo:     localRepo,
 		globalRepo:    globalRepo,
 		cfg:           config,
@@ -52,6 +52,9 @@ func (s *ExchangeInfoSvc) StartReceiveExInfo(ctx context.Context) {
 		time.Sleep(time.Duration(s.cfg.ExchangeInfoUpdPerM) * time.Minute)
 		ctxWithTimeout, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 		exInfo, err := s.binanceClient.GetFullExchangeInfo(ctxWithTimeout)
+		if err == nil {
+			s.metrics.UpdateMetrics(exInfo.Symbols)
+		}
 		s.logger.Info(fmt.Sprintf("got exchange info with hash %d", exInfo.ExInfoHash()))
 		cancel()
 		ctxWithTimeout, cancel = context.WithTimeout(context.Background(), 5*time.Second)

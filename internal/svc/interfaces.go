@@ -35,9 +35,19 @@ type GlobalRepo interface {
 	Disconnect(ctx context.Context)
 }
 
+type TypeOfEvent int
+
+const (
+	Receive TypeOfEvent = iota
+	Send
+	Save
+)
+
 type MetricsHolder interface {
-	IncreaseDeltaCtr(model.Symbol, int)
-	IncreaseSnapshotPairCtr(model.Symbol, int)
-	IncrementSuccessDeltaReconnectCtr(model.Symbol)
-	IncrementFailedDeltaReconnectCtr(model.Symbol)
+	ProcessDeltaMetrics(deltas []model.Delta, event TypeOfEvent)
+	UpdateMetrics([]bmodel.SymbolInfo)
+	//IncreaseDeltaCtr(model.Symbol, int)
+	//IncreaseSnapshotPairCtr(model.Symbol, int)
+	//IncrementSuccessDeltaReconnectCtr(model.Symbol)
+	//IncrementFailedDeltaReconnectCtr(model.Symbol)
 }

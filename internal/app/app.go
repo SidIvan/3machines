@@ -26,17 +26,18 @@ type App struct {
 	localRepo     svc.LocalRepo
 	exInfoCache   *cache.ExchangeInfoCache
 	binanceClient svc.BinanceClient
+	metrics       svc.MetricsHolder
 	cfg           *conf.AppConfig
 }
 
 func NewApp(cfg *conf.AppConfig) *App {
 	binance.InitLogger()
 	logger := log.GetLogger("App")
+	metricsHolder := metrics.NewMetrics(cfg)
 	exInfoCache := cache.NewExchangeInfoCache()
 	globalRepo := repo.NewClickhouseRepo(cfg.GlobalRepoConfig)
 	localRepo := repo.NewLocalMongoRepo(cfg.LocalRepoCfg)
 	binanceClient := web.NewBinanceClient(cfg.BinanceHttpConfig, exInfoCache)
-	metricsHolder := metrics.NewMetrics(cfg)
 	deltaRecSvc := svc.NewDeltaReceiverSvc(cfg, binanceClient, localRepo, globalRepo, metricsHolder, exInfoCache)
 	snapshotSvc := svc.NewSnapshotSvc(cfg, binanceClient, localRepo, globalRepo, metricsHolder, exInfoCache)
 	exInfoSvc := svc.NewExchangeInfoSvc(cfg, binanceClient, localRepo, globalRepo, metricsHolder, exInfoCache)
@@ -51,6 +52,7 @@ func NewApp(cfg *conf.AppConfig) *App {
 		localRepo:     localRepo,
 		exInfoCache:   exInfoCache,
 		binanceClient: binanceClient,
+		metrics:       metricsHolder,
 		cfg:           cfg,
 	}
 }
@@ -74,6 +76,11 @@ func (s *App) Start() {
 		s.logger.Error(err.Error())
 		return
 	}
+	var symbols []string
+	for _, symbol := range exInfo.Symbols {
+		symbols = append(symbols, symbol.Symbol)
+	}
+	s.metrics.UpdateMetrics(exInfo.Symbols)
 	go func() {
 		http.Handle("/metrics", promhttp.Handler())
 		err := http.ListenAndServe(":9001", nil)

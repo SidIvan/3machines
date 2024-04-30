@@ -21,12 +21,13 @@ type DeltaReceiver struct {
 	receiver   *binance.DeltaReceiveClient
 	localRepo  LocalRepo
 	globalRepo GlobalRepo
+	metrics    MetricsHolder
 	symbols    []string
 	shutdown   *atomic.Bool
 	done       chan struct{}
 }
 
-func NewDeltaReceiver(cfg *binance.BinanceHttpClientConfig, symbols []string, localRepo LocalRepo, globalRepo GlobalRepo) *DeltaReceiver {
+func NewDeltaReceiver(cfg *binance.BinanceHttpClientConfig, symbols []string, localRepo LocalRepo, globalRepo GlobalRepo, metrics MetricsHolder) *DeltaReceiver {
 	if len(symbols) == 0 {
 		return nil
 	}
@@ -38,6 +39,7 @@ func NewDeltaReceiver(cfg *binance.BinanceHttpClientConfig, symbols []string, lo
 		symbols:    symbols,
 		localRepo:  localRepo,
 		globalRepo: globalRepo,
+		metrics:    metrics,
 		shutdown:   &shutdown,
 		done:       make(chan struct{}),
 	}
@@ -60,6 +62,7 @@ func (s *DeltaReceiver) ReceiveAndSend(ctx context.Context) {
 		if err != nil {
 			s.logger.Error(err.Error())
 		} else if batch != nil {
+			s.metrics.ProcessDeltaMetrics(batch, Receive)
 			if err = s.SendBatch(ctx, batch); err != nil {
 				s.logger.Error(err.Error())
 			}
@@ -95,6 +98,7 @@ func (s *DeltaReceiver) ReceiveBatch(ctx context.Context) ([]model.Delta, error)
 func (s *DeltaReceiver) SendBatch(ctx context.Context, deltas []model.Delta) error {
 	for i := 0; i < 3; i++ {
 		if err := s.globalRepo.SendDeltas(ctx, deltas); err == nil {
+			s.metrics.ProcessDeltaMetrics(deltas, Send)
 			return nil
 		} else {
 			s.logger.Error(err.Error())
@@ -105,6 +109,7 @@ func (s *DeltaReceiver) SendBatch(ctx context.Context, deltas []model.Delta) err
 	s.logger.Warn("failed send to Ch, try save to mongo")
 	for i := 0; i < 3; i++ {
 		if err := s.localRepo.SaveDeltas(ctx, deltas); err == nil {
+			s.metrics.ProcessDeltaMetrics(deltas, Save)
 			s.logger.Info("successfully saved to mongo")
 			return nil
 		} else {

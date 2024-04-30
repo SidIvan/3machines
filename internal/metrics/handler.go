@@ -3,76 +3,57 @@ package metrics
 import (
 	"DeltaReceiver/internal/conf"
 	"DeltaReceiver/internal/model"
+	"DeltaReceiver/internal/svc"
+	bmodel "DeltaReceiver/pkg/binance/model"
 	"DeltaReceiver/pkg/log"
-	"fmt"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promauto"
 	"go.uber.org/zap"
 )
 
 type Metrics struct {
-	logger                     *zap.Logger
-	NumReceivedDeltas          map[model.Symbol]prometheus.Counter
-	NumDeltasSuccessReconnects map[model.Symbol]prometheus.Counter
-	NumDeltasFailedReconnects  map[model.Symbol]prometheus.Counter
-	NumReceivedSnapshotParts   map[model.Symbol]prometheus.Counter
+	logger  *zap.Logger
+	deltasM *deltaMetrics
 }
 
 func NewMetrics(cfg *conf.AppConfig) *Metrics {
 	metrics := Metrics{
-		logger:                     log.GetLogger("PrometheusMetricsHandler"),
-		NumReceivedDeltas:          make(map[model.Symbol]prometheus.Counter),
-		NumDeltasSuccessReconnects: make(map[model.Symbol]prometheus.Counter),
-		NumDeltasFailedReconnects:  make(map[model.Symbol]prometheus.Counter),
-		NumReceivedSnapshotParts:   make(map[model.Symbol]prometheus.Counter),
+		logger:  log.GetLogger("PrometheusMetricsHandler"),
+		deltasM: newDeltaMetrics(),
 	}
-	for symbol, _ := range cfg.BinanceHttpConfig.Pair2Period {
-		metrics.NumReceivedDeltas[model.SymbolFromString(symbol)] = promauto.NewCounter(prometheus.CounterOpts{
-			Namespace: "binance_deltas",
-			Name:      fmt.Sprintf("received_deltas_counter_%s", symbol),
-		})
-	}
-	for symbol, _ := range cfg.BinanceHttpConfig.Pair2Period {
-		metrics.NumDeltasSuccessReconnects[model.SymbolFromString(symbol)] = promauto.NewCounter(prometheus.CounterOpts{
-			Namespace: "binance_deltas",
-			Name:      fmt.Sprintf("success_deltas_reconnects_%s", symbol),
-		})
-	}
-	for symbol, _ := range cfg.BinanceHttpConfig.Pair2Period {
-		metrics.NumDeltasFailedReconnects[model.SymbolFromString(symbol)] = promauto.NewCounter(prometheus.CounterOpts{
-			Namespace: "binance_deltas",
-			Name:      fmt.Sprintf("failed_deltas_reconnects_%s", symbol),
-		})
-	}
-	for symbol, _ := range cfg.BinanceHttpConfig.SnapshotPeriod {
-		metrics.NumReceivedSnapshotParts[model.SymbolFromString(symbol)] = promauto.NewCounter(prometheus.CounterOpts{
-			Namespace: "binance_snapshots",
-			Name:      fmt.Sprintf("received_snapshot_part_ctr_%s", symbol),
-		})
-	}
+	//for symbol, _ := range cfg.BinanceHttpConfig.Pair2Period {
+	//	metrics.NumReceivedDeltas[model.SymbolFromString(symbol)] = promauto.NewCounter(prometheus.CounterOpts{
+	//		Namespace: "binance_deltas",
+	//		Name:      fmt.Sprintf("received_deltas_counter_%s", symbol),
+	//	})
+	//}
+	//for symbol, _ := range cfg.BinanceHttpConfig.Pair2Period {
+	//	metrics.NumDeltasSuccessReconnects[model.SymbolFromString(symbol)] = promauto.NewCounter(prometheus.CounterOpts{
+	//		Namespace: "binance_deltas",
+	//		Name:      fmt.Sprintf("success_deltas_reconnects_%s", symbol),
+	//	})
+	//}
+	//for symbol, _ := range cfg.BinanceHttpConfig.Pair2Period {
+	//	metrics.NumDeltasFailedReconnects[model.SymbolFromString(symbol)] = promauto.NewCounter(prometheus.CounterOpts{
+	//		Namespace: "binance_deltas",
+	//		Name:      fmt.Sprintf("failed_deltas_reconnects_%s", symbol),
+	//	})
+	//}
+	//for symbol, _ := range cfg.BinanceHttpConfig.SnapshotPeriod {
+	//	metrics.NumReceivedSnapshotParts[model.SymbolFromString(symbol)] = promauto.NewCounter(prometheus.CounterOpts{
+	//		Namespace: "binance_snapshots",
+	//		Name:      fmt.Sprintf("received_snapshot_part_ctr_%s", symbol),
+	//	})
+	//}
 	return &metrics
 }
 
-func (s *Metrics) IncreaseDeltaCtr(symbol model.Symbol, delta int) {
-	if delta < 0 {
-		s.logger.Warn("attempt to decrease ctr")
-		return
+func (s *Metrics) ProcessDeltaMetrics(deltas []model.Delta, event svc.TypeOfEvent) {
+	s.deltasM.ProcessMetrics(deltas, event)
+}
+
+func (s *Metrics) UpdateMetrics(symbolInfos []bmodel.SymbolInfo) {
+	var symbols []string
+	for _, symbol := range symbolInfos {
+		symbols = append(symbols, symbol.Symbol)
 	}
-	s.NumReceivedDeltas[symbol].Add(float64(delta))
-}
-
-func (s *Metrics) IncrementSuccessDeltaReconnectCtr(symbol model.Symbol) {
-	s.NumDeltasSuccessReconnects[symbol].Inc()
-}
-
-func (s *Metrics) IncrementFailedDeltaReconnectCtr(symbol model.Symbol) {
-	s.NumDeltasFailedReconnects[symbol].Inc()
-}
-
-func (s *Metrics) IncreaseSnapshotPairCtr(symbol model.Symbol, delta int) {
-	if delta < 0 {
-		s.logger.Warn("attempt to decrease ctr")
-		return
-	}
-	s.NumReceivedSnapshotParts[symbol].Add(float64(delta))
+	s.deltasM.updateActiveMetrics(symbols)
 }
