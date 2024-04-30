@@ -54,11 +54,11 @@ func (s *deltaMetrics) updateActiveMetrics(symbols []string) {
 				Namespace: BinanceDeltasNamespace,
 				Name:      fmt.Sprintf("received_deltas_counter_%s", metricKey),
 			})
-			s.ReceivedDeltas[metricKey] = promauto.NewCounter(prometheus.CounterOpts{
+			s.SentDeltas[metricKey] = promauto.NewCounter(prometheus.CounterOpts{
 				Namespace: BinanceDeltasNamespace,
 				Name:      fmt.Sprintf("sent_deltas_counter_%s", metricKey),
 			})
-			s.ReceivedDeltas[metricKey] = promauto.NewCounter(prometheus.CounterOpts{
+			s.SavedDeltas[metricKey] = promauto.NewCounter(prometheus.CounterOpts{
 				Namespace: BinanceDeltasNamespace,
 				Name:      fmt.Sprintf("saved_deltas_counter_%s", metricKey),
 			})
