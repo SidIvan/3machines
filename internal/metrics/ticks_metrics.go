@@ -22,7 +22,7 @@ type ticksMetrics struct {
 
 func newTicksMetrics() *ticksMetrics {
 	return &ticksMetrics{
-		logger:        log.GetLogger("TicksMetricsImpl"),
+		logger:        log.GetLogger("ExInfoMetricsImpl"),
 		ReceivedTicks: make(map[string]prometheus.Counter),
 		SentTicks:     make(map[string]prometheus.Counter),
 		SavedTicks:    make(map[string]prometheus.Counter),
