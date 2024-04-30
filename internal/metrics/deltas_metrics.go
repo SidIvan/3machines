@@ -48,18 +48,19 @@ func (s *deltaMetrics) updateActiveMetrics(symbols []string) {
 		})
 	}
 	for _, symbol := range symbols {
-		if _, ok := s.ReceivedDeltas[symbol]; !ok {
+		metricKey := getMetricKey(symbol)
+		if _, ok := s.ReceivedDeltas[metricKey]; !ok {
 			s.ReceivedDeltas[symbol] = promauto.NewCounter(prometheus.CounterOpts{
 				Namespace: BinanceDeltasNamespace,
-				Name:      fmt.Sprintf("received_deltas_counter_%s", symbol),
+				Name:      fmt.Sprintf("received_deltas_counter_%s", metricKey),
 			})
-			s.ReceivedDeltas[symbol] = promauto.NewCounter(prometheus.CounterOpts{
+			s.ReceivedDeltas[metricKey] = promauto.NewCounter(prometheus.CounterOpts{
 				Namespace: BinanceDeltasNamespace,
-				Name:      fmt.Sprintf("sent_deltas_counter_%s", symbol),
+				Name:      fmt.Sprintf("sent_deltas_counter_%s", metricKey),
 			})
-			s.ReceivedDeltas[symbol] = promauto.NewCounter(prometheus.CounterOpts{
+			s.ReceivedDeltas[metricKey] = promauto.NewCounter(prometheus.CounterOpts{
 				Namespace: BinanceDeltasNamespace,
-				Name:      fmt.Sprintf("saved_deltas_counter_%s", symbol),
+				Name:      fmt.Sprintf("saved_deltas_counter_%s", metricKey),
 			})
 		}
 	}
@@ -77,12 +78,16 @@ func (s *deltaMetrics) ProcessMetrics(deltas []model.Delta, event svc.TypeOfEven
 
 func (s *deltaMetrics) processMetrics(deltas []model.Delta, metrics map[string]prometheus.Counter, totalMetric prometheus.Counter) {
 	for _, delta := range deltas {
-		metricName := strings.ToUpper(delta.Symbol)
-		if metric, ok := metrics[metricName]; !ok {
-			s.logger.Warn(fmt.Sprintf("try to process non-existense metric [%s]", metricName))
+		metricKey := getMetricKey(delta.Symbol)
+		if metric, ok := metrics[metricKey]; !ok {
+			s.logger.Warn(fmt.Sprintf("try to process non-existense metric with key [%s]", metricKey))
 		} else {
 			metric.Inc()
 		}
 	}
 	totalMetric.Add(float64(len(deltas)))
+}
+
+func getMetricKey(symbol string) string {
+	return strings.ToUpper(symbol)
 }
