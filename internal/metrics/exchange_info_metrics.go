@@ -17,7 +17,7 @@ type exInfoMetrics struct {
 
 func newExInfoMetrics() *exInfoMetrics {
 	return &exInfoMetrics{
-		logger: log.GetLogger("TicksMetricsImpl"),
+		logger: log.GetLogger("ExchangeInfoMetricsImpl"),
 	}
 }
 

@@ -36,10 +36,12 @@ func newSystemMetrics() *systemMetrics {
 const SystemNamespace = "system"
 
 func (s *systemMetrics) updateMetrics() {
-	s.freeRamGauge = promauto.NewGauge(prometheus.GaugeOpts{
-		Namespace: SystemNamespace,
-		Name:      "free_ram_bytes",
-	})
+	if s.freeRamGauge != nil {
+		s.freeRamGauge = promauto.NewGauge(prometheus.GaugeOpts{
+			Namespace: SystemNamespace,
+			Name:      "free_ram_bytes",
+		})
+	}
 }
 
 func (s *systemMetrics) ProcessMetrics() {
