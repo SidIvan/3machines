@@ -68,9 +68,7 @@ func (s BinanceHttpClient) GetFullExchangeInfo(ctx context.Context) (*model.Exch
 	if isBanned() {
 		return nil, RequestRejectedErr
 	}
-	ctxWithTimeout, cancel := context.WithTimeout(ctx, 15*time.Second)
-	defer cancel()
-	req, err := http.NewRequestWithContext(ctxWithTimeout, http.MethodGet, fmt.Sprintf("%sapi/v3/exchangeInfo", s.baseUri), http.NoBody)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("%sapi/v3/exchangeInfo", s.baseUri), http.NoBody)
 	if err != nil {
 		s.logger.Error(err.Error())
 		return nil, err

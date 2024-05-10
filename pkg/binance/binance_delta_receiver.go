@@ -99,7 +99,7 @@ func (s *DeltaReceiveClient) ReceiveDeltaMessage(ctx context.Context) (*model.De
 		if s.shutdown.Load() {
 			return nil, nil
 		}
-		s.logger.Warn("error while getting delta message, reconnect")
+		s.logger.Warn(fmt.Errorf("error while getting delta message, reconnect %w", err).Error())
 		if err = s.Reconnect(ctx); err != nil && i == 3 {
 			return nil, err
 		}

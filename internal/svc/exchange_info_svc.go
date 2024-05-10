@@ -52,13 +52,16 @@ func (s *ExchangeInfoSvc) StartReceiveExInfo(ctx context.Context) {
 		time.Sleep(time.Duration(s.cfg.ExchangeInfoUpdPerM) * time.Minute)
 		ctxWithTimeout, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 		exInfo, err := s.binanceClient.GetFullExchangeInfo(ctxWithTimeout)
+		cancel()
 		if err == nil {
 			s.metrics.UpdateMetrics(exInfo.Symbols)
 			s.metrics.ProcessExInfoMetrics(Receive)
+		} else {
+			continue
 		}
 		s.logger.Info(fmt.Sprintf("got exchange info with hash %d", exInfo.ExInfoHash()))
 		cancel()
-		ctxWithTimeout, cancel = context.WithTimeout(context.Background(), 5*time.Second)
+		ctxWithTimeout, cancel = context.WithTimeout(context.Background(), 20*time.Second)
 		lastSavedExInfo := s.globalRepo.GetLastFullExchangeInfo(ctxWithTimeout)
 		cancel()
 		if err != nil {
