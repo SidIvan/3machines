@@ -120,7 +120,7 @@ func (s LocalMongoRepo) SaveExchangeInfo(ctx context.Context, exInfo *bmodel.Exc
 }
 
 func (s LocalMongoRepo) SaveBookTicker(ctx context.Context, ticks []bmodel.SymbolTick) error {
-	_, err := s.ExInfoCol.InsertMany(ctx, formDocuments(ticks))
+	_, err := s.BookTickerCol.InsertMany(ctx, formDocuments(ticks))
 	if err != nil {
 		err = fmt.Errorf("error while inserting ticks %w", err)
 	}
