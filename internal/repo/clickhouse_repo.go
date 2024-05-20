@@ -7,6 +7,7 @@ import (
 	"DeltaReceiver/pkg/log"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/ClickHouse/ch-go"
 	"github.com/ClickHouse/ch-go/chpool"
@@ -131,6 +132,9 @@ func prepareBookTickerInsertBlock(ticks []bmodel.SymbolTick) proto.Input {
 }
 
 func (s ClickhouseRepo) SendBookTicks(ctx context.Context, ticks []bmodel.SymbolTick) error {
+	if s.pool == nil {
+		return NilConnPool
+	}
 	if len(ticks) == 0 {
 		s.logger.Warn("empty ticks slice")
 		return nil
@@ -208,6 +212,9 @@ func prepareFullSnapshotInsertBlock(snapshotParts []model.DepthSnapshotPart) pro
 }
 
 func (s ClickhouseRepo) SendDeltas(ctx context.Context, deltas []model.Delta) error {
+	if s.pool == nil {
+		return NilConnPool
+	}
 	if len(deltas) == 0 {
 		s.logger.Warn("empty deltas batch")
 		return nil
@@ -225,6 +232,9 @@ func (s ClickhouseRepo) SendDeltas(ctx context.Context, deltas []model.Delta) er
 }
 
 func (s ClickhouseRepo) SendSnapshot(ctx context.Context, snapshot []model.DepthSnapshotPart) error {
+	if s.pool == nil {
+		return NilConnPool
+	}
 	if len(snapshot) == 0 {
 		return nil
 	}
@@ -269,6 +279,9 @@ func (s ClickhouseRepo) Disconnect(ctx context.Context) {
 }
 
 func (s ClickhouseRepo) SendFullExchangeInfo(ctx context.Context, exInfo *bmodel.ExchangeInfo) error {
+	if s.pool == nil {
+		return NilConnPool
+	}
 	curHash := exInfo.ExInfoHash()
 	lastHash := s.GetLastFullExchangeInfoHash(ctx)
 	//s.logger.Debug(fmt.Sprintf("%d", s.pool.connPool))
@@ -289,6 +302,9 @@ func (s ClickhouseRepo) SendFullExchangeInfo(ctx context.Context, exInfo *bmodel
 }
 
 func (s ClickhouseRepo) GetLastFullExchangeInfoHash(ctx context.Context) uint64 {
+	if s.pool == nil {
+		return 0
+	}
 	var resp proto.ColUInt64
 	var hash uint64
 	if err := s.pool.Do(ctx, ch.Query{
@@ -313,6 +329,9 @@ func (s ClickhouseRepo) GetLastFullExchangeInfoHash(ctx context.Context) uint64 
 }
 
 func (s ClickhouseRepo) GetLastFullExchangeInfo(ctx context.Context) *bmodel.ExchangeInfo {
+	if s.pool == nil {
+		return nil
+	}
 	var resp proto.ColStr
 	var exInfo bmodel.ExchangeInfo
 	if err := s.pool.Do(ctx, ch.Query{
@@ -337,3 +356,5 @@ func (s ClickhouseRepo) GetLastFullExchangeInfo(ctx context.Context) *bmodel.Exc
 	}
 	return &exInfo
 }
+
+var NilConnPool = errors.New("nil conn pool")
