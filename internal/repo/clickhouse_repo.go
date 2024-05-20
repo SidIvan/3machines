@@ -236,27 +236,6 @@ func (s ClickhouseRepo) SendSnapshot(ctx context.Context, snapshot []model.Depth
 	return nil
 }
 
-func (s ClickhouseRepo) GetLastSavedTimestamp(ctx context.Context, symb model.Symbol) time.Time {
-	timestampResp := new(proto.ColDateTime64).WithPrecision(3)
-	latestTimestamp := time.Unix(0, 0)
-	if err := s.pool.Do(ctx, ch.Query{
-		Body: fmt.Sprintf("SELECT %s from %s.%s WHERE %s = '%s' ORDER BY %s LIMIT 1",
-			TimestampCol, s.cfg.DatabaseName, s.cfg.DeltaTable, SymbolCol, symb, TimestampCol),
-		Result: proto.Results{
-			{Name: TimestampCol, Data: timestampResp},
-		},
-		OnResult: func(ctx context.Context, block proto.Block) error {
-			if block.Rows != 0 {
-				latestTimestamp = timestampResp.Data[0].Time(proto.PrecisionMax)
-			}
-			return nil
-		},
-	}); err != nil {
-		s.logger.Error(err.Error())
-	}
-	return latestTimestamp
-}
-
 const (
 	ExchangeInfoCol = "exchange_info"
 	HashCol         = "hash"

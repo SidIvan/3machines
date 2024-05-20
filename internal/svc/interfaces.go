@@ -4,7 +4,6 @@ import (
 	"DeltaReceiver/internal/model"
 	bmodel "DeltaReceiver/pkg/binance/model"
 	"context"
-	"time"
 )
 
 type BinanceClient interface {
@@ -23,7 +22,6 @@ type LocalRepo interface {
 }
 
 type GlobalRepo interface {
-	GetLastSavedTimestamp(context.Context, model.Symbol) time.Time
 	SendDeltas(context.Context, []model.Delta) error
 	SendSnapshot(context.Context, []model.DepthSnapshotPart) error
 	Connect(ctx context.Context) error

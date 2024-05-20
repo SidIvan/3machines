@@ -83,7 +83,6 @@ func (s *App) Start() {
 	time.Sleep(2 * time.Second)
 	if err = s.globalRepo.SendFullExchangeInfo(baseContext, exInfo); err != nil {
 		s.logger.Error(err.Error())
-		return
 	}
 	var symbols []string
 	for _, symbol := range exInfo.Symbols {
