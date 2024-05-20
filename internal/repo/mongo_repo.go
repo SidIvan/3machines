@@ -95,7 +95,7 @@ func (s LocalMongoRepo) GetDeltas(ctx context.Context, numDeltas int64) []model.
 }
 
 func (s LocalMongoRepo) DeleteDeltas(ctx context.Context, ids []primitive.ObjectID) (int64, error) {
-	deleteRes, err := s.BinanceDeltasCol.DeleteMany(ctx, bson.M{"$in": ids})
+	deleteRes, err := s.BinanceDeltasCol.DeleteMany(ctx, bson.M{"_id": bson.M{"$in": ids}})
 	if err != nil {
 		s.logger.Error(err.Error())
 		return 0, nil
