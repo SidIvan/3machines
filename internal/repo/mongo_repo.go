@@ -86,7 +86,7 @@ func (s LocalMongoRepo) GetDeltas(ctx context.Context, numDeltas int32) []model.
 		return nil
 	}
 	var results []model.DeltaWithId
-	err = cur.All(ctx, results)
+	err = cur.All(ctx, &results)
 	if err != nil {
 		s.logger.Error(err.Error())
 		return nil
