@@ -94,7 +94,6 @@ func (s ClickhouseRepo) Connect(ctx context.Context) error {
 	})
 	if err != nil {
 		s.logger.Error(err.Error())
-		return err
 	}
 	s.pool.SetPool(connPool)
 	return nil
