@@ -7,6 +7,8 @@ import (
 	"DeltaReceiver/pkg/log"
 	"context"
 	"fmt"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.uber.org/zap"
@@ -75,6 +77,30 @@ func (s LocalMongoRepo) SaveDeltas(ctx context.Context, deltas []model.Delta) er
 		err = fmt.Errorf("error while inserting deltas %w", err)
 	}
 	return err
+}
+
+func (s LocalMongoRepo) GetDeltas(ctx context.Context, numDeltas int32) []model.DeltaWithId {
+	cur, err := s.BinanceDeltasCol.Find(ctx, bson.M{}, &options.FindOptions{BatchSize: &numDeltas})
+	if err != nil {
+		s.logger.Error(err.Error())
+		return nil
+	}
+	var results []model.DeltaWithId
+	err = cur.All(ctx, results)
+	if err != nil {
+		s.logger.Error(err.Error())
+		return nil
+	}
+	return results
+}
+
+func (s LocalMongoRepo) DeleteDeltas(ctx context.Context, ids []primitive.ObjectID) (int64, error) {
+	deleteRes, err := s.BinanceDeltasCol.DeleteMany(ctx, bson.M{"$in": ids})
+	if err != nil {
+		s.logger.Error(err.Error())
+		return 0, nil
+	}
+	return deleteRes.DeletedCount, nil
 }
 
 func (s LocalMongoRepo) SaveSnapshot(ctx context.Context, snapshot []model.DepthSnapshotPart) error {

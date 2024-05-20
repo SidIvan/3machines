@@ -4,6 +4,7 @@ import (
 	"DeltaReceiver/internal/model"
 	bmodel "DeltaReceiver/pkg/binance/model"
 	"context"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type BinanceClient interface {
@@ -17,6 +18,8 @@ type LocalRepo interface {
 	SaveSnapshot(context.Context, []model.DepthSnapshotPart) error
 	SaveExchangeInfo(context.Context, *bmodel.ExchangeInfo) error
 	SaveBookTicker(context.Context, []bmodel.SymbolTick) error
+	GetDeltas(ctx context.Context, numDeltas int32) []model.DeltaWithId
+	DeleteDeltas(ctx context.Context, ids []primitive.ObjectID) (int64, error)
 	Connect(ctx context.Context) error
 	Reconnect(ctx context.Context)
 }
@@ -48,4 +51,8 @@ type MetricsHolder interface {
 	ProcessExInfoMetrics(TypeOfEvent)
 	ProcessSystemMetrics()
 	UpdateMetrics([]bmodel.SymbolInfo)
+}
+
+type Fixer interface {
+	Fix()
 }

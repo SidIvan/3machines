@@ -1,5 +1,7 @@
 package model
 
+import "go.mongodb.org/mongo-driver/bson/primitive"
+
 type Delta struct {
 	Timestamp     int64  `json:"timestamp" bson:"timestamp"`
 	Price         string `json:"price" bson:"price"`
@@ -8,6 +10,11 @@ type Delta struct {
 	FirstUpdateId int64  `json:"firstUpdateId" bson:"firstUpdateId"`
 	T             bool   `json:"type" bson:"type"`
 	Symbol        string `json:"symbol" bson:"symbol"`
+}
+
+type DeltaWithId struct {
+	Delta
+	MongoId primitive.ObjectID `bson:"_id"`
 }
 
 func NewDelta(timestamp int64, price, count string, updateId, firstUpdateId int64, t bool, symbol string) Delta {

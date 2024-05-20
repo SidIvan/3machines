@@ -28,6 +28,7 @@ type App struct {
 	exInfoCache   *cache.ExchangeInfoCache
 	binanceClient svc.BinanceClient
 	metrics       svc.MetricsHolder
+	deltaFixer    svc.Fixer
 	cfg           *conf.AppConfig
 }
 
@@ -43,6 +44,7 @@ func NewApp(cfg *conf.AppConfig) *App {
 	snapshotSvc := svc.NewSnapshotSvc(cfg, binanceClient, localRepo, globalRepo, metricsHolder, exInfoCache)
 	exInfoSvc := svc.NewExchangeInfoSvc(cfg, binanceClient, localRepo, globalRepo, metricsHolder, exInfoCache)
 	bookTickerSvc := svc.NewBookTickerSvc(cfg, binanceClient, localRepo, globalRepo, metricsHolder, exInfoCache)
+	deltaFixer := svc.NewDeltaFixer(cfg, globalRepo, localRepo)
 	return &App{
 		logger:        logger,
 		deltaRecSvc:   deltaRecSvc,
@@ -54,6 +56,7 @@ func NewApp(cfg *conf.AppConfig) *App {
 		exInfoCache:   exInfoCache,
 		binanceClient: binanceClient,
 		metrics:       metricsHolder,
+		deltaFixer:    deltaFixer,
 		cfg:           cfg,
 	}
 }
@@ -87,6 +90,7 @@ func (s *App) Start() {
 	}
 	s.metrics.UpdateMetrics(exInfo.Symbols)
 	systemMonitorer := metrics.NewSystemMonitorer(s.metrics)
+	s.runFixers()
 	go systemMonitorer.CronUpdateMetrics()
 	s.logger.Info("App started")
 	go s.deltaRecSvc.ReceiveDeltasPairs(baseContext)
@@ -118,4 +122,8 @@ func (s *App) Stop(ctx context.Context) {
 	wg.Wait()
 	s.globalRepo.Disconnect(context.Background())
 	s.logger.Info("End of graceful shutdown")
+}
+
+func (s *App) runFixers() {
+	go s.deltaFixer.Fix()
 }
