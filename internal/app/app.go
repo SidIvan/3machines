@@ -62,16 +62,13 @@ func (s *App) Start() {
 	baseContext := context.Background()
 	if err := s.globalRepo.Connect(baseContext); err != nil {
 		s.logger.Error(err.Error())
-		return
 	}
 	if err := s.localRepo.Connect(baseContext); err != nil {
 		s.logger.Error(err.Error())
-		return
 	}
 	exInfo, err := s.binanceClient.GetFullExchangeInfo(context.Background())
 	if err != nil {
 		s.logger.Error(err.Error())
-		return
 	}
 	go func() {
 		http.Handle("/metrics", promhttp.Handler())
