@@ -102,14 +102,14 @@ func (s *App) Start() {
 func (s *App) Stop(ctx context.Context) {
 	s.logger.Info("Begin of graceful shutdown")
 	var wg sync.WaitGroup
-	wg.Add(3)
+	wg.Add(2)
 	go func() {
 		s.deltaRecSvc.Shutdown(ctx)
 		wg.Done()
 	}()
 	go func() {
 		s.snapshotSvc.Shutdown(ctx)
-		wg.Done()
+		//wg.Done()
 	}()
 	go func() {
 		s.exInfoSvc.Shutdown(ctx)
