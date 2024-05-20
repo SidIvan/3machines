@@ -83,7 +83,7 @@ func NewClickhouseRepo(cfg *conf.GlobalRepoConfig) *ClickhouseRepo {
 }
 
 func (s ClickhouseRepo) Connect(ctx context.Context) error {
-	connPool, err := chpool.Dial(ctx, chpool.Options{
+	opts := chpool.Options{
 		ClientOptions: ch.Options{
 			Address:     s.cfg.URI.GetAddress(),
 			DialTimeout: 5 * time.Second,
@@ -91,9 +91,14 @@ func (s ClickhouseRepo) Connect(ctx context.Context) error {
 		},
 		MaxConns: ChMaxConns,
 		MinConns: ChMinConns,
-	})
+	}
+	connPool, err := chpool.Dial(ctx, opts)
 	if err != nil {
 		s.logger.Error(err.Error())
+		connPool, err = chpool.New(ctx, opts)
+		if err != nil {
+			s.logger.Error(err.Error())
+		}
 	}
 	s.pool.SetPool(connPool)
 	return nil
