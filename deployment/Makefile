@@ -1,22 +1,11 @@
-run1: clearLog
-	docker compose -f docker-compose1.yaml build --no-cache
-	docker compose -f docker-compose1.yaml up -d --force-recreate
+run: clearLog=
+	docker compose -f docker-compose.yaml up -d --force-recreate --build
 
-restart1: stop1
-	docker compose -f docker-compose1.yaml up -d
+restartAll: stopAll
+	docker compose -f docker-compose.yaml up -d
 
-stop1:
-	docker compose -f docker-compose1.yaml stop
-
-run2: clearLog
-	docker compose -f docker-compose2.yaml build --no-cache
-	docker compose -f docker-compose2.yaml up -d --force-recreate
-
-restart2: stop2
-	docker compose -f docker-compose2.yaml up -d
-
-stop2:
-	docker compose -f docker-compose2.yaml stop
+stopAll:
+	docker compose -f docker-compose.yaml stop
 
 
 clearLog:

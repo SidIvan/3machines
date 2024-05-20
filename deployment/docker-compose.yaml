@@ -10,7 +10,7 @@ services:
   service:
     build:
       context: "."
-      dockerfile: "run2.Dockerfile"
+      dockerfile: "run.Dockerfile"
     user: root
     restart: unless-stopped
     depends_on:
@@ -20,7 +20,7 @@ services:
         condition: service_healthy
     volumes:
       - '/etc/ssl/certs/ca-certificates.crt:/etc/ssl/certs/ca-certificates.crt'
-      - '../cmd/writer2.yaml:/app/writer2.yaml'
+      - '../cmd/writer.yaml:/app/writer.yaml'
       - '/var/log/writer:/app/log'
     ports:
       - '9001:9001'
