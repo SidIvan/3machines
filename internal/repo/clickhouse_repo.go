@@ -30,6 +30,9 @@ type chPoolHolder struct {
 func (s *chPoolHolder) Do(ctx context.Context, query ch.Query) error {
 	s.mut.RLock()
 	defer s.mut.RUnlock()
+	if s.connPool == nil {
+		return NilConnPool
+	}
 	return s.connPool.Do(ctx, query)
 }
 
