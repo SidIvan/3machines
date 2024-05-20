@@ -18,7 +18,7 @@ type LocalRepo interface {
 	SaveSnapshot(context.Context, []model.DepthSnapshotPart) error
 	SaveExchangeInfo(context.Context, *bmodel.ExchangeInfo) error
 	SaveBookTicker(context.Context, []bmodel.SymbolTick) error
-	GetDeltas(ctx context.Context, numDeltas int32) []model.DeltaWithId
+	GetDeltas(ctx context.Context, numDeltas int64) []model.DeltaWithId
 	DeleteDeltas(ctx context.Context, ids []primitive.ObjectID) (int64, error)
 	Connect(ctx context.Context) error
 	Reconnect(ctx context.Context)

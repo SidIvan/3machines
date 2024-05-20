@@ -11,6 +11,8 @@ import (
 	"time"
 )
 
+const FixerBatchSize = 1000
+
 type DeltaFixer struct {
 	logger     *zap.Logger
 	cfg        *conf.AppConfig

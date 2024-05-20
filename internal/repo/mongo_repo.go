@@ -79,8 +79,8 @@ func (s LocalMongoRepo) SaveDeltas(ctx context.Context, deltas []model.Delta) er
 	return err
 }
 
-func (s LocalMongoRepo) GetDeltas(ctx context.Context, numDeltas int32) []model.DeltaWithId {
-	cur, err := s.BinanceDeltasCol.Find(ctx, bson.M{}, &options.FindOptions{BatchSize: &numDeltas})
+func (s LocalMongoRepo) GetDeltas(ctx context.Context, numDeltas int64) []model.DeltaWithId {
+	cur, err := s.BinanceDeltasCol.Find(ctx, bson.M{}, &options.FindOptions{Limit: &numDeltas})
 	if err != nil {
 		s.logger.Error(err.Error())
 		return nil
