@@ -55,7 +55,7 @@ func (s *DeltaFixer) Fix() {
 }
 
 func (s *DeltaFixer) getLocalSavedDeltas(ctx context.Context) []model.DeltaWithId {
-	ctxWithTimeout, cancel := context.WithTimeout(ctx, 5*time.Second)
+	ctxWithTimeout, cancel := context.WithTimeout(ctx, 15*time.Second)
 	defer cancel()
 	return s.localRepo.GetDeltas(ctxWithTimeout, BatchSize)
 }
@@ -67,7 +67,7 @@ func (s *DeltaFixer) sendDeltas(ctx context.Context, deltasWithIds []model.Delta
 	}
 	var err error
 	for i := 0; i < 3; i++ {
-		ctxWithTimeout, cancel := context.WithTimeout(ctx, 5*time.Second)
+		ctxWithTimeout, cancel := context.WithTimeout(ctx, 15*time.Second)
 		err = s.globalRepo.SendDeltas(ctxWithTimeout, deltas)
 		cancel()
 		if err == nil {
@@ -83,7 +83,7 @@ func (s *DeltaFixer) deleteLocalDeltas(ctx context.Context, deltasWithIds []mode
 	for _, delta := range deltasWithIds {
 		ids = append(ids, delta.MongoId)
 	}
-	ctxWithTimeout, cancel := context.WithTimeout(ctx, 5*time.Second)
+	ctxWithTimeout, cancel := context.WithTimeout(ctx, 15*time.Second)
 	deletedNum, err := s.localRepo.DeleteDeltas(ctxWithTimeout, ids)
 	cancel()
 	if err != nil {
