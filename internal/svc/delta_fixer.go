@@ -34,6 +34,7 @@ const SleepTimeMin = 5
 func (s *DeltaFixer) Fix() {
 	ctx := context.Background()
 	for {
+		time.Sleep(1 * time.Second)
 		deltasWithIds := s.getLocalSavedDeltas(ctx)
 		if deltasWithIds == nil || len(deltasWithIds) == 0 {
 			s.logger.Debug("cannot get unsent deltas, sleep")
