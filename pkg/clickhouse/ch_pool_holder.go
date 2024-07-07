@@ -7,6 +7,7 @@ import (
 	"github.com/ClickHouse/ch-go"
 	"github.com/ClickHouse/ch-go/chpool"
 	"go.uber.org/zap"
+	"os"
 	"sync"
 	"time"
 )
@@ -35,13 +36,17 @@ func (s *ChPoolHolder) Connect(ctx context.Context) error {
 func (s *ChPoolHolder) Reconnect(ctx context.Context, numTries int) error {
 	var pool *chpool.Pool
 	var err error
+	s.logger.Info(s.cfg.UriConf.GetAddress())
+	s.logger.Info(s.cfg.User)
+	s.logger.Info(s.cfg.Password)
+	xd, _ := os.Hostname()
+	s.logger.Info(xd)
 	for i := 0; i < numTries; i++ {
 		pool, err = chpool.Dial(ctx, chpool.Options{
 			ClientOptions: ch.Options{
 				Address:     s.cfg.UriConf.GetAddress(),
 				DialTimeout: time.Duration(s.cfg.DialTimeoutS) * time.Second,
 				ReadTimeout: time.Duration(s.cfg.ReadTimeoutS) * time.Second,
-				Database:    "binance",
 				User:        s.cfg.User,
 				Password:    s.cfg.Password,
 			},
