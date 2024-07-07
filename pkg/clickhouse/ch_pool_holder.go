@@ -41,6 +41,7 @@ func (s *ChPoolHolder) Reconnect(ctx context.Context, numTries int) error {
 				Address:     s.cfg.UriConf.GetAddress(),
 				DialTimeout: time.Duration(s.cfg.DialTimeoutS) * time.Second,
 				ReadTimeout: time.Duration(s.cfg.ReadTimeoutS) * time.Second,
+				Database:    "binance",
 				User:        s.cfg.User,
 				Password:    s.cfg.Password,
 			},

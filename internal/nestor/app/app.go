@@ -13,7 +13,6 @@ import (
 	"DeltaReceiver/pkg/clickhouse"
 	"DeltaReceiver/pkg/log"
 	"context"
-	"fmt"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.uber.org/zap"
 	"net/http"
@@ -43,10 +42,6 @@ func NewApp(cfg *conf.AppConfig) *App {
 	logger := log.GetLogger("App")
 	metricsHolder := metrics.NewMetrics()
 	exInfoCache := cache.NewExchangeInfoCache()
-	fmt.Println(cfg.GlobalRepoConfig.DatabaseName)
-	fmt.Println(cfg.GlobalRepoConfig.DeltaTable)
-	fmt.Println(cfg.GlobalRepoConfig.ChPoolCfg.User)
-	fmt.Println(cfg.GlobalRepoConfig.ChPoolCfg.Password)
 	chPoolHolder := clickhouse.NewChPoolHolder(cfg.GlobalRepoConfig.ChPoolCfg)
 	globalRepo := repo.NewClickhouseRepo(chPoolHolder, cfg.GlobalRepoConfig)
 	deltaStorage := crepo.NewChDeltaStorage(chPoolHolder, cfg.GlobalRepoConfig.DatabaseName, cfg.GlobalRepoConfig.DeltaTable)
