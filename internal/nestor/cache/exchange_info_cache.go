@@ -7,12 +7,13 @@ import (
 
 type ExchangeInfoCache struct {
 	val *model.ExchangeInfo
-	mut sync.Mutex
+	mut *sync.Mutex
 }
 
 func NewExchangeInfoCache() *ExchangeInfoCache {
+	var mut sync.Mutex
 	return &ExchangeInfoCache{
-		mut: sync.Mutex{},
+		mut: &mut,
 	}
 }
 

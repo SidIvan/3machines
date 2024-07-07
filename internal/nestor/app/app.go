@@ -38,10 +38,10 @@ type App struct {
 }
 
 func NewApp(cfg *conf.AppConfig) *App {
-	binance.InitLogger()
 	log.InitServiceName("nestor")
+	binance.InitLogger()
 	logger := log.GetLogger("App")
-	metricsHolder := metrics.NewMetrics(cfg)
+	metricsHolder := metrics.NewMetrics()
 	exInfoCache := cache.NewExchangeInfoCache()
 	fmt.Println(cfg.GlobalRepoConfig)
 	fmt.Println(cfg.GlobalRepoConfig.ChPoolCfg)

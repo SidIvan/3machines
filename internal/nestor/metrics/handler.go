@@ -2,7 +2,6 @@ package metrics
 
 import (
 	"DeltaReceiver/internal/common/model"
-	"DeltaReceiver/internal/nestor/conf"
 	model2 "DeltaReceiver/internal/nestor/model"
 	"DeltaReceiver/internal/nestor/svc"
 	bmodel "DeltaReceiver/pkg/binance/model"
@@ -20,7 +19,7 @@ type Metrics struct {
 	systemM   *systemMetrics
 }
 
-func NewMetrics(cfg *conf.AppConfig) *Metrics {
+func NewMetrics() *Metrics {
 	metrics := Metrics{
 		logger:    log.GetLogger("PrometheusMetricsHandler"),
 		deltasM:   newDeltaMetrics(),
