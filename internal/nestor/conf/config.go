@@ -8,12 +8,11 @@ import (
 
 type AppConfig struct {
 	BinanceHttpConfig      *binance.BinanceHttpClientConfig `yaml:"binance.client"`
-	GDBBatchSize           int                              `yaml:"global.db.batch.size"`
 	GetFullSnapshotPeriodM int16                            `yaml:"get.full.snapshot.period.m"`
 	FullSnapshotDepth      int                              `yaml:"full.snapshot.depth"`
 	ReconnectPeriodM       int16                            `yaml:"reconnect.period.m"`
-	LocalRepoCfg           *LocalRepoConfig                 `yaml:"local.common.config"`
-	GlobalRepoConfig       *conf.GlobalRepoConfig           `yaml:"global.common.config"`
+	LocalRepoCfg           *LocalRepoConfig                 `yaml:"local.repo.config"`
+	GlobalRepoConfig       *conf.GlobalRepoConfig           `yaml:"global.repo.config"`
 	ExchangeInfoUpdPerM    int                              `yaml:"ex.info.upd.per.m"`
 }
 
