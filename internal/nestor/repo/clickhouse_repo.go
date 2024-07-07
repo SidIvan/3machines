@@ -10,7 +10,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/ClickHouse/ch-go"
-	"github.com/ClickHouse/ch-go/chpool"
 	"github.com/ClickHouse/ch-go/proto"
 	"go.uber.org/zap"
 	"time"
@@ -32,26 +31,6 @@ const (
 	ChMinConns = 15
 )
 
-func (s ClickhouseRepo) Reconnect(ctx context.Context) error {
-	if connPool, err := chpool.Dial(ctx, chpool.Options{
-		ClientOptions: ch.Options{
-			Address:     s.cfg.ChPoolCfg.UriConf.GetAddress(),
-			DialTimeout: 5 * time.Second,
-			ReadTimeout: 5 * time.Second,
-			User:        s.cfg.ChPoolCfg.User,
-			Password:    s.cfg.ChPoolCfg.Password,
-		},
-		MaxConns: ChMaxConns,
-		MinConns: ChMinConns,
-	}); err != nil {
-		s.logger.Error(err.Error())
-		return err
-	} else {
-		s.pool.SetPool(connPool)
-		return err
-	}
-}
-
 func NewClickhouseRepo(chPoolHolder *clickhouse.ChPoolHolder, cfg *conf.GlobalRepoConfig) *ClickhouseRepo {
 	logger := log.GetLogger("ClickhouseRepo")
 	return &ClickhouseRepo{
@@ -59,30 +38,6 @@ func NewClickhouseRepo(chPoolHolder *clickhouse.ChPoolHolder, cfg *conf.GlobalRe
 		pool:   chPoolHolder,
 		cfg:    cfg,
 	}
-}
-
-func (s ClickhouseRepo) Connect(ctx context.Context) error {
-	opts := chpool.Options{
-		ClientOptions: ch.Options{
-			Address:     s.cfg.ChPoolCfg.UriConf.GetAddress(),
-			DialTimeout: 5 * time.Second,
-			ReadTimeout: 5 * time.Second,
-			User:        s.cfg.ChPoolCfg.User,
-			Password:    s.cfg.ChPoolCfg.Password,
-		},
-		MaxConns: ChMaxConns,
-		MinConns: ChMinConns,
-	}
-	connPool, err := chpool.Dial(ctx, opts)
-	if err != nil {
-		s.logger.Error(err.Error())
-		connPool, err = chpool.New(ctx, opts)
-		if err != nil {
-			s.logger.Error(err.Error())
-		}
-	}
-	s.pool.SetPool(connPool)
-	return nil
 }
 
 func prepareBookTickerInsertBlock(ticks []bmodel.SymbolTick) proto.Input {
@@ -202,10 +157,6 @@ func (s ClickhouseRepo) prepareExchangeInfoInsertBlock(exInfo *bmodel.ExchangeIn
 	}
 }
 
-func (s ClickhouseRepo) Disconnect(ctx context.Context) {
-	s.pool.Disconnect()
-}
-
 func (s ClickhouseRepo) SendFullExchangeInfo(ctx context.Context, exInfo *bmodel.ExchangeInfo) error {
 	if s.pool == nil {
 		return clickhouse.NilConnPool
@@ -283,4 +234,16 @@ func (s ClickhouseRepo) GetLastFullExchangeInfo(ctx context.Context) *bmodel.Exc
 		s.logger.Warn("empty get latest exchange info response")
 	}
 	return &exInfo
+}
+
+func (s ClickhouseRepo) Connect(ctx context.Context) error {
+	return s.pool.Connect(ctx)
+}
+
+func (s ClickhouseRepo) Reconnect(ctx context.Context) error {
+	return s.pool.Reconnect(ctx, 3)
+}
+
+func (s ClickhouseRepo) Disconnect(ctx context.Context) {
+	s.pool.Disconnect()
 }
