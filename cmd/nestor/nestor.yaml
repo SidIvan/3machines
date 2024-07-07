@@ -1,0 +1,74 @@
+global.db.batch.size:
+  10000
+get.full.snapshot.period.m:
+  10000
+full.snapshot.depth:
+  5000
+reconnect.period.m:
+  720
+ex.info.upd.per.m:
+  5
+
+local.repo.config:
+  delta.collection.name:
+    binance_deltas
+  snapshot.collection.name:
+    binance_snapshots
+  exchange.info.collection.name:
+    binance_exchange_info
+  book.ticker.collection.name:
+    binance_order_books_tops
+  mongo:
+    timeout.sec:
+      1
+    database.name:
+      db
+    num.conn.retries:
+      3
+    uri:
+      schema:
+        mongodb://
+      host:
+        mongodb
+      port:
+        27017
+
+binance.client:
+  delta.stream.url:
+    schema:
+      wss://
+    host:
+      stream.binance.com
+    port:
+      9443
+  http.base.uri.config:
+    schema:
+      https://
+    host:
+      api.binance.com
+    port:
+      443
+
+global.repo.config:
+  ch.pool:
+    base.uri:
+      host:
+        185.68.21.181
+      port:
+        10360
+    user:
+      nestor
+    password:
+      3e4Fa9y077Iw
+  timeoutS:
+    3
+  database.name:
+    binance
+  delta.table.name:
+    deltas
+  snapshot.table.name:
+    snapshots
+  ex.info.table:
+    exchange_info
+  book.ticker.table:
+    order_books_tops

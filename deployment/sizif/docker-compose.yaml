@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  build:
+    image: build:develop
+    build:
+      context: "../.."
+      dockerfile: "deployment/sizif/build.Dockerfile"
+
+  sizif:
+    build:
+      context: "../.."
+      dockerfile: "deployment/sizif/run.Dockerfile"
+    user: root
+    restart: unless-stopped
+    depends_on:
+      build:
+        condition: service_completed_successfully
+    volumes:
+      - type: bind
+        source: '../../cmd/sizif/sizif.yaml'
+        target: '/app/sizif.yaml'
+      - '/etc/ssl/certs/ca-certificates.crt:/etc/ssl/certs/ca-certificates.crt'
+      - '/var/log/sizif:/app/log'
+      - '/etc/parquet:/parquet'
+    ports:
+      - '9001:9001'
+    stop_grace_period: 70s

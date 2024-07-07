@@ -1,0 +1,28 @@
+parquet.storage:
+  base.path: "/parquet"
+
+global.common.config:
+  ch.pool:
+    base.uri:
+      host:
+        176.113.80.155
+      port:
+        9000
+    dial.timeout.s:
+      5
+    read.timeout.s:
+      5
+    ch.max.conns:
+      3
+    ch.min.conns:
+      1
+  database.name:
+    "db"
+  delta.table.name:
+    "tmp_binance"
+
+num.parallel.processes:
+  3
+
+delete.processed.deltas:
+  false

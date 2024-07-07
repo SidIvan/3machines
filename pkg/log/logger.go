@@ -2,8 +2,15 @@ package log
 
 import (
 	"DeltaReceiver/pkg/env"
+	"fmt"
 	"go.uber.org/zap"
 )
+
+var serviceName string
+
+func InitServiceName(name string) {
+	serviceName = name
+}
 
 func GetLogger(loggerName string) *zap.Logger {
 	envType := env.GetEnvType()
@@ -12,13 +19,13 @@ func GetLogger(loggerName string) *zap.Logger {
 	if envType == env.DEV {
 		cfg := zap.NewDevelopmentConfig()
 		cfg.OutputPaths = []string{
-			"/app/log/writer.log",
+			fmt.Sprintf("/app/log/%s.log", serviceName),
 		}
 		logger, err = cfg.Build()
 	} else if envType == env.PROD {
 		cfg := zap.NewProductionConfig()
 		cfg.OutputPaths = []string{
-			"/app/log/writer.log",
+			fmt.Sprintf("/app/log/%s.log", serviceName),
 		}
 		logger, err = zap.NewProduction()
 	}
