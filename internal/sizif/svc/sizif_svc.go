@@ -34,12 +34,12 @@ type ProcessingKey struct {
 }
 
 func (s *ProcessingKey) GetStartTime() time.Time {
-	startTime, _ := time.Parse(s.DateTimeStart, ProcessingKeyLayout)
+	startTime, _ := time.Parse(ProcessingKeyLayout, s.DateTimeStart)
 	return startTime
 }
 
 func (s *ProcessingKey) GetEndTime() time.Time {
-	endTime, _ := time.Parse(s.DateTimeEnd, ProcessingKeyLayout)
+	endTime, _ := time.Parse(ProcessingKeyLayout, s.DateTimeEnd)
 	return endTime
 }
 
