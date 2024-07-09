@@ -164,13 +164,13 @@ func (s ChDeltaStorage) GetDeltas(ctx context.Context, symbol, deltaType string,
 	selectQuery := ch.Query{
 		Body: selectQueryBody,
 		Result: proto.Results{
+			{Name: SymbolCol, Data: &symbCol},
 			{Name: TimestampCol, Data: timestampCol},
 			{Name: DeltaTypeCol, Data: &typeCol},
 			{Name: PriceCol, Data: &priceCol},
 			{Name: CountCol, Data: &countCol},
 			{Name: FirstUpdateIdCol, Data: &firstUpdateIdCol},
 			{Name: UpdateIdCol, Data: &updateIdCol},
-			{Name: SymbolCol, Data: &symbCol},
 		},
 		OnResult: func(ctx context.Context, block proto.Block) error {
 			for i := 0; i < block.Rows; i++ {
