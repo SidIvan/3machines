@@ -124,6 +124,7 @@ func (s ChDeltaStorage) GetTsSegment(ctx context.Context, since time.Time) (map[
 	symbToTimePair := make(map[string]svc.TimePair)
 	selectQueryBody := fmt.Sprintf("SELECT MIN(%s) AS %s, MAX(%s) AS %s, %s FROM %s.%s WHERE %s >= %s GROUP BY %s",
 		TimestampCol, earliestColName, TimestampCol, latestColName, SymbolCol, s.dbName, s.tableName, TimestampCol, since.Format(ChDateTimeLayout), SymbolCol)
+	s.logger.Info(selectQueryBody)
 	selectQuery := ch.Query{
 		Body: selectQueryBody,
 		Result: proto.Results{
