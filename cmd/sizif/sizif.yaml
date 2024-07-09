@@ -5,9 +5,13 @@ global.common.config:
   ch.pool:
     base.uri:
       host:
-        176.113.80.155
+        185.68.21.181
       port:
-        9000
+        10360
+      user:
+        sizif
+      password:
+        KPCxZ88Ln6SB
     dial.timeout.s:
       5
     read.timeout.s:
@@ -17,9 +21,9 @@ global.common.config:
     ch.min.conns:
       1
   database.name:
-    "db"
+    "binance"
   delta.table.name:
-    "tmp_binance"
+    "deltas"
 
 num.parallel.processes:
   3
