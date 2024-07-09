@@ -149,6 +149,7 @@ func (s *SizifSvc) startSingleProcess(ctx context.Context, since time.Time) {
 			lastDayNo := timePair.Latest.Unix() / SecondsInDay
 			for curDayNo := firstDayNo; curDayNo < lastDayNo; curDayNo++ {
 				for hourNo := int64(0); hourNo < 24; hourNo++ {
+					s.logger.Info(fmt.Sprintf("%d %d %d %d", curDayNo, lastDayNo, curDayNo*SecondsInDay+hourNo*SecondsInHour, curDayNo*SecondsInDay+(hourNo+1)*SecondsInHour))
 					curProcDate := time.Unix(curDayNo*SecondsInDay+hourNo*SecondsInHour, 0).Format(ProcessingKeyLayout)
 					curEndProcDate := time.Unix(curDayNo*SecondsInDay+(hourNo+1)*SecondsInHour, 0).Format(ProcessingKeyLayout)
 					s.logger.Info(curProcDate)
