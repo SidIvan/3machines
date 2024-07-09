@@ -11,7 +11,6 @@ import (
 	"go.uber.org/zap"
 	"os"
 	"sync"
-	"time"
 )
 
 var (
@@ -37,27 +36,11 @@ func NewLocalParquetStorage(dirFullPath string) *LocalParquetStorage {
 	}
 }
 
-func validateDeltasForSaving(deltas []model.Delta, key *svc.ProcessingKey) error {
-	if len(deltas) == 0 {
-		return EmptyDeltasBatch
-	}
-	for _, delta := range deltas {
-		if model.StringOfDeltaType(delta.T) != key.DeltaType || delta.Symbol != key.Symbol || time.UnixMilli(delta.Timestamp).Format(dateTimeLayout) != key.DateTimeStart {
-			return InvalidDeltasBatchForSavingToParquet
-		}
-	}
-	return nil
-}
-
 func (s LocalParquetStorage) GetParquetPath(key *svc.ProcessingKey) string {
 	return fmt.Sprintf("/binance/%s/%s/%s/%s.parquet", s.DirFullPath, key.DeltaType, key.Symbol, key.DateTimeStart)
 }
 
 func (s LocalParquetStorage) SaveDeltas(deltas []model.Delta, key *svc.ProcessingKey) error {
-	if err := validateDeltasForSaving(deltas, key); err != nil {
-		s.logger.Error(err.Error())
-		return err
-	}
 	s.mut.Lock()
 	defer s.mut.Unlock()
 	if s.IsParquetExists(key) {
