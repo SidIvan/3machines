@@ -161,6 +161,7 @@ func (s ChDeltaStorage) GetDeltas(ctx context.Context, symbol, deltaType string,
 	var symbCol proto.ColStr
 	var receivedDeltas []model.Delta
 	selectQueryBody := s.formGetDeltasQueryBody(symbol, deltaType, fromTime, toTime)
+	s.logger.Info(selectQueryBody)
 	selectQuery := ch.Query{
 		Body: selectQueryBody,
 		Result: proto.Results{
