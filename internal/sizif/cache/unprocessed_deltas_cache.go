@@ -53,6 +53,7 @@ func (s *UnprocessedDeltasCache) GetUnprocessedDeltas(ctx context.Context, since
 			return s.cacheVal, err
 		}
 		s.cacheVal = newCacheVal
+		s.lastUpdateTs = curTime
 		return newCacheVal, nil
 	}
 	return s.cacheVal, nil
