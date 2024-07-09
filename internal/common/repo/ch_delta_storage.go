@@ -188,6 +188,7 @@ func (s ChDeltaStorage) GetDeltas(ctx context.Context, symbol, deltaType string,
 					FirstUpdateId: firstUpdateIdCol.Row(i),
 					UpdateId:      updateIdCol.Row(i),
 					T:             isBid,
+					Symbol:        symbol,
 				})
 			}
 			return nil
