@@ -43,7 +43,7 @@ func (s *ProcessingKey) GetEndTime() time.Time {
 	return endTime
 }
 
-const ProcessingKeyLayout string = "2006-01-02T03:04:05"
+const ProcessingKeyLayout string = "2006-01-02T15:04:05"
 
 func NewSizifSvc(config *conf.AppConfig, deltaStorage svc.DeltaStorage, parquetStorage ParquetStorage) *SizifSvc {
 	var mut sync.Mutex
