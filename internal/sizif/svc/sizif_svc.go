@@ -138,8 +138,11 @@ func (s *SizifSvc) saveParquet(ctx context.Context, deltas []model.Delta, key *P
 var deltaTypes = []string{"bid", "ask"}
 
 func (s *SizifSvc) startSingleProcess(ctx context.Context, since time.Time) {
+	s.logger.Info("1")
 	for ; ; time.Sleep(5 * time.Minute) {
+		s.logger.Info("2")
 		symbToTsSegment, err := s.unprocessedDeltasCache.GetUnprocessedDeltas(ctx, since)
+		s.logger.Info("3")
 		if err != nil {
 			s.logger.Error(err.Error())
 			continue
@@ -179,6 +182,7 @@ func (s *SizifSvc) startSingleProcess(ctx context.Context, since time.Time) {
 				}
 			}
 		}
+		s.logger.Info("end of processing, sleep 5 min")
 	}
 }
 
