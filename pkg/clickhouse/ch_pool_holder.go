@@ -35,6 +35,9 @@ func (s *ChPoolHolder) Connect(ctx context.Context) error {
 func (s *ChPoolHolder) Reconnect(ctx context.Context, numTries int) error {
 	var pool *chpool.Pool
 	var err error
+	s.logger.Info(s.cfg.User)
+	s.logger.Info(s.cfg.Password)
+	s.logger.Info(s.cfg.UriConf.GetAddress())
 	for i := 0; i < numTries; i++ {
 		pool, err = chpool.Dial(ctx, chpool.Options{
 			ClientOptions: ch.Options{

@@ -1,7 +1,7 @@
 parquet.storage:
   base.path: "/parquet"
 
-global.common.config:
+global.repo.config:
   ch.pool:
     base.uri:
       host:
@@ -21,9 +21,9 @@ global.common.config:
     ch.min.conns:
       1
   database.name:
-    "binance"
+    binance
   delta.table.name:
-    "deltas"
+    deltas
 
 num.parallel.processes:
   3
