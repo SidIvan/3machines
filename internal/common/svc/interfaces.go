@@ -18,7 +18,6 @@ type TimePair struct {
 
 type DeltaStorage interface {
 	SendDeltas(context.Context, []model.Delta) error
-	GetSymbolNotInSet(ctx context.Context, fromTime, toTime time.Time, excludedSymbols map[string]struct{}) (string, error)
 	GetDeltas(ctx context.Context, symbol, deltaType string, fromTime, toTime time.Time) ([]model.Delta, error)
 	DeleteDeltas(ctx context.Context, symbol string, fromTime, toTime time.Time) error
 	GetTsSegment(ctx context.Context, since time.Time) (map[string]TimePair, error)
