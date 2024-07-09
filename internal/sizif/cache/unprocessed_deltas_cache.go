@@ -45,7 +45,7 @@ func (s *UnprocessedDeltasCache) GetUnprocessedDeltas(ctx context.Context, since
 	s.mut.Lock()
 	defer s.mut.Unlock()
 	curTime := time.Now()
-	if curTime.Sub(s.lastUpdateTs) < updateUnprocessedDeltasCachePeriod {
+	if curTime.Sub(s.lastUpdateTs) > updateUnprocessedDeltasCachePeriod {
 		s.logger.Debug("updating cache")
 		newCacheVal, err := s.deltaStorage.GetTsSegment(ctx, since)
 		if err != nil {
