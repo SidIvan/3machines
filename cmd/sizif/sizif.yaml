@@ -8,10 +8,10 @@ global.common.config:
         185.68.21.181
       port:
         10360
-      user:
-        sizif
-      password:
-        KPCxZ88Ln6SB
+    user:
+      sizif
+    password:
+      KPCxZ88Ln6SB
     dial.timeout.s:
       5
     read.timeout.s:
