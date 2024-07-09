@@ -69,6 +69,7 @@ func (s *SizifSvc) Start(ctx context.Context) {
 	wg.Add(s.cfg.NumWorkerThreads)
 	for i := 0; i < s.cfg.NumWorkerThreads; i++ {
 		go func() {
+			s.logger.Info("worker thread started")
 			s.startSingleProcess(ctx, firstDayFromConf)
 			wg.Done()
 		}()

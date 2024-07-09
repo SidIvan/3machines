@@ -13,14 +13,14 @@ const updateUnprocessedDeltasCachePeriod = 5 * time.Minute
 
 type UnprocessedDeltasCache struct {
 	logger       *zap.Logger
-	mut          *sync.RWMutex
+	mut          *sync.Mutex
 	deltaStorage svc.DeltaStorage
 	lastUpdateTs time.Time
 	cacheVal     map[string]svc.TimePair
 }
 
 func NewUnprocessedDeltasCache(deltaStorage svc.DeltaStorage) *UnprocessedDeltasCache {
-	var mut sync.RWMutex
+	var mut sync.Mutex
 	return &UnprocessedDeltasCache{
 		logger:       log.GetLogger("UnprocessedDeltasCache"),
 		mut:          &mut,
@@ -42,10 +42,11 @@ func trunkSinceStartTs(timePairs map[string]svc.TimePair, sinceTime time.Time) {
 }
 
 func (s *UnprocessedDeltasCache) GetUnprocessedDeltas(ctx context.Context, since time.Time) (map[string]svc.TimePair, error) {
+	s.mut.Lock()
+	defer s.mut.Unlock()
 	curTime := time.Now()
 	if curTime.Sub(s.lastUpdateTs) < updateUnprocessedDeltasCachePeriod {
-		s.mut.Lock()
-		defer s.mut.Unlock()
+		s.logger.Debug("updating cache")
 		newCacheVal, err := s.deltaStorage.GetTsSegment(ctx, since)
 		if err != nil {
 			s.logger.Error(err.Error())
@@ -54,7 +55,5 @@ func (s *UnprocessedDeltasCache) GetUnprocessedDeltas(ctx context.Context, since
 		s.cacheVal = newCacheVal
 		return newCacheVal, nil
 	}
-	s.mut.RLock()
-	defer s.mut.RUnlock()
 	return s.cacheVal, nil
 }
