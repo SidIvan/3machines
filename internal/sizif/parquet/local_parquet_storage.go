@@ -42,7 +42,7 @@ func validateDeltasForSaving(deltas []model.Delta, key *svc.ProcessingKey) error
 		return EmptyDeltasBatch
 	}
 	for _, delta := range deltas {
-		if model.StringOfDeltaType(delta.T) != key.Type || delta.Symbol != key.Symbol || time.UnixMilli(delta.Timestamp).Format(dateTimeLayout) != key.Date {
+		if model.StringOfDeltaType(delta.T) != key.DeltaType || delta.Symbol != key.Symbol || time.UnixMilli(delta.Timestamp).Format(dateTimeLayout) != key.DateTimeStart {
 			return InvalidDeltasBatchForSavingToParquet
 		}
 	}
@@ -50,7 +50,7 @@ func validateDeltasForSaving(deltas []model.Delta, key *svc.ProcessingKey) error
 }
 
 func (s LocalParquetStorage) GetParquetPath(key *svc.ProcessingKey) string {
-	return fmt.Sprintf("/binance/%s/%s/%s/%s.parquet", s.DirFullPath, key.Type, key.Symbol, key.Date)
+	return fmt.Sprintf("/binance/%s/%s/%s/%s.parquet", s.DirFullPath, key.DeltaType, key.Symbol, key.DateTimeStart)
 }
 
 func (s LocalParquetStorage) SaveDeltas(deltas []model.Delta, key *svc.ProcessingKey) error {

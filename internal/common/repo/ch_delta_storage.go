@@ -115,29 +115,42 @@ func (s ChDeltaStorage) formGetSymbolQueryBody(fromDateTime, toDateTime string, 
 		SymbolCol, s.dbName, s.tableName, SymbolCol, formListOfSymbolsForChQuery(excludedSymbols), TimestampCol, fromDateTime, toDateTime)
 }
 
-func (s ChDeltaStorage) GetEarliestTs(ctx context.Context) (time.Time, error) {
-	timestampCol := new(proto.ColDateTime64).WithPrecision(3)
-	selectQueryBody := fmt.Sprintf("SELECT %s FROM %s.%s ORDER BY %s LIMIT 1",
-		TimestampCol, s.dbName, s.tableName, TimestampCol)
+func (s ChDeltaStorage) GetTsSegment(ctx context.Context, since time.Time) (map[string]svc.TimePair, error) {
+	earliestColName := "earliestTs"
+	latestColName := "latestTs"
+	earliestTsCol := new(proto.ColDateTime64).WithPrecision(3)
+	latestTsCol := new(proto.ColDateTime64).WithPrecision(3)
+	var symbCol proto.ColStr
+	symbToTimePair := make(map[string]svc.TimePair)
+	selectQueryBody := fmt.Sprintf("SELECT MIN(%s) AS %s, MAX(%s) AS %s, %s FROM %s.%s WHERE %s >= %s GROUP BY %s",
+		TimestampCol, earliestColName, TimestampCol, latestColName, SymbolCol, s.dbName, s.tableName, TimestampCol, since.Format(ChDateTimeLayout), SymbolCol)
 	selectQuery := ch.Query{
 		Body: selectQueryBody,
 		Result: proto.Results{
-			{Name: TimestampCol, Data: timestampCol},
+			{Name: earliestColName, Data: earliestTsCol},
+			{Name: latestColName, Data: latestTsCol},
+			{Name: SymbolCol, Data: &symbCol},
+		},
+		OnResult: func(ctx context.Context, block proto.Block) error {
+			for i := 0; i < block.Rows; i++ {
+				symbToTimePair[symbCol.Row(i)] = svc.TimePair{
+					Earliest: earliestTsCol.Row(i),
+					Latest:   latestTsCol.Row(i),
+				}
+			}
+			return nil
 		},
 	}
 	if err := s.pool.Do(ctx, selectQuery); err != nil {
 		s.logger.Error(err.Error())
-		return time.Time{}, err
+		return nil, err
 	}
-	if timestampCol.Rows() == 0 {
-		return time.Time{}, svc.EmptyStorage
-	}
-	return timestampCol.Row(0), nil
+	return symbToTimePair, nil
 }
 
-func (s ChDeltaStorage) GetSymbol(ctx context.Context, fromTsS, toTsS int64, excludedSymbols map[string]struct{}) (string, error) {
-	fromDateTime := time.Unix(fromTsS, 0).Format(ChDateTimeLayout)
-	toDateTime := time.Unix(toTsS, 0).Format(ChDateTimeLayout)
+func (s ChDeltaStorage) GetSymbolNotInSet(ctx context.Context, fromTime, toTime time.Time, excludedSymbols map[string]struct{}) (string, error) {
+	fromDateTime := fromTime.Format(ChDateTimeLayout)
+	toDateTime := toTime.Format(ChDateTimeLayout)
 	var symbCol proto.ColStr
 	selectQueryBody := s.formGetSymbolQueryBody(fromDateTime, toDateTime, excludedSymbols)
 	selectQuery := ch.Query{
@@ -156,9 +169,20 @@ func (s ChDeltaStorage) GetSymbol(ctx context.Context, fromTsS, toTsS int64, exc
 	return symbCol.Row(0), nil
 }
 
-func (s ChDeltaStorage) GetDeltas(ctx context.Context, symbol string, fromTsS, toTsS int64) ([]model.Delta, error) {
-	fromDateTime := time.Unix(fromTsS, 0).Format(ChDateTimeLayout)
-	toDateTime := time.Unix(toTsS, 0).Format(ChDateTimeLayout)
+func (s ChDeltaStorage) formGetDeltasQueryBody(symbol, deltaType string, fromTime, toTime time.Time) string {
+	fromDateTime := fromTime.Format(ChDateTimeLayout)
+	toDateTime := toTime.Format(ChDateTimeLayout)
+	if deltaType == "" {
+		return fmt.Sprintf(
+			"SELECT * FROM %s.%s WHERE %s = %s AND %s BETWEEN '%s' AND '%s'",
+			s.dbName, s.tableName, SymbolCol, symbol, TimestampCol, fromDateTime, toDateTime)
+	}
+	return fmt.Sprintf(
+		"SELECT * FROM %s.%s WHERE %s = %s AND %s BETWEEN '%s' AND '%s' AND %s = %s",
+		s.dbName, s.tableName, SymbolCol, symbol, TimestampCol, fromDateTime, toDateTime, DeltaTypeCol, deltaType)
+}
+
+func (s ChDeltaStorage) GetDeltas(ctx context.Context, symbol, deltaType string, fromTime, toTime time.Time) ([]model.Delta, error) {
 	timestampCol := new(proto.ColDateTime64).WithPrecision(3)
 	var typeCol proto.ColEnum
 	var priceCol proto.ColStr
@@ -167,9 +191,7 @@ func (s ChDeltaStorage) GetDeltas(ctx context.Context, symbol string, fromTsS, t
 	var firstUpdateIdCol proto.ColInt64
 	var symbCol proto.ColStr
 	var receivedDeltas []model.Delta
-	selectQueryBody := fmt.Sprintf(
-		"SELECT * FROM %s.%s WHERE %s == %s AND %s BETWEEN '%s' AND '%s'",
-		s.dbName, s.tableName, SymbolCol, symbol, TimestampCol, fromDateTime, toDateTime)
+	selectQueryBody := s.formGetDeltasQueryBody(symbol, deltaType, fromTime, toTime)
 	selectQuery := ch.Query{
 		Body: selectQueryBody,
 		Result: proto.Results{
@@ -182,7 +204,6 @@ func (s ChDeltaStorage) GetDeltas(ctx context.Context, symbol string, fromTsS, t
 			{Name: SymbolCol, Data: &symbCol},
 		},
 		OnResult: func(ctx context.Context, block proto.Block) error {
-			fmt.Println(block.Rows)
 			for i := 0; i < block.Rows; i++ {
 				var isBid bool
 				if typeCol.Row(i) == "bid" {
@@ -209,12 +230,12 @@ func (s ChDeltaStorage) GetDeltas(ctx context.Context, symbol string, fromTsS, t
 	return receivedDeltas, nil
 }
 
-func (s ChDeltaStorage) DeleteDeltas(ctx context.Context, symbol string, fromTsS, toTsS int64, deltaType string) error {
-	fromDateTime := time.Unix(fromTsS, 0).Format(ChDateTimeLayout)
-	toDateTime := time.Unix(toTsS, 0).Format(ChDateTimeLayout)
+func (s ChDeltaStorage) DeleteDeltas(ctx context.Context, symbol string, fromTime, toTime time.Time) error {
+	fromDateTime := fromTime.Format(ChDateTimeLayout)
+	toDateTime := toTime.Format(ChDateTimeLayout)
 	deleteQueryBody := fmt.Sprintf(
-		"DELETE FROM %s.%s WHERE %s BETWEEN '%s' AND '%s' AND %s = %s AND %s = %s",
-		s.dbName, s.tableName, TimestampCol, fromDateTime, toDateTime, SymbolCol, symbol, DeltaTypeCol, deltaType)
+		"DELETE FROM %s.%s WHERE %s BETWEEN '%s' AND '%s' AND %s = %s",
+		s.dbName, s.tableName, TimestampCol, fromDateTime, toDateTime, SymbolCol, symbol)
 	deleteQuery := ch.Query{
 		Body: deleteQueryBody,
 	}

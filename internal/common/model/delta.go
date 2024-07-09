@@ -1,6 +1,9 @@
 package model
 
-import "go.mongodb.org/mongo-driver/bson/primitive"
+import (
+	"encoding/json"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+)
 
 type Delta struct {
 	Timestamp     int64  `json:"timestamp" bson:"timestamp" parquet:"name=timestamp_ms, type=BYTE_ARRAY, convertedtype=UTF8"`
@@ -37,9 +40,18 @@ func (s *Delta) IsAsk() bool {
 	return !s.T
 }
 
+func (s *Delta) GetStringDeltaType() string {
+	return StringOfDeltaType(s.T)
+}
+
 func StringOfDeltaType(isBid bool) string {
 	if isBid {
 		return "bid"
 	}
 	return "ask"
+}
+
+func (s *Delta) String() string {
+	stringVal, _ := json.Marshal(s)
+	return string(stringVal)
 }

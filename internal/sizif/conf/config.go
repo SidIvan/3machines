@@ -9,6 +9,7 @@ type AppConfig struct {
 	GlobalRepoConfig        *gconf.GlobalRepoConfig `yaml:"global.common.config"`
 	NumWorkerThreads        int                     `yaml:"num.parallel.processes"`
 	IsDeleteProcessedDeltas bool                    `yaml:"delete.processed.deltas"`
+	ProcessDeltasFrom       string                  `yaml:"process.deltas.from"`
 }
 
 type ParquetConfig struct {

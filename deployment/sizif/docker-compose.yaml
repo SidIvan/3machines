@@ -20,9 +20,6 @@ services:
       - type: bind
         source: '../../cmd/sizif/sizif.yaml'
         target: '/app/sizif.yaml'
-      - '/etc/ssl/certs/ca-certificates.crt:/etc/ssl/certs/ca-certificates.crt'
       - '/var/log/sizif:/app/log'
       - '/etc/parquet:/parquet'
-    ports:
-      - '9001:9001'
     stop_grace_period: 70s

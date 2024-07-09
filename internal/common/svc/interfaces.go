@@ -7,14 +7,21 @@ import (
 	"time"
 )
 
-var EmptyStorage = errors.New("empty table")
+var (
+	EmptyStorage = errors.New("empty table")
+)
+
+type TimePair struct {
+	Earliest time.Time
+	Latest   time.Time
+}
 
 type DeltaStorage interface {
 	SendDeltas(context.Context, []model.Delta) error
-	GetSymbol(ctx context.Context, fromTsS, toTsS int64, excludedSymbols map[string]struct{}) (string, error)
-	GetDeltas(ctx context.Context, symbol string, fromTsS, toTsS int64) ([]model.Delta, error)
-	DeleteDeltas(ctx context.Context, symbol string, fromTsS, toTsS int64, deltaType string) error
-	GetEarliestTs(ctx context.Context) (time.Time, error)
+	GetSymbolNotInSet(ctx context.Context, fromTime, toTime time.Time, excludedSymbols map[string]struct{}) (string, error)
+	GetDeltas(ctx context.Context, symbol, deltaType string, fromTime, toTime time.Time) ([]model.Delta, error)
+	DeleteDeltas(ctx context.Context, symbol string, fromTime, toTime time.Time) error
+	GetTsSegment(ctx context.Context, since time.Time) (map[string]TimePair, error)
 	Connect(ctx context.Context) error
 	Reconnect(ctx context.Context) error
 	Disconnect(ctx context.Context)
