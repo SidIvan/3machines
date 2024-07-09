@@ -22,4 +22,6 @@ services:
         target: '/app/sizif.yaml'
       - '/var/log/sizif:/app/log'
       - '/etc/parquet:/parquet'
+    ports:
+      - '10360:10360'
     stop_grace_period: 70s
