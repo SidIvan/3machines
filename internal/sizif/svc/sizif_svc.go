@@ -151,6 +151,8 @@ func (s *SizifSvc) startSingleProcess(ctx context.Context, since time.Time) {
 				for hourNo := int64(0); hourNo < 24; hourNo++ {
 					curProcDate := time.Unix(curDayNo*SecondsInDay+hourNo*SecondsInHour, 0).Format(ProcessingKeyLayout)
 					curEndProcDate := time.Unix(curDayNo*SecondsInDay+(hourNo+1)*SecondsInHour, 0).Format(ProcessingKeyLayout)
+					s.logger.Info(curProcDate)
+					s.logger.Info(curEndProcDate)
 					for _, deltaType := range deltaTypes {
 						curProcKey := ProcessingKey{
 							DateTimeStart: curProcDate,
