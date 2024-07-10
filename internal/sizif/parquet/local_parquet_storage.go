@@ -29,6 +29,7 @@ type LocalParquetStorage struct {
 
 func NewLocalParquetStorage(dirFullPath string) *LocalParquetStorage {
 	var mut sync.Mutex
+	os.MkdirAll(dirFullPath, 0600)
 	return &LocalParquetStorage{
 		logger:      log.GetLogger("LocalParquetStorage"),
 		DirFullPath: dirFullPath,
@@ -37,7 +38,8 @@ func NewLocalParquetStorage(dirFullPath string) *LocalParquetStorage {
 }
 
 func (s LocalParquetStorage) GetParquetPath(key *svc.ProcessingKey) string {
-	return fmt.Sprintf("/binance/%s/%s/%s/%s.parquet", s.DirFullPath, key.DeltaType, key.Symbol, key.DateTimeStart)
+	os.MkdirAll(fmt.Sprintf("%s/%s/%s", s.DirFullPath, key.DeltaType, key.Symbol), 0600)
+	return fmt.Sprintf("%s/%s/%s/%s.parquet", s.DirFullPath, key.DeltaType, key.Symbol, key.DateTimeStart)
 }
 
 func (s LocalParquetStorage) SaveDeltas(deltas []model.Delta, key *svc.ProcessingKey) error {
