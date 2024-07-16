@@ -38,8 +38,8 @@ func NewLocalParquetStorage(dirFullPath string) *LocalParquetStorage {
 }
 
 func (s LocalParquetStorage) GetParquetPath(key *svc.ProcessingKey) string {
-	os.MkdirAll(fmt.Sprintf("%s/%s/%s", s.DirFullPath, key.DeltaType, key.Symbol), 0600)
-	return fmt.Sprintf("%s/%s/%s/%s.parquet", s.DirFullPath, key.DeltaType, key.Symbol, key.DateTimeStart)
+	os.MkdirAll(fmt.Sprintf("%s/%s", s.DirFullPath, key.Symbol), 0600)
+	return fmt.Sprintf("%s/%s/%s.Parquet", s.DirFullPath, key.Symbol, key.DateTimeStart)
 }
 
 func (s LocalParquetStorage) SaveDeltas(deltas []model.Delta, key *svc.ProcessingKey) error {

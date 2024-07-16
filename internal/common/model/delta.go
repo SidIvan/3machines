@@ -11,7 +11,7 @@ type Delta struct {
 	Count         string `json:"count" bson:"count" parquet:"name=count, type=BYTE_ARRAY, convertedtype=UTF8"`
 	UpdateId      int64  `json:"updateId" bson:"updateId"`
 	FirstUpdateId int64  `json:"firstUpdateId" bson:"firstUpdateId"`
-	T             bool   `json:"type" bson:"type"`
+	T             bool   `json:"type" bson:"type" parquet:"name=type, type=BOOLEAN"`
 	Symbol        string `json:"symbol" bson:"symbol"`
 }
 

@@ -30,7 +30,6 @@ type ProcessingKey struct {
 	DateTimeStart string
 	DateTimeEnd   string
 	Symbol        string
-	DeltaType     string
 }
 
 func (s *ProcessingKey) GetStartTime() time.Time {
@@ -102,14 +101,14 @@ func (s *SizifSvc) getDeltas(ctx context.Context, pKey *ProcessingKey) ([]model.
 	fromTime := pKey.GetStartTime()
 	toTime := pKey.GetEndTime()
 	for _, reschedulePeriodS := range reschedulePeriodGetDeltasS {
-		deltas, err = s.deltaStorage.GetDeltas(ctx, pKey.Symbol, pKey.DeltaType, fromTime, toTime)
+		deltas, err = s.deltaStorage.GetDeltas(ctx, "", pKey.Symbol, fromTime, toTime)
 		if err == nil {
 			return deltas, nil
 		}
 		s.logger.Error(err.Error())
 		sleep(reschedulePeriodS)
 	}
-	deltas, err = s.deltaStorage.GetDeltas(ctx, pKey.Symbol, pKey.DeltaType, fromTime, toTime)
+	deltas, err = s.deltaStorage.GetDeltas(ctx, pKey.Symbol, "", fromTime, toTime)
 	if err != nil {
 		s.logger.Error(err.Error())
 	}
@@ -154,31 +153,29 @@ func (s *SizifSvc) startSingleProcess(ctx context.Context, since time.Time) {
 					curEndProcDate := time.Unix(curDayNo*SecondsInDay+(hourNo+1)*SecondsInHour, 0).Format(ProcessingKeyLayout)
 					s.logger.Info(curProcDate)
 					s.logger.Info(curEndProcDate)
-					for _, deltaType := range deltaTypes {
-						curProcKey := ProcessingKey{
-							DateTimeStart: curProcDate,
-							DateTimeEnd:   curEndProcDate,
-							Symbol:        symbol,
-							DeltaType:     deltaType,
-						}
-						s.mut.Lock()
-						if _, ok := s.processing[curProcKey]; ok {
-							s.mut.Unlock()
-							continue
-						}
-						s.processing[curProcKey] = struct{}{}
-						s.mut.Unlock()
-						for i := 0; i < 3; i++ {
-							if err := s.ProcessKey(ctx, &curProcKey); err != nil {
-								s.logger.Error(err.Error())
-							} else {
-								break
-							}
-						}
-						s.mut.Lock()
-						delete(s.processing, curProcKey)
-						s.mut.Unlock()
+					curProcKey := ProcessingKey{
+						DateTimeStart: curProcDate,
+						DateTimeEnd:   curEndProcDate,
+						Symbol:        symbol,
 					}
+					s.mut.Lock()
+					if _, ok := s.processing[curProcKey]; ok {
+						s.mut.Unlock()
+						continue
+					}
+					s.processing[curProcKey] = struct{}{}
+					s.mut.Unlock()
+					for i := 0; i < 3; i++ {
+						if err := s.ProcessKey(ctx, &curProcKey); err != nil {
+							s.logger.Error(err.Error())
+						} else {
+							break
+						}
+					}
+					s.mut.Lock()
+					delete(s.processing, curProcKey)
+					s.mut.Unlock()
+
 				}
 			}
 		}
@@ -232,8 +229,7 @@ func (s *SizifSvc) validateAndRemoveDuplicates(deltas []model.Delta, pKey *Proce
 	var validatedDeltas []model.Delta
 	for _, delta := range deltas {
 		deltaTs := time.UnixMilli(delta.Timestamp)
-		if delta.GetStringDeltaType() != pKey.DeltaType ||
-			delta.Symbol != pKey.Symbol ||
+		if delta.Symbol != pKey.Symbol ||
 			deltaTs.Before(fromTime) ||
 			deltaTs.After(toTime) {
 			s.logger.Error(fmt.Sprintf("deltas are not valid to key, delta = [%s], key = [%s]", delta, pKey))
@@ -248,12 +244,16 @@ func (s *SizifSvc) validateAndRemoveDuplicates(deltas []model.Delta, pKey *Proce
 	for i := 1; i < len(deltas); i++ {
 		delta := deltas[i]
 		lastValidatedDelta := validatedDeltas[len(validatedDeltas)-1]
-		if delta.UpdateId == lastValidatedDelta.UpdateId {
+		if delta.UpdateId == lastValidatedDelta.UpdateId &&
+			delta.T == lastValidatedDelta.T &&
+			delta.Price == lastValidatedDelta.Price &&
+			delta.Timestamp == lastValidatedDelta.Timestamp &&
+			delta.Count == lastValidatedDelta.Count {
 			continue
 		}
-		expectedFirstUpdateId := validatedDeltas[len(validatedDeltas)-1].UpdateId + 1
+		expectedFirstUpdateId := lastValidatedDelta.UpdateId + 1
 		if delta.FirstUpdateId > expectedFirstUpdateId {
-			logHole(s.holeLogger, delta.Symbol, delta.GetStringDeltaType(), expectedFirstUpdateId, delta.FirstUpdateId, lastValidatedDelta.Timestamp)
+			logHole(s.holeLogger, delta.Symbol, delta.GetStringDeltaType(), expectedFirstUpdateId, delta.FirstUpdateId-1, lastValidatedDelta.Timestamp)
 		}
 		validatedDeltas = append(validatedDeltas, delta)
 	}
@@ -262,7 +262,6 @@ func (s *SizifSvc) validateAndRemoveDuplicates(deltas []model.Delta, pKey *Proce
 
 type HoleMsg struct {
 	Symbol     string `json:"symbol"`
-	DeltaType  string `json:"delta_type"`
 	FirstUpdId int64  `json:"first_update_id"`
 	LastUpdId  int64  `json:"last_update_id"`
 	TsMs       int64  `json:"timestamp_ms"`
@@ -271,7 +270,6 @@ type HoleMsg struct {
 func logHole(logger *zap.Logger, symbol, deltaType string, sinceUpdId, toUpdId, tsMs int64) {
 	holeMsg := HoleMsg{
 		Symbol:     symbol,
-		DeltaType:  deltaType,
 		FirstUpdId: sinceUpdId,
 		LastUpdId:  toUpdId,
 		TsMs:       tsMs,
@@ -302,5 +300,5 @@ func (s *SizifSvc) deleteDeltas(ctx context.Context, pKey *ProcessingKey) error 
 }
 
 func (s *ProcessingKey) String() string {
-	return fmt.Sprintf("[%s, %s, %s, %s]", s.Symbol, s.DateTimeStart, s.DateTimeEnd, s.DeltaType)
+	return fmt.Sprintf("[%s, %s, %s]", s.Symbol, s.DateTimeStart, s.DateTimeEnd)
 }
