@@ -1,5 +1,5 @@
 parquet.storage:
-  base.path: "/parquet/binance"
+  base.path: "/3machines"
 
 global.repo.config:
   ch.pool:
