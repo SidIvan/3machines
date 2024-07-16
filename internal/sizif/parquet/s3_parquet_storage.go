@@ -34,7 +34,7 @@ func NewS3ParquetStorage(bucketName string) *S3ParquetStorage {
 	}
 	cl := s3.New(mySession, aswconf)
 	return &S3ParquetStorage{
-		logger:      log.GetLogger("LocalParquetStorage"),
+		logger:      log.GetLogger("S3ParquetStorage"),
 		bucketName:  aws.String(bucketName),
 		client:      cl,
 		baseDirName: aws.String("binance/deltas"),
