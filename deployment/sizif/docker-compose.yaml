@@ -22,4 +22,5 @@ services:
         target: '/app/sizif.yaml'
       - '/var/log/sizif:/app/log'
       - '/etc/parquet:/parquet'
+      - '/etc/ssl/certs/ca-certificates.crt:/etc/ssl/certs/ca-certificates.crt'
     stop_grace_period: 70s
