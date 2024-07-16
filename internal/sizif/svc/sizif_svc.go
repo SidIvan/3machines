@@ -101,7 +101,7 @@ func (s *SizifSvc) getDeltas(ctx context.Context, pKey *ProcessingKey) ([]model.
 	fromTime := pKey.GetStartTime()
 	toTime := pKey.GetEndTime()
 	for _, reschedulePeriodS := range reschedulePeriodGetDeltasS {
-		deltas, err = s.deltaStorage.GetDeltas(ctx, "", pKey.Symbol, fromTime, toTime)
+		deltas, err = s.deltaStorage.GetDeltas(ctx, pKey.Symbol, "", fromTime, toTime)
 		if err == nil {
 			return deltas, nil
 		}
