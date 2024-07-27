@@ -12,7 +12,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	xs3 "github.com/xitongsys/parquet-go-source/s3"
-	"github.com/xitongsys/parquet-go/parquet"
 	"github.com/xitongsys/parquet-go/writer"
 	"go.uber.org/zap"
 )
@@ -62,7 +61,7 @@ func (s S3ParquetStorage) SaveDeltas(deltas []model.Delta, key *svc.ProcessingKe
 		s.logger.Error(err.Error())
 		return err
 	}
-	pWriter.CompressionType = parquet.CompressionCodec_BROTLI
+	// pWriter.CompressionType = parquet.CompressionCodec_BROTLI
 	pWriter.PageSize = 128 * 1024 * 1024
 	s.logger.Debug(fmt.Sprintf("try to save %d deltas", len(deltas)))
 	for _, delta := range deltas {
