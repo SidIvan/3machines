@@ -48,6 +48,7 @@ func (s S3ParquetStorage) GetParquetPath(key *svc.ProcessingKey) *string {
 
 func (s S3ParquetStorage) SaveDeltas(deltas []model.Delta, key *svc.ProcessingKey) error {
 	if s.IsParquetExists(key) {
+		s.logger.Info("parquet already exists")
 		return ParquetAlreadyExists
 	}
 	fileWriter, err := xs3.NewS3FileWriterWithClient(context.TODO(), s.client, *s.bucketName, *s.GetParquetPath(key), nil)
@@ -75,6 +76,7 @@ func (s S3ParquetStorage) SaveDeltas(deltas []model.Delta, key *svc.ProcessingKe
 		return err
 	}
 	_ = fileWriter.Close()
+	s.logger.Info(fmt.Sprintf("parquet %s saved", *key))
 	return nil
 }
 
@@ -87,5 +89,6 @@ func (s S3ParquetStorage) IsParquetExists(key *svc.ProcessingKey) bool {
 		s.logger.Error(err.Error())
 		return true
 	}
+	s.logger.Debug(fmt.Sprintf("found %d docs", *out.KeyCount))
 	return *out.KeyCount > 0
 }
