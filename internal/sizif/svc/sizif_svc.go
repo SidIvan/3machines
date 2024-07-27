@@ -9,10 +9,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"go.uber.org/zap"
 	"sort"
 	"sync"
 	"time"
+
+	"go.uber.org/zap"
 )
 
 type SizifSvc struct {
@@ -224,6 +225,7 @@ func (s *SizifSvc) validateAndRemoveDuplicates(deltas []model.Delta, pKey *Proce
 	if len(deltas) == 0 {
 		return nil
 	}
+	s.logger.Info(fmt.Sprintf("start validate %s", *pKey))
 	fromTime := pKey.GetStartTime()
 	toTime := pKey.GetEndTime()
 	var validatedDeltas []model.Delta
@@ -232,7 +234,7 @@ func (s *SizifSvc) validateAndRemoveDuplicates(deltas []model.Delta, pKey *Proce
 		if delta.Symbol != pKey.Symbol ||
 			deltaTs.Before(fromTime) ||
 			deltaTs.After(toTime) {
-			s.logger.Error(fmt.Sprintf("deltas are not valid to key, delta = [%s], key = [%s]", delta, pKey))
+			s.logger.Error(fmt.Sprintf("deltas are not valid to key, delta = [%s], key = [%s]", delta.String(), *pKey))
 			return nil
 		}
 	}
@@ -257,6 +259,7 @@ func (s *SizifSvc) validateAndRemoveDuplicates(deltas []model.Delta, pKey *Proce
 		}
 		validatedDeltas = append(validatedDeltas, delta)
 	}
+	s.logger.Info(fmt.Sprintf("end validate %s", *pKey))
 	return validatedDeltas
 }
 
