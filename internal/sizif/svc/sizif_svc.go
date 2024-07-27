@@ -118,6 +118,7 @@ func (s *SizifSvc) getDeltas(ctx context.Context, pKey *ProcessingKey) ([]model.
 
 func (s *SizifSvc) saveParquet(ctx context.Context, deltas []model.Delta, key *ProcessingKey) error {
 	if s.parquetStorage.IsParquetExists(key) {
+		s.logger.Info("parquet already exists")
 		return ParquetAlreadyExists
 	}
 	for _, reschedulePeriodS := range rescheduleSaveParquetS {

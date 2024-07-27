@@ -43,6 +43,7 @@ func NewS3ParquetStorage(bucketName string) *S3ParquetStorage {
 }
 
 func (s S3ParquetStorage) GetParquetPath(key *svc.ProcessingKey) *string {
+	s.logger.Debug(fmt.Sprintf("parquet path %s", fmt.Sprintf("%s/%s/%s.Parquet", *s.baseDirName, key.Symbol, key.DateTimeStart)))
 	return aws.String(fmt.Sprintf("%s/%s/%s.Parquet", *s.baseDirName, key.Symbol, key.DateTimeStart))
 }
 
@@ -63,6 +64,7 @@ func (s S3ParquetStorage) SaveDeltas(deltas []model.Delta, key *svc.ProcessingKe
 	}
 	pWriter.CompressionType = parquet.CompressionCodec_BROTLI
 	pWriter.PageSize = 128 * 1024 * 1024
+	s.logger.Debug(fmt.Sprintf("try to save %d deltas", len(deltas)))
 	for _, delta := range deltas {
 		for i := 0; i < 3; i++ {
 			err = pWriter.Write(delta)
