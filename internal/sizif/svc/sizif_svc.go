@@ -217,7 +217,7 @@ func (s *SizifSvc) attemptToProcessKey(ctx context.Context, key *ProcessingKey) 
 		return err
 	}
 	if s.cfg.IsDeleteProcessedDeltas {
-		return s.deleteDeltas(ctx, key)
+		go s.deleteDeltas(ctx, key)
 	}
 	return nil
 }
