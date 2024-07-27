@@ -286,6 +286,7 @@ func logHole(logger *zap.Logger, symbol, deltaType string, sinceUpdId, toUpdId, 
 }
 
 func (s *SizifSvc) deleteDeltas(ctx context.Context, pKey *ProcessingKey) error {
+	s.logger.Debug(fmt.Sprintf("try to delete deltas %s", *pKey))
 	startTime := pKey.GetStartTime()
 	endTime := pKey.GetEndTime()
 	for _, reschedulePeriod := range rescheduleDeleteDeltasS {
@@ -294,11 +295,14 @@ func (s *SizifSvc) deleteDeltas(ctx context.Context, pKey *ProcessingKey) error 
 			sleep(reschedulePeriod)
 			continue
 		}
+		s.logger.Debug(fmt.Sprintf("deltas deleted %s", *pKey))
 		return nil
 	}
 	err := s.deltaStorage.DeleteDeltas(ctx, pKey.Symbol, startTime, endTime)
 	if err != nil {
 		s.logger.Error(fmt.Errorf("deleting deltas error %w", err).Error())
+	} else {
+		s.logger.Debug(fmt.Sprintf("deltas deleted %s", *pKey))
 	}
 	return err
 }

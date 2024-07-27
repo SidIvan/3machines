@@ -7,10 +7,11 @@ import (
 	"DeltaReceiver/pkg/log"
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/ClickHouse/ch-go"
 	"github.com/ClickHouse/ch-go/proto"
 	"go.uber.org/zap"
-	"time"
 )
 
 type ChDeltaStorage struct {
