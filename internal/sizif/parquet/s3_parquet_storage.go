@@ -6,6 +6,7 @@ import (
 	"DeltaReceiver/pkg/log"
 	"context"
 	"fmt"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -42,7 +43,7 @@ func NewS3ParquetStorage(bucketName string) *S3ParquetStorage {
 }
 
 func (s S3ParquetStorage) GetParquetPath(key *svc.ProcessingKey) *string {
-	return aws.String(fmt.Sprintf("%s/%s/%s.Parquet", s.baseDirName, key.Symbol, key.DateTimeStart))
+	return aws.String(fmt.Sprintf("%s/%s/%s.Parquet", *s.baseDirName, key.Symbol, key.DateTimeStart))
 }
 
 func (s S3ParquetStorage) SaveDeltas(deltas []model.Delta, key *svc.ProcessingKey) error {
