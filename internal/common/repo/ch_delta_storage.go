@@ -208,6 +208,7 @@ func (s ChDeltaStorage) DeleteDeltas(ctx context.Context, symbol string, fromTim
 	deleteQueryBody := fmt.Sprintf(
 		"DELETE FROM %s.%s WHERE %s BETWEEN '%s' AND '%s' AND %s = '%s'",
 		s.dbName, s.tableName, TimestampCol, fromDateTime, toDateTime, SymbolCol, symbol)
+	s.logger.Debug(deleteQueryBody)
 	deleteQuery := ch.Query{
 		Body: deleteQueryBody,
 	}
