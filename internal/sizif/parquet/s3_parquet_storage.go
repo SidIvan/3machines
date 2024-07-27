@@ -62,7 +62,7 @@ func (s S3ParquetStorage) SaveDeltas(deltas []model.Delta, key *svc.ProcessingKe
 		s.logger.Error(err.Error())
 		return err
 	}
-	pWriter.CompressionType = parquet.CompressionCodec_BROTLI
+	pWriter.CompressionType = parquet.CompressionCodec_LZ4
 	pWriter.PageSize = 128 * 1024 * 1024
 	s.logger.Debug(fmt.Sprintf("try to save %d deltas", len(deltas)))
 	for _, delta := range deltas {
