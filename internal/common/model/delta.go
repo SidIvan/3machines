@@ -7,7 +7,7 @@ import (
 )
 
 type Delta struct {
-	Timestamp     int64  `json:"timestamp" bson:"timestamp" parquet:"name=timestamp_ms, type=BYTE_ARRAY, convertedtype=UTF8"`
+	Timestamp     int64  `json:"timestamp" bson:"timestamp" parquet:"name=timestamp_ms, type=INT64"`
 	Price         string `json:"price" bson:"price" parquet:"name=price, type=BYTE_ARRAY, convertedtype=UTF8"`
 	Count         string `json:"count" bson:"count" parquet:"name=count, type=BYTE_ARRAY, convertedtype=UTF8"`
 	UpdateId      int64  `json:"updateId" bson:"updateId"`
