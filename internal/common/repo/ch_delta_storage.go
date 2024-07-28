@@ -212,7 +212,9 @@ func (s ChDeltaStorage) DeleteDeltas(ctx context.Context, symbol string, fromTim
 	deleteQuery := ch.Query{
 		Body: deleteQueryBody,
 	}
-	if err := s.pool.Do(ctx, deleteQuery); err != nil {
+	ctxWithTimeout, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+	if err := s.pool.Do(ctxWithTimeout, deleteQuery); err != nil {
 		s.logger.Error(err.Error())
 		return err
 	}
