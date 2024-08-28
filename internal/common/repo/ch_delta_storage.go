@@ -64,13 +64,13 @@ func prepareDeltasInsertBlock(deltas []model.Delta) proto.Input {
 		symbCol.Append(string(delta.Symbol))
 	}
 	return proto.Input{
-		{Name: TimestampCol, Data: timestampCol},
+		{Name: SymbolCol, Data: &symbCol},
 		{Name: DeltaTypeCol, Data: &typeCol},
+		{Name: TimestampCol, Data: timestampCol},
 		{Name: PriceCol, Data: &priceCol},
 		{Name: CountCol, Data: &countCol},
 		{Name: UpdateIdCol, Data: &updateIdCol},
 		{Name: FirstUpdateIdCol, Data: &firstUpdateIdCol},
-		{Name: SymbolCol, Data: &symbCol},
 	}
 }
 

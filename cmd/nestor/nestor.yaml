@@ -71,4 +71,4 @@ global.repo.config:
   ex.info.table:
     exchange_info
   book.ticker.table:
-    order_books_tops
+    order_books_ticks

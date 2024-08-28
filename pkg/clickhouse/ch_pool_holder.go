@@ -4,11 +4,12 @@ import (
 	"DeltaReceiver/pkg/log"
 	"context"
 	"errors"
+	"sync"
+	"time"
+
 	"github.com/ClickHouse/ch-go"
 	"github.com/ClickHouse/ch-go/chpool"
 	"go.uber.org/zap"
-	"sync"
-	"time"
 )
 
 type ChPoolHolder struct {
