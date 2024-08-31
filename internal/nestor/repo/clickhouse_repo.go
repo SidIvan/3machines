@@ -9,10 +9,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
+
 	"github.com/ClickHouse/ch-go"
 	"github.com/ClickHouse/ch-go/proto"
 	"go.uber.org/zap"
-	"time"
 )
 
 const (
@@ -57,12 +58,12 @@ func prepareBookTickerInsertBlock(ticks []bmodel.SymbolTick) proto.Input {
 		askQuantityCol.Append(tick.AskQuantity)
 	}
 	return proto.Input{
+		{Name: SymbolCol, Data: &symbolCol},
 		{Name: TimestampCol, Data: timestampCol},
 		{Name: "bid_price", Data: &bidPriceCol},
 		{Name: "bid_quantity", Data: &bidQuantityCol},
 		{Name: "ask_price", Data: &askPriceCol},
 		{Name: "ask_quantity", Data: &askQuantityCol},
-		{Name: SymbolCol, Data: &symbolCol},
 	}
 }
 
@@ -105,12 +106,12 @@ func prepareFullSnapshotInsertBlock(snapshotParts []model2.DepthSnapshotPart) pr
 		symbCol.Append(part.Symbol)
 	}
 	return proto.Input{
+		{Name: SymbolCol, Data: &symbCol},
 		{Name: TimestampCol, Data: timestampCol},
 		{Name: "type", Data: &typeCol},
 		{Name: "price", Data: &priceCol},
 		{Name: "count", Data: &countCol},
 		{Name: "last_update_id", Data: &updateIdCol},
-		{Name: SymbolCol, Data: &symbCol},
 	}
 }
 
