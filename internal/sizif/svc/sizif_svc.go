@@ -34,12 +34,12 @@ type ProcessingKey struct {
 }
 
 func (s *ProcessingKey) GetStartTime() time.Time {
-	startTime, _ := time.Parse(ProcessingKeyLayout, s.DateTimeStart)
+	startTime, _ := time.ParseInLocation(ProcessingKeyLayout, s.DateTimeStart, location)
 	return startTime
 }
 
 func (s *ProcessingKey) GetEndTime() time.Time {
-	endTime, _ := time.Parse(ProcessingKeyLayout, s.DateTimeEnd)
+	endTime, _ := time.ParseInLocation(ProcessingKeyLayout, s.DateTimeEnd, location)
 	return endTime
 }
 
@@ -60,7 +60,7 @@ func NewSizifSvc(config *conf.AppConfig, deltaStorage svc.DeltaStorage, parquetS
 }
 
 func (s *SizifSvc) Start(ctx context.Context) {
-	firstDayFromConf, err := time.Parse(ProcessingKeyLayout, s.cfg.ProcessDeltasFrom)
+	firstDayFromConf, err := time.ParseInLocation(ProcessingKeyLayout, s.cfg.ProcessDeltasFrom, location)
 	if err != nil {
 		s.logger.Error(err.Error())
 		return
@@ -222,7 +222,7 @@ func (s *SizifSvc) attemptToProcessKey(ctx context.Context, key *ProcessingKey) 
 	return nil
 }
 
-var location, _ = time.LoadLocation("Europe/Moscow") // Example timezone for +3 hours
+var location, _ = time.LoadLocation("Europe/Moscow")
 
 func (s *SizifSvc) validateAndRemoveDuplicates(deltas []model.Delta, pKey *ProcessingKey) []model.Delta {
 	if len(deltas) == 0 {
