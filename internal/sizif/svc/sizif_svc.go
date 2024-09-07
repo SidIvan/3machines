@@ -117,10 +117,10 @@ func (s *SizifSvc) getDeltas(ctx context.Context, pKey *ProcessingKey) ([]model.
 }
 
 func (s *SizifSvc) saveParquet(ctx context.Context, deltas []model.Delta, key *ProcessingKey) error {
-	if s.parquetStorage.IsParquetExists(key) {
-		s.logger.Info("parquet already exists")
-		return ParquetAlreadyExists
-	}
+	// if s.parquetStorage.IsParquetExists(key) {
+	// 	s.logger.Info("parquet already exists")
+	// 	return ParquetAlreadyExists
+	// }
 	for _, reschedulePeriodS := range rescheduleSaveParquetS {
 		err := s.parquetStorage.SaveDeltas(deltas, key)
 		if err == nil {
@@ -186,10 +186,10 @@ func (s *SizifSvc) startSingleProcess(ctx context.Context, since time.Time) {
 }
 
 func (s *SizifSvc) ProcessKey(ctx context.Context, key *ProcessingKey) error {
-	if s.parquetStorage.IsParquetExists(key) {
-		s.logger.Debug(fmt.Sprintf("%s already processed", key.String()))
-		return nil
-	}
+	// if s.parquetStorage.IsParquetExists(key) {
+	// 	s.logger.Debug(fmt.Sprintf("%s already processed", key.String()))
+	// 	return nil
+	// }
 	s.logger.Info(fmt.Sprintf("start processing %s", key.String()))
 	for _, reschedulePeriodS := range reschedulePeriodWholeProcessS {
 		if err := s.attemptToProcessKey(ctx, key); err != nil {
@@ -207,10 +207,10 @@ func (s *SizifSvc) attemptToProcessKey(ctx context.Context, key *ProcessingKey) 
 		return err
 	}
 	s.logger.Info(fmt.Sprintf("downloaded %d deltas for %s", len(deltas), key.String()))
-	if s.parquetStorage.IsParquetExists(key) {
-		s.logger.Warn(fmt.Sprintf("downloaded %d deltas for %s", len(deltas), key.String()))
-		return nil
-	}
+	// if s.parquetStorage.IsParquetExists(key) {
+	// 	s.logger.Warn(fmt.Sprintf("downloaded %d deltas for %s", len(deltas), key.String()))
+	// 	return nil
+	// }
 	deltas = s.validateAndRemoveDuplicates(deltas, key)
 	err = s.saveParquet(ctx, deltas, key)
 	if err != nil {
@@ -222,6 +222,8 @@ func (s *SizifSvc) attemptToProcessKey(ctx context.Context, key *ProcessingKey) 
 	return nil
 }
 
+var location, _ = time.LoadLocation("Europe/Moscow") // Example timezone for +3 hours
+
 func (s *SizifSvc) validateAndRemoveDuplicates(deltas []model.Delta, pKey *ProcessingKey) []model.Delta {
 	if len(deltas) == 0 {
 		return nil
@@ -231,7 +233,7 @@ func (s *SizifSvc) validateAndRemoveDuplicates(deltas []model.Delta, pKey *Proce
 	toTime := pKey.GetEndTime()
 	var validatedDeltas []model.Delta
 	for _, delta := range deltas {
-		deltaTs := time.UnixMilli(delta.Timestamp)
+		deltaTs := time.UnixMilli(delta.Timestamp).In(location)
 		if delta.Symbol != pKey.Symbol ||
 			deltaTs.Before(fromTime) ||
 			deltaTs.After(toTime) {
