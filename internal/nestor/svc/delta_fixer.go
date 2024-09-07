@@ -7,9 +7,10 @@ import (
 	"DeltaReceiver/pkg/log"
 	"context"
 	"fmt"
+	"time"
+
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.uber.org/zap"
-	"time"
 )
 
 const FixerBatchSize = 1000
@@ -67,7 +68,7 @@ func (s *DeltaFixer) getLocalSavedDeltas(ctx context.Context) []model.DeltaWithI
 func (s *DeltaFixer) sendDeltas(ctx context.Context, deltasWithIds []model.DeltaWithId) error {
 	var deltas []model.Delta
 	for _, delta := range deltasWithIds {
-		deltas = append(deltas, delta.Delta)
+		deltas = append(deltas, delta.GetDelta())
 	}
 	var err error
 	for i := 0; i < 3; i++ {

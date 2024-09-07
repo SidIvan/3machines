@@ -8,11 +8,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"go.uber.org/zap"
 	"os"
 	"strconv"
 	"sync/atomic"
 	"time"
+
+	"go.uber.org/zap"
 )
 
 type SnapshotSvc struct {
