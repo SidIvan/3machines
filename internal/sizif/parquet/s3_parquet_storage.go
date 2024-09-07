@@ -48,10 +48,10 @@ func (s S3ParquetStorage) GetParquetPath(key *svc.ProcessingKey) *string {
 }
 
 func (s S3ParquetStorage) SaveDeltas(deltas []model.Delta, key *svc.ProcessingKey) error {
-	if s.IsParquetExists(key) {
-		s.logger.Info("parquet already exists")
-		return ParquetAlreadyExists
-	}
+	// if s.IsParquetExists(key) {
+	// 	s.logger.Info("parquet already exists")
+	// 	return ParquetAlreadyExists
+	// }
 	fileWriter, err := xs3.NewS3FileWriterWithClient(context.TODO(), s.client, *s.bucketName, *s.GetParquetPath(key), nil)
 	if err != nil {
 		s.logger.Error(err.Error())
