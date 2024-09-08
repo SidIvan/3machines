@@ -4,6 +4,7 @@ import (
 	"DeltaReceiver/internal/common/svc"
 	"DeltaReceiver/pkg/log"
 	"context"
+	"fmt"
 	"sync"
 	"time"
 
@@ -60,6 +61,7 @@ func (s *UnprocessedDeltasCache) GetUnprocessedDeltas(ctx context.Context, since
 
 		for key, val := range s.symbolToLastUpdateTime {
 			if curTimePair, ok := newCacheVal[key]; ok && curTimePair.Earliest.Before(val) {
+				s.logger.Debug(fmt.Sprintf("update cache for symbol %s from %s to %s", key, curTimePair.Earliest, val))
 				newCacheVal[key] = svc.TimePair{
 					Earliest: val,
 					Latest:   curTimePair.Latest,
@@ -67,7 +69,7 @@ func (s *UnprocessedDeltasCache) GetUnprocessedDeltas(ctx context.Context, since
 			}
 		}
 		s.cacheVal = newCacheVal
-		s.lastUpdateTs = curTime
+		s.lastUpdateTs = time.Now()
 		return newCacheVal, nil
 	}
 	return s.cacheVal, nil
