@@ -146,13 +146,13 @@ func (s *SizifSvc) startSingleProcess(ctx context.Context, since time.Time) {
 			continue
 		}
 		for symbol, timePair := range symbToTsSegment {
-			firstDayNo := timePair.Earliest.Unix() / SecondsInDay
-			lastDayNo := timePair.Latest.Unix() / SecondsInDay
+			firstDayNo := timePair.Earliest.In(location).Unix() / SecondsInDay
+			lastDayNo := timePair.Latest.In(location).Unix() / SecondsInDay
 			for curDayNo := firstDayNo; curDayNo < lastDayNo; curDayNo++ {
 				for hourNo := int64(0); hourNo < 24; hourNo++ {
 					s.logger.Info(fmt.Sprintf("%d %d %d %d", curDayNo, lastDayNo, curDayNo*SecondsInDay+hourNo*SecondsInHour, curDayNo*SecondsInDay+(hourNo+1)*SecondsInHour))
-					curProcDate := time.Unix(curDayNo*SecondsInDay+hourNo*SecondsInHour, 0).Format(ProcessingKeyLayout)
-					curEndProcDate := time.Unix(curDayNo*SecondsInDay+(hourNo+1)*SecondsInHour, 0).Format(ProcessingKeyLayout)
+					curProcDate := time.Unix(curDayNo*SecondsInDay+hourNo*SecondsInHour, 0).In(location).Format(ProcessingKeyLayout)
+					curEndProcDate := time.Unix(curDayNo*SecondsInDay+(hourNo+1)*SecondsInHour, 0).In(location).Format(ProcessingKeyLayout)
 					s.logger.Info(curProcDate)
 					s.logger.Info(curEndProcDate)
 					curProcKey := ProcessingKey{
@@ -186,10 +186,6 @@ func (s *SizifSvc) startSingleProcess(ctx context.Context, since time.Time) {
 }
 
 func (s *SizifSvc) ProcessKey(ctx context.Context, key *ProcessingKey) error {
-	// if s.parquetStorage.IsParquetExists(key) {
-	// 	s.logger.Debug(fmt.Sprintf("%s already processed", key.String()))
-	// 	return nil
-	// }
 	s.logger.Info(fmt.Sprintf("start processing %s", key.String()))
 	for _, reschedulePeriodS := range reschedulePeriodWholeProcessS {
 		if err := s.attemptToProcessKey(ctx, key); err != nil {
@@ -207,10 +203,6 @@ func (s *SizifSvc) attemptToProcessKey(ctx context.Context, key *ProcessingKey) 
 		return err
 	}
 	s.logger.Info(fmt.Sprintf("downloaded %d deltas for %s", len(deltas), key.String()))
-	// if s.parquetStorage.IsParquetExists(key) {
-	// 	s.logger.Warn(fmt.Sprintf("downloaded %d deltas for %s", len(deltas), key.String()))
-	// 	return nil
-	// }
 	deltas = s.validateAndRemoveDuplicates(deltas, key)
 	err = s.saveParquet(ctx, deltas, key)
 	if err != nil {
@@ -219,6 +211,7 @@ func (s *SizifSvc) attemptToProcessKey(ctx context.Context, key *ProcessingKey) 
 	if s.cfg.IsDeleteProcessedDeltas {
 		go s.deleteDeltas(ctx, key)
 	}
+	s.unprocessedDeltasCache.SetProcessedSymbolTo(key.Symbol, key.GetEndTime())
 	return nil
 }
 

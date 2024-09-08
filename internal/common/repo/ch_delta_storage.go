@@ -128,6 +128,7 @@ func (s ChDeltaStorage) GetTsSegment(ctx context.Context, since time.Time) (map[
 					Earliest: earliestTsCol.Row(i),
 					Latest:   latestTsCol.Row(i),
 				}
+				s.logger.Debug(fmt.Sprintf("symbol %s presented from %s to %s", symbCol.Row(i), earliestTsCol.Row(i), latestTsCol.Row(i)))
 			}
 			return nil
 		},

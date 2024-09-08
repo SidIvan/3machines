@@ -5,12 +5,13 @@ import (
 	"DeltaReceiver/internal/sizif/conf"
 	"context"
 	"flag"
-	"gopkg.in/yaml.v3"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
+
+	"gopkg.in/yaml.v3"
 )
 
 func main() {
