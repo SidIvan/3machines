@@ -25,7 +25,7 @@ type App struct {
 }
 
 func NewApp(cfg *cfg.AppConfig) *App {
-	log.InitServiceName("nestor")
+	log.InitServiceName("verbose")
 	logger := log.GetLogger("App")
 	deltaHolesStorage := repo.NewMongoDeltaHoleStorage(cfg.HolesStorageCfg)
 	dwarfSvc := svc.NewDwarfSvc(deltaHolesStorage)
