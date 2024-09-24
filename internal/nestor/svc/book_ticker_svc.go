@@ -6,11 +6,12 @@ import (
 	"DeltaReceiver/pkg/log"
 	"context"
 	"fmt"
-	"go.uber.org/zap"
 	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"go.uber.org/zap"
 )
 
 type BookTickerSvc struct {
