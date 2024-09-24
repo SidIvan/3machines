@@ -3,6 +3,9 @@ package log
 import (
 	"DeltaReceiver/pkg/env"
 	"fmt"
+	"net/http"
+	"time"
+
 	"go.uber.org/zap"
 )
 
@@ -41,4 +44,14 @@ func GetLogger(loggerName string) *zap.Logger {
 
 func GetTestLogger() *zap.Logger {
 	return zap.NewNop()
+}
+
+func CreateMiddleware(logger *zap.Logger) func(http.Handler) http.Handler {
+	return func(httpHandler http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			logger.Info(fmt.Sprintf("Request: %s %s %s\n", r.Method, r.RequestURI, time.Now().Format(time.RFC822)))
+			httpHandler.ServeHTTP(w, r)
+			logger.Info(fmt.Sprintf("Response: %s %s %s\n", r.Method, r.RequestURI, time.Now().Format(time.RFC822)))
+		})
+	}
 }

@@ -1,0 +1,18 @@
+nestor.listen.port:
+  8080
+delta.holes.col.name:
+  "delta_holes"
+mongo:
+    timeout.sec:
+      1
+    database.name:
+      binance
+    num.conn.retries:
+      3
+    uri:
+      schema:
+        mongodb://
+      host:
+        mongodb
+      port:
+        27017
