@@ -3,6 +3,7 @@ package conf
 import (
 	"DeltaReceiver/internal/common/conf"
 	"DeltaReceiver/pkg/binance"
+	pconf "DeltaReceiver/pkg/conf"
 	mconf "DeltaReceiver/pkg/mongo/conf"
 )
 
@@ -14,6 +15,7 @@ type AppConfig struct {
 	LocalRepoCfg           *LocalRepoConfig                 `yaml:"local.repo.config"`
 	GlobalRepoConfig       *conf.GlobalRepoConfig           `yaml:"global.repo.config"`
 	ExchangeInfoUpdPerM    int                              `yaml:"ex.info.upd.per.m"`
+	DwarfUrl               *pconf.BaseUriConfig             `yaml:"dwarf.url"`
 }
 
 type LocalRepoConfig struct {

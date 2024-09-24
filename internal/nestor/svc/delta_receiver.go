@@ -3,48 +3,61 @@ package svc
 import (
 	"DeltaReceiver/internal/common/model"
 	csvc "DeltaReceiver/internal/common/svc"
+	"DeltaReceiver/internal/nestor/cache"
 	"DeltaReceiver/pkg/binance"
 	"DeltaReceiver/pkg/log"
 	"context"
 	"encoding/json"
 	"fmt"
-	"go.uber.org/zap"
 	"os"
 	"strconv"
 	"sync/atomic"
 	"time"
+
+	"go.uber.org/zap"
 )
 
 const BatchSize = 7500
 
 type DeltaReceiver struct {
-	logger       *zap.Logger
-	receiver     *binance.DeltaReceiveClient
-	localRepo    LocalRepo
-	globalRepo   GlobalRepo
-	deltaStorage csvc.DeltaStorage
-	metrics      MetricsHolder
-	symbols      []string
-	shutdown     *atomic.Bool
-	done         chan struct{}
+	logger               *zap.Logger
+	receiver             *binance.DeltaReceiveClient
+	localRepo            LocalRepo
+	globalRepo           GlobalRepo
+	deltaStorage         csvc.DeltaStorage
+	metrics              MetricsHolder
+	symbols              []string
+	shutdown             *atomic.Bool
+	done                 chan struct{}
+	deltaUpdateIdWatcher *cache.DeltaUpdateIdWatcher
+	deltaHolesStorage    DeltaHolesStorage
 }
 
-func NewDeltaReceiver(cfg *binance.BinanceHttpClientConfig, symbols []string, localRepo LocalRepo, globalRepo GlobalRepo, deltaStorage csvc.DeltaStorage, metrics MetricsHolder) *DeltaReceiver {
+func NewDeltaReceiver(
+	cfg *binance.BinanceHttpClientConfig,
+	symbols []string, localRepo LocalRepo,
+	globalRepo GlobalRepo,
+	deltaStorage csvc.DeltaStorage,
+	metrics MetricsHolder,
+	deltaUpdateIdWatcher *cache.DeltaUpdateIdWatcher,
+	deltaHolesStorage DeltaHolesStorage) *DeltaReceiver {
 	if len(symbols) == 0 {
 		return nil
 	}
 	var shutdown atomic.Bool
 	shutdown.Store(false)
 	return &DeltaReceiver{
-		logger:       log.GetLogger("DeltaReceiver"),
-		receiver:     binance.NewDeltaReceiveClient(cfg, symbols),
-		symbols:      symbols,
-		localRepo:    localRepo,
-		globalRepo:   globalRepo,
-		deltaStorage: deltaStorage,
-		metrics:      metrics,
-		shutdown:     &shutdown,
-		done:         make(chan struct{}),
+		logger:               log.GetLogger("DeltaReceiver"),
+		receiver:             binance.NewDeltaReceiveClient(cfg, symbols),
+		symbols:              symbols,
+		localRepo:            localRepo,
+		globalRepo:           globalRepo,
+		deltaStorage:         deltaStorage,
+		metrics:              metrics,
+		shutdown:             &shutdown,
+		done:                 make(chan struct{}),
+		deltaUpdateIdWatcher: deltaUpdateIdWatcher,
+		deltaHolesStorage:    deltaHolesStorage,
 	}
 }
 
@@ -69,6 +82,7 @@ func (s *DeltaReceiver) ReceiveAndSend(ctx context.Context) {
 			if err = s.SendBatch(ctx, batch); err != nil {
 				s.logger.Error(err.Error())
 			}
+			s.validateBatch(ctx, batch)
 		}
 	}
 	s.done <- struct{}{}
@@ -138,6 +152,27 @@ func (s *DeltaReceiver) saveDeltasToFile(deltas []model.Delta) error {
 	}
 	file.Close()
 	return nil
+}
+
+func (s *DeltaReceiver) validateBatch(ctx context.Context, batch []model.Delta) {
+	holes := s.deltaUpdateIdWatcher.GetHolesAndUpdate(batch)
+	for _, hole := range holes {
+		for i := 0; i < 3; i++ {
+			if s.saveHole(ctx, hole) {
+				break
+			}
+		}
+	}
+}
+
+func (s *DeltaReceiver) saveHole(ctx context.Context, hole model.DeltaHole) bool {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+	if err := s.deltaHolesStorage.SaveDeltaHole(ctx, hole); err != nil {
+		s.logger.Error(err.Error())
+		return false
+	}
+	return true
 }
 
 func (s *DeltaReceiver) Shutdown(ctx context.Context) {

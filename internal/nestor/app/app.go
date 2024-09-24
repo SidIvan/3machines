@@ -13,27 +13,30 @@ import (
 	"DeltaReceiver/pkg/clickhouse"
 	"DeltaReceiver/pkg/log"
 	"context"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"go.uber.org/zap"
 	"net/http"
 	"sync"
 	"time"
+
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"go.uber.org/zap"
 )
 
 type App struct {
-	logger        *zap.Logger
-	deltaRecSvc   *svc.DeltaReceiverSvc
-	snapshotSvc   *svc.SnapshotSvc
-	exInfoSvc     *svc.ExchangeInfoSvc
-	bookTickerSvc *svc.BookTickerSvc
-	globalRepo    svc.GlobalRepo
-	deltaStorage  csvc.DeltaStorage
-	localRepo     svc.LocalRepo
-	exInfoCache   *cache.ExchangeInfoCache
-	binanceClient svc.BinanceClient
-	metrics       svc.MetricsHolder
-	deltaFixer    svc.Fixer
-	cfg           *conf.AppConfig
+	logger              *zap.Logger
+	deltaRecSvc         *svc.DeltaReceiverSvc
+	snapshotSvc         *svc.SnapshotSvc
+	exInfoSvc           *svc.ExchangeInfoSvc
+	bookTickerSvc       *svc.BookTickerSvc
+	globalRepo          svc.GlobalRepo
+	deltaStorage        csvc.DeltaStorage
+	localRepo           svc.LocalRepo
+	exInfoCache         *cache.ExchangeInfoCache
+	binanceClient       svc.BinanceClient
+	metrics             svc.MetricsHolder
+	deltaFixer          svc.Fixer
+	deltaHolesIdWatcher *cache.DeltaUpdateIdWatcher
+	deltaHolesStorage   svc.DeltaHolesStorage
+	cfg                 *conf.AppConfig
 }
 
 func NewApp(cfg *conf.AppConfig) *App {
@@ -42,30 +45,34 @@ func NewApp(cfg *conf.AppConfig) *App {
 	logger := log.GetLogger("App")
 	metricsHolder := metrics.NewMetrics()
 	exInfoCache := cache.NewExchangeInfoCache()
+	deltaHolesStorage := repo.NewDwarfHttpClient(cfg.DwarfUrl)
+	deltaHolesIdWatcher := cache.NewDeltaUpdateIdWatcher()
 	chPoolHolder := clickhouse.NewChPoolHolder(cfg.GlobalRepoConfig.ChPoolCfg)
 	globalRepo := repo.NewClickhouseRepo(chPoolHolder, cfg.GlobalRepoConfig)
 	deltaStorage := crepo.NewChDeltaStorage(chPoolHolder, cfg.GlobalRepoConfig.DatabaseName, cfg.GlobalRepoConfig.DeltaTable)
 	localRepo := repo.NewLocalMongoRepo(cfg.LocalRepoCfg)
 	binanceClient := web.NewBinanceClient(cfg.BinanceHttpConfig, exInfoCache)
-	deltaRecSvc := svc.NewDeltaReceiverSvc(cfg, binanceClient, localRepo, globalRepo, deltaStorage, metricsHolder, exInfoCache)
+	deltaRecSvc := svc.NewDeltaReceiverSvc(cfg, binanceClient, localRepo, globalRepo, deltaStorage, metricsHolder, exInfoCache, deltaHolesIdWatcher, deltaHolesStorage)
 	snapshotSvc := svc.NewSnapshotSvc(cfg, binanceClient, localRepo, globalRepo, metricsHolder, exInfoCache)
 	exInfoSvc := svc.NewExchangeInfoSvc(cfg, binanceClient, localRepo, globalRepo, metricsHolder, exInfoCache)
 	bookTickerSvc := svc.NewBookTickerSvc(cfg, binanceClient, localRepo, globalRepo, metricsHolder, exInfoCache)
 	deltaFixer := svc.NewDeltaFixer(cfg, deltaStorage, localRepo)
 	return &App{
-		logger:        logger,
-		deltaRecSvc:   deltaRecSvc,
-		snapshotSvc:   snapshotSvc,
-		exInfoSvc:     exInfoSvc,
-		bookTickerSvc: bookTickerSvc,
-		globalRepo:    globalRepo,
-		deltaStorage:  deltaStorage,
-		localRepo:     localRepo,
-		exInfoCache:   exInfoCache,
-		binanceClient: binanceClient,
-		metrics:       metricsHolder,
-		deltaFixer:    deltaFixer,
-		cfg:           cfg,
+		logger:              logger,
+		deltaRecSvc:         deltaRecSvc,
+		snapshotSvc:         snapshotSvc,
+		exInfoSvc:           exInfoSvc,
+		bookTickerSvc:       bookTickerSvc,
+		globalRepo:          globalRepo,
+		deltaStorage:        deltaStorage,
+		localRepo:           localRepo,
+		exInfoCache:         exInfoCache,
+		binanceClient:       binanceClient,
+		metrics:             metricsHolder,
+		deltaFixer:          deltaFixer,
+		deltaHolesIdWatcher: deltaHolesIdWatcher,
+		deltaHolesStorage:   deltaHolesStorage,
+		cfg:                 cfg,
 	}
 }
 

@@ -5,6 +5,7 @@ import (
 	nmodel "DeltaReceiver/internal/nestor/model"
 	bmodel "DeltaReceiver/pkg/binance/model"
 	"context"
+
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -55,4 +56,8 @@ type MetricsHolder interface {
 
 type Fixer interface {
 	Fix()
+}
+
+type DeltaHolesStorage interface {
+	SaveDeltaHole(context.Context, model.DeltaHole) error
 }

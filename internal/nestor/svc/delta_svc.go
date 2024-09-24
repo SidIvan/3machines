@@ -7,38 +7,52 @@ import (
 	"DeltaReceiver/pkg/log"
 	"context"
 	"fmt"
-	"go.uber.org/zap"
 	"strings"
 	"sync/atomic"
 	"time"
+
+	"go.uber.org/zap"
 )
 
 type DeltaReceiverSvc struct {
-	logger         *zap.Logger
-	binanceClient  BinanceClient
-	deltaReceivers []*DeltaReceiver
-	localRepo      LocalRepo
-	globalRepo     GlobalRepo
-	deltaStorage   csvc.DeltaStorage
-	metricsHolder  MetricsHolder
-	cfg            *conf.AppConfig
-	shutdown       *atomic.Bool
-	exInfoCache    *cache.ExchangeInfoCache
+	logger               *zap.Logger
+	binanceClient        BinanceClient
+	deltaReceivers       []*DeltaReceiver
+	localRepo            LocalRepo
+	globalRepo           GlobalRepo
+	deltaStorage         csvc.DeltaStorage
+	metricsHolder        MetricsHolder
+	cfg                  *conf.AppConfig
+	shutdown             *atomic.Bool
+	exInfoCache          *cache.ExchangeInfoCache
+	deltaUpdateIdWatcher *cache.DeltaUpdateIdWatcher
+	deltaHolesStorage    DeltaHolesStorage
 }
 
-func NewDeltaReceiverSvc(config *conf.AppConfig, binanceClient BinanceClient, localRepo LocalRepo, globalRepo GlobalRepo, deltaStorage csvc.DeltaStorage, metricsHolder MetricsHolder, exInfoCache *cache.ExchangeInfoCache) *DeltaReceiverSvc {
+func NewDeltaReceiverSvc(
+	config *conf.AppConfig,
+	binanceClient BinanceClient,
+	localRepo LocalRepo,
+	globalRepo GlobalRepo,
+	deltaStorage csvc.DeltaStorage,
+	metricsHolder MetricsHolder,
+	exInfoCache *cache.ExchangeInfoCache,
+	deltaUpdateIdWatcher *cache.DeltaUpdateIdWatcher,
+	deltaHolesStorage DeltaHolesStorage) *DeltaReceiverSvc {
 	var shutdown atomic.Bool
 	shutdown.Store(false)
 	return &DeltaReceiverSvc{
-		logger:        log.GetLogger("DeltaReceiverSvc"),
-		binanceClient: binanceClient,
-		metricsHolder: metricsHolder,
-		localRepo:     localRepo,
-		globalRepo:    globalRepo,
-		deltaStorage:  deltaStorage,
-		cfg:           config,
-		shutdown:      &shutdown,
-		exInfoCache:   exInfoCache,
+		logger:               log.GetLogger("DeltaReceiverSvc"),
+		binanceClient:        binanceClient,
+		metricsHolder:        metricsHolder,
+		localRepo:            localRepo,
+		globalRepo:           globalRepo,
+		deltaStorage:         deltaStorage,
+		cfg:                  config,
+		shutdown:             &shutdown,
+		exInfoCache:          exInfoCache,
+		deltaUpdateIdWatcher: deltaUpdateIdWatcher,
+		deltaHolesStorage:    deltaHolesStorage,
 	}
 }
 
@@ -60,7 +74,7 @@ func (s *DeltaReceiverSvc) getAndActivateNewReceivers(ctx context.Context) []*De
 		for j := 0; j*numReceivers+i < len(symbols); j++ {
 			symbolsForReceiver = append(symbolsForReceiver, symbols[j*numReceivers+i])
 		}
-		if newReceiver := NewDeltaReceiver(s.cfg.BinanceHttpConfig, symbolsForReceiver, s.localRepo, s.globalRepo, s.deltaStorage, s.metricsHolder); newReceiver != nil {
+		if newReceiver := NewDeltaReceiver(s.cfg.BinanceHttpConfig, symbolsForReceiver, s.localRepo, s.globalRepo, s.deltaStorage, s.metricsHolder, s.deltaUpdateIdWatcher, s.deltaHolesStorage); newReceiver != nil {
 			newReceivers = append(newReceivers, newReceiver)
 		}
 	}
