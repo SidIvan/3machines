@@ -1,8 +1,9 @@
 nestor.listen.port:
   8080
-delta.holes.col.name:
-  "delta_holes"
-mongo:
+holes.storage.cfg:
+  delta.holes.col.name:
+    "delta_holes"
+  mongo:
     timeout.sec:
       1
     database.name:
