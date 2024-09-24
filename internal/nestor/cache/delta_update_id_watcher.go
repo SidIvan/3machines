@@ -38,4 +38,5 @@ func (s *DeltaUpdateIdWatcher) GetHolesAndUpdate(batch []model.Delta) []model.De
 		}
 		s.val[symbol] = max(lastUpdId, delta.UpdateId)
 	}
+	return holes
 }
