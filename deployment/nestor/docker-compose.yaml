@@ -12,7 +12,7 @@ services:
       context: "../.."
       dockerfile: "deployment/nestor/run.Dockerfile"
     environment:
-      - SERVICE_NAME=$${SERVICE_NAME}
+      - SERVICE_NAME=${SERVICE_NAME}
     user: root
     restart: unless-stopped
     depends_on:
