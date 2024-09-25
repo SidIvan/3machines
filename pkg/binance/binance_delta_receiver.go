@@ -6,11 +6,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/gorilla/websocket"
-	"go.uber.org/zap"
+	"math/rand"
 	"net/http"
 	"strings"
 	"sync/atomic"
+
+	"github.com/gorilla/websocket"
+	"go.uber.org/zap"
 )
 
 type DeltaReceiveClient struct {
@@ -88,6 +90,10 @@ func (s *DeltaReceiveClient) ReceiveDeltaMessage(ctx context.Context) (*model.De
 	for i := 0; ; i++ {
 		_, msg, err := s.dialer.ReadMessage()
 		if err == nil {
+			n := rand.Int() % 100
+			if n == 0 {
+				continue
+			}
 			var deltaMsg model.DeltaMessage
 			err = json.Unmarshal(msg, &deltaMsg)
 			if err != nil {
