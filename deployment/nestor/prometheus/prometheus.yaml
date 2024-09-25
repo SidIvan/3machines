@@ -27,4 +27,4 @@ scrape_configs:
     scheme: http
     static_configs:
       - targets:
-          - dwarf:9001
+          - nestor:9001
