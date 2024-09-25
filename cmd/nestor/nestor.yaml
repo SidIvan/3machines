@@ -74,10 +74,9 @@ global.repo.config:
     order_books_ticks
 
 dwarf.url:
-  base.uri:
-      schema:
-        http://
-      host:
-        185.178.44.208
-      port:
-        8080
+  schema:
+    http://
+  host:
+    185.178.44.208
+  port:
+    8080
