@@ -62,6 +62,7 @@ func (s *DwarfHttpClient) createRequest(hole model.DeltaHole) (*http.Request, er
 	if err != nil {
 		return nil, err
 	}
+	req.Close = true
 	req.Header.Set("serviceName", s.serviceName)
 	return req, nil
 }
