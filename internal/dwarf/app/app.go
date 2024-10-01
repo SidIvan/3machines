@@ -80,6 +80,11 @@ func initApi(dwarfSvc *svc.DwarfSvc, metrics svc.Metrics, logger *zap.Logger) ht
 			nestorRouter.SaveDeltasHoleHandler(w, r)
 		}).
 		Methods(http.MethodPost)
+	r.
+		HandleFunc("/delta/hole", func(w http.ResponseWriter, r *http.Request) {
+			nestorRouter.GetDeltaHolesHandler(w, r)
+		}).
+		Methods(http.MethodGet)
 	r.Use(log.CreateMiddleware(logger))
 	return r
 }

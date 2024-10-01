@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"time"
 
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.uber.org/zap"
@@ -66,4 +67,19 @@ func (s MongoDeltaHoleStorage) SaveDeltaHole(ctx context.Context, deltaHole *mod
 		err = fmt.Errorf("error while inserting delta hole %w", err)
 	}
 	return err
+}
+
+func (s MongoDeltaHoleStorage) GetDeltaHoles(ctx context.Context, fromTsMs, toTsMs int64) ([]model.DeltaHoleWithInfo, error) {
+	filter := bson.M{"timestamp_ms": bson.M{"gte": fromTsMs, "lte": toTsMs}}
+	cur, err := s.DeltaHolesCol.Find(ctx, filter)
+	if err != nil {
+		err = fmt.Errorf("error while getting delta holes %w", err)
+		return nil, err
+	}
+	var deltaHoles []model.DeltaHoleWithInfo
+	if err := cur.All(ctx, deltaHoles); err != nil {
+		err = fmt.Errorf("error while getting delta holes %w", err)
+		return nil, err
+	}
+	return deltaHoles, nil
 }

@@ -5,6 +5,7 @@ import (
 	"DeltaReceiver/internal/dwarf/model"
 	"DeltaReceiver/pkg/log"
 	"context"
+	"time"
 
 	"go.uber.org/zap"
 )
@@ -24,6 +25,7 @@ func NewDwarfSvc(holesStorage HolesStorage) *DwarfSvc {
 type HolesStorage interface {
 	Connect(context.Context) error
 	SaveDeltaHole(context.Context, *model.DeltaHoleWithInfo) error
+	GetDeltaHoles(context.Context, int64, int64) ([]model.DeltaHoleWithInfo, error)
 }
 
 type Metrics interface {
@@ -40,4 +42,18 @@ func (s *DwarfSvc) SaveDeltaHole(ctx context.Context, serviceName string, deltaH
 		}
 	}
 	return false
+}
+
+type GetDeltaHolesRequest struct {
+	FromTs time.Time `json:"timestamp_from"`
+	ToTs   time.Time `json:"timestamp_to"`
+}
+
+func (s *DwarfSvc) GetDeltaHoles(ctx context.Context, req *GetDeltaHolesRequest) ([]model.DeltaHoleWithInfo, error) {
+	deltaHoles, err := s.HolesStorage.GetDeltaHoles(ctx, req.FromTs.UnixMilli(), req.ToTs.UnixMilli())
+	if err != nil {
+		s.logger.Error(err.Error())
+		return nil, err
+	}
+	return deltaHoles, nil
 }
