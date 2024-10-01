@@ -77,7 +77,7 @@ func (s MongoDeltaHoleStorage) GetDeltaHoles(ctx context.Context, fromTsMs, toTs
 		return nil, err
 	}
 	var deltaHoles []model.DeltaHoleWithInfo
-	if err := cur.All(ctx, deltaHoles); err != nil {
+	if err := cur.All(ctx, &deltaHoles); err != nil {
 		err = fmt.Errorf("error while getting delta holes %w", err)
 		return nil, err
 	}
