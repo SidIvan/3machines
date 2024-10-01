@@ -5,7 +5,9 @@ import (
 	"DeltaReceiver/internal/dwarf/model"
 	"DeltaReceiver/pkg/log"
 	"context"
+	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"go.uber.org/zap"
@@ -48,6 +50,25 @@ func (s *DwarfSvc) SaveDeltaHole(ctx context.Context, serviceName string, deltaH
 type GetDeltaHolesRequest struct {
 	FromTs time.Time `json:"timestamp_from"`
 	ToTs   time.Time `json:"timestamp_to"`
+}
+
+var location, _ = time.LoadLocation("Europe/Moscow")
+
+func (s *GetDeltaHolesRequest) UnmarshalJSON(b []byte) error {
+	times := strings.Split(string(b)[1:len(b)-1], ",")
+	if len(times) != 2 {
+		return errors.New("invalid input request body")
+	}
+	var err error
+	s.FromTs, err = time.ParseInLocation(time.RFC3339, times[0], location)
+	if err != nil {
+		return err
+	}
+	s.FromTs, err = time.ParseInLocation(time.RFC3339, times[1], location)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (s *DwarfSvc) GetDeltaHoles(ctx context.Context, req *GetDeltaHolesRequest) ([]model.DeltaHoleWithInfo, error) {

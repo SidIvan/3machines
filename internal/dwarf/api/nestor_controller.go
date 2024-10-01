@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
-	"time"
 
 	"go.uber.org/zap"
 )
@@ -51,8 +50,6 @@ func (s *NestorRouter) SaveDeltasHoleHandler(w http.ResponseWriter, r *http.Requ
 	}
 }
 
-var location, _ = time.LoadLocation("Europe/Moscow")
-
 func (s *NestorRouter) GetDeltaHolesHandler(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
 	defer r.Body.Close()
@@ -67,10 +64,6 @@ func (s *NestorRouter) GetDeltaHolesHandler(w http.ResponseWriter, r *http.Reque
 		s.logger.Error(err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		return
-	}
-	reqBody = svc.GetDeltaHolesRequest{
-		FromTs: reqBody.FromTs.In(location),
-		ToTs:   reqBody.ToTs.In(location),
 	}
 	deltaHoles, err := s.dwarfSvc.GetDeltaHoles(context.Background(), &reqBody)
 	if err != nil {
