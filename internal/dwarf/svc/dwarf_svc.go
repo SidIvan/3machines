@@ -5,6 +5,7 @@ import (
 	"DeltaReceiver/internal/dwarf/model"
 	"DeltaReceiver/pkg/log"
 	"context"
+	"fmt"
 	"time"
 
 	"go.uber.org/zap"
@@ -50,6 +51,7 @@ type GetDeltaHolesRequest struct {
 }
 
 func (s *DwarfSvc) GetDeltaHoles(ctx context.Context, req *GetDeltaHolesRequest) ([]model.DeltaHoleWithInfo, error) {
+	s.logger.Debug(fmt.Sprintf("Get delta holes request from %s to %s", req.FromTs, req.ToTs))
 	deltaHoles, err := s.HolesStorage.GetDeltaHoles(ctx, req.FromTs.UnixMilli(), req.ToTs.UnixMilli())
 	if err != nil {
 		s.logger.Error(err.Error())
