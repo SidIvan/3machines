@@ -5,9 +5,7 @@ import (
 	"DeltaReceiver/internal/dwarf/model"
 	"DeltaReceiver/pkg/log"
 	"context"
-	"errors"
 	"fmt"
-	"strings"
 	"time"
 
 	"go.uber.org/zap"
@@ -48,23 +46,19 @@ func (s *DwarfSvc) SaveDeltaHole(ctx context.Context, serviceName string, deltaH
 }
 
 type GetDeltaHolesRequest struct {
-	FromTs time.Time `json:"timestamp_from"`
-	ToTs   time.Time `json:"timestamp_to"`
+	FromTs RFC3339JSONTime `json:"timestamp_from"`
+	ToTs   RFC3339JSONTime `json:"timestamp_to"`
+}
+
+type RFC3339JSONTime struct {
+	ts time.Time
 }
 
 var location, _ = time.LoadLocation("Europe/Moscow")
 
-func (s *GetDeltaHolesRequest) UnmarshalJSON(b []byte) error {
-	times := strings.Split(string(b)[1:len(b)-1], ",")
-	if len(times) != 2 {
-		return errors.New("invalid input request body")
-	}
+func (s *RFC3339JSONTime) UnmarshalJSON(b []byte) error {
 	var err error
-	s.FromTs, err = time.ParseInLocation(time.RFC3339, times[0], location)
-	if err != nil {
-		return err
-	}
-	s.FromTs, err = time.ParseInLocation(time.RFC3339, times[1], location)
+	s.ts, err = time.ParseInLocation(time.RFC3339, string(b), location)
 	if err != nil {
 		return err
 	}
@@ -72,8 +66,8 @@ func (s *GetDeltaHolesRequest) UnmarshalJSON(b []byte) error {
 }
 
 func (s *DwarfSvc) GetDeltaHoles(ctx context.Context, req *GetDeltaHolesRequest) ([]model.DeltaHoleWithInfo, error) {
-	s.logger.Debug(fmt.Sprintf("Get delta holes request from %s to %s", req.FromTs, req.ToTs))
-	deltaHoles, err := s.HolesStorage.GetDeltaHoles(ctx, req.FromTs.UnixMilli(), req.ToTs.UnixMilli())
+	s.logger.Debug(fmt.Sprintf("Get delta holes request from %s to %s", req.FromTs.ts, req.ToTs.ts))
+	deltaHoles, err := s.HolesStorage.GetDeltaHoles(ctx, req.FromTs.ts.UnixMilli(), req.ToTs.ts.UnixMilli())
 	if err != nil {
 		s.logger.Error(err.Error())
 		return nil, err
