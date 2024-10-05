@@ -56,10 +56,15 @@ type RFC3339JSONTime struct {
 
 var location, _ = time.LoadLocation("Europe/Moscow")
 
+var debugLogger = log.GetLogger("DebugLogger")
+
 func (s *RFC3339JSONTime) UnmarshalJSON(b []byte) error {
 	var err error
+	debugLogger.Debug(fmt.Sprintf("Try to unmarshal %s", b))
 	s.ts, err = time.ParseInLocation(time.RFC3339, string(b), location)
+	debugLogger.Debug(fmt.Sprintf("Unmarshal to %s", s.ts))
 	if err != nil {
+		debugLogger.Error(err.Error())
 		return err
 	}
 	return nil
