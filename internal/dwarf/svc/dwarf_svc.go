@@ -54,12 +54,15 @@ type RFC3339JSONTime struct {
 	ts time.Time
 }
 
-var location, _ = time.LoadLocation("Europe/Moscow")
+var (
+	location, _ = time.LoadLocation("Europe/Moscow")
+	layout      = "2006-01-02T15:04:05"
+)
 
 func (s *RFC3339JSONTime) UnmarshalJSON(b []byte) error {
 	var err error
 	stringTime := string(b)
-	s.ts, err = time.ParseInLocation(time.RFC3339, stringTime[1:len(stringTime)-1], location)
+	s.ts, err = time.ParseInLocation(layout, stringTime[1:len(stringTime)-1], location)
 	if err != nil {
 		return err
 	}
