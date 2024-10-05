@@ -71,7 +71,7 @@ func (s MongoDeltaHoleStorage) SaveDeltaHole(ctx context.Context, deltaHole *mod
 
 func (s MongoDeltaHoleStorage) GetDeltaHoles(ctx context.Context, fromTsMs, toTsMs int64) ([]model.DeltaHoleWithInfo, error) {
 	s.logger.Debug(fmt.Sprintf("Get delta holes request from %d to %d", fromTsMs, toTsMs))
-	filter := bson.M{"timestamp_ms": bson.M{"gte": fromTsMs, "lte": toTsMs}}
+	filter := bson.M{"timestamp_ms": bson.M{"$gte": fromTsMs, "$lte": toTsMs}}
 	cur, err := s.DeltaHolesCol.Find(ctx, filter)
 	if err != nil {
 		err = fmt.Errorf("error while getting delta holes %w", err)
