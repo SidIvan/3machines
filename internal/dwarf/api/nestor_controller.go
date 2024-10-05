@@ -67,7 +67,7 @@ func (s *NestorRouter) GetDeltaHolesHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 	deltaHoles, err := s.dwarfSvc.GetDeltaHoles(context.Background(), &reqBody)
-	s.logger.Debug(fmt.Sprintf("Got {} deltaHoles", len(deltaHoles)))
+	s.logger.Debug(fmt.Sprintf("Got %d deltaHoles", len(deltaHoles)))
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
