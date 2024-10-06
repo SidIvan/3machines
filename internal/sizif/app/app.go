@@ -27,7 +27,7 @@ func NewApp(cfg *conf.AppConfig) *App {
 	logger := log.GetLogger("App")
 	chPoolHolder := clickhouse.NewChPoolHolder(cfg.GlobalRepoConfig.ChPoolCfg)
 	deltaStorage := repo.NewChDeltaStorage(chPoolHolder, cfg.GlobalRepoConfig.DatabaseName, cfg.GlobalRepoConfig.DeltaTable)
-	parquetStorage := parquet.NewS3ParquetStorage(cfg.ParquetStorageCfg.BasePath)
+	parquetStorage := parquet.NewOldS3ParquetStorage(cfg.ParquetStorageCfg.BasePath)
 	sizifSvc := svc.NewSizifSvc(cfg, deltaStorage, parquetStorage)
 	return &App{
 		logger:         logger,

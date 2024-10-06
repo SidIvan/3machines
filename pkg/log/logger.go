@@ -19,6 +19,7 @@ func GetCustomLogger(loggerName string, fileName string) *zap.Logger {
 	envType := env.GetEnvType()
 	var logger *zap.Logger
 	var err error
+
 	if envType == env.DEV {
 		cfg := zap.NewDevelopmentConfig()
 		cfg.OutputPaths = []string{
@@ -38,7 +39,19 @@ func GetCustomLogger(loggerName string, fileName string) *zap.Logger {
 	return logger.Named(loggerName)
 }
 
+func GetSTDOutLogger(loggerName string) *zap.Logger {
+	cfg := zap.NewDevelopmentConfig()
+	logger, err := cfg.Build()
+	if err != nil {
+		panic(err)
+	}
+	return logger.Named(loggerName)
+}
+
 func GetLogger(loggerName string) *zap.Logger {
+	if serviceName == "" {
+		return GetSTDOutLogger(loggerName)
+	}
 	return GetCustomLogger(loggerName, serviceName)
 }
 

@@ -8,6 +8,10 @@ type BaseUriConfig struct {
 	Port   int    `yaml:"port"`
 }
 
+func (cfg *BaseUriConfig) GetEndpoint() string {
+	return fmt.Sprintf("%s%s", cfg.Schema, cfg.Host)
+}
+
 func (cfg *BaseUriConfig) GetBaseUri() string {
 	return fmt.Sprintf("%s%s:%d/", cfg.Schema, cfg.Host, cfg.Port)
 }
