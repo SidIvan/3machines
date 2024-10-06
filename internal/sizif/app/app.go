@@ -2,9 +2,9 @@ package app
 
 import (
 	"DeltaReceiver/internal/common/repo"
+	"DeltaReceiver/internal/common/repo/parquet"
 	csvc "DeltaReceiver/internal/common/svc"
 	"DeltaReceiver/internal/sizif/conf"
-	"DeltaReceiver/internal/sizif/parquet"
 	"DeltaReceiver/internal/sizif/svc"
 	"DeltaReceiver/pkg/clickhouse"
 	"DeltaReceiver/pkg/log"
