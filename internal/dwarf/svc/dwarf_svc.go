@@ -30,7 +30,7 @@ type HolesStorage interface {
 }
 
 type Metrics interface {
-	IncNumCallsCreateDeltaHole()
+	IncNumCallsCreateDeltaHole(string)
 }
 
 func (s *DwarfSvc) SaveDeltaHole(ctx context.Context, serviceName string, deltaHole cmodel.DeltaHole) bool {
