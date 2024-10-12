@@ -76,7 +76,8 @@ func initApi(dwarfSvc *svc.DwarfSvc, metrics svc.Metrics, logger *zap.Logger) ht
 	r := mux.NewRouter()
 	r.
 		HandleFunc("/delta/hole", func(w http.ResponseWriter, r *http.Request) {
-			metrics.IncNumCallsCreateDeltaHole()
+			serviceName := r.Header.Get(api.ServiceNameHeaderName)
+			metrics.IncNumCallsCreateDeltaHole(serviceName)
 			nestorRouter.SaveDeltasHoleHandler(w, r)
 		}).
 		Methods(http.MethodPost)
