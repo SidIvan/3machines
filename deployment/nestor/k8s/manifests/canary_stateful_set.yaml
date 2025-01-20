@@ -67,7 +67,7 @@ spec:
                 key: hosts
         envFrom:
           - configMapRef:
-            name: nestor-config
+              name: nestor-config
         volumeMounts:
           - name: nestor-logs
             mountPath: /app/log
