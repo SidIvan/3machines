@@ -7,4 +7,5 @@ type SymbolTick struct {
 	BidQuantity string `json:"B" bson:"bid_quantity"`
 	AskPrice    string `json:"a" bson:"ask_price"`
 	AskQuantity string `json:"A" bson:"ask_quantity"`
+	Timestamp   int64  `bson:"timestamp_ms"`
 }

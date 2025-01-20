@@ -5,7 +5,6 @@ import (
 	"DeltaReceiver/pkg/log"
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/gocql/gocql"
 	"go.uber.org/zap"
@@ -35,9 +34,8 @@ func (s *CsBookTicksStorage) initStatements() {
 
 func (s CsBookTicksStorage) SendBookTicks(ctx context.Context, bookTicks []model.SymbolTick) error {
 	batch := s.session.NewBatch(gocql.LoggedBatch).WithContext(ctx)
-	curTsMs := time.Now().UnixMilli()
 	for _, bookTick := range bookTicks {
-		batch.Query(s.insertStatement, bookTick.Symbol, getHourNo(curTsMs), curTsMs, bookTick.UpdateId, bookTick.AskPrice, bookTick.AskQuantity, bookTick.BidPrice, bookTick.BidQuantity)
+		batch.Query(s.insertStatement, bookTick.Symbol, getHourNo(bookTick.Timestamp), bookTick.Timestamp, bookTick.UpdateId, bookTick.AskPrice, bookTick.AskQuantity, bookTick.BidPrice, bookTick.BidQuantity)
 	}
 	err := s.session.ExecuteBatch(batch)
 	if err != nil {

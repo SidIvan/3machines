@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"strings"
 	"sync/atomic"
+	"time"
 
 	"github.com/gorilla/websocket"
 	"go.uber.org/zap"
@@ -89,6 +90,7 @@ func (s *BookTickerClient) ReceiveTicks(ctx context.Context) (*model.SymbolTick,
 				s.logger.Error(err.Error())
 				return nil, fmt.Errorf("error while unmarshaling tick message %w", err)
 			}
+			tick.Timestamp = time.Now().UnixMilli()
 			return &tick, nil
 		}
 		if s.shutdown.Load() {

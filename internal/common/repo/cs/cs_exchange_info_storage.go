@@ -6,19 +6,18 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"time"
 
 	"github.com/gocql/gocql"
 	"go.uber.org/zap"
 )
 
 type CsExchangeInfoStorage struct {
-	logger                         *zap.Logger
-	session                        *gocql.Session
-	tableName                      string
-	insertStatement                string
-	selectDaysExInfoStatemenet     string
-	selectLastExInfoStatemenet     string
+	logger                     *zap.Logger
+	session                    *gocql.Session
+	tableName                  string
+	insertStatement            string
+	selectDaysExInfoStatemenet string
+	selectLastExInfoStatemenet string
 }
 
 func NewExchangeInfoStorage(session *gocql.Session, tableName string) *CsExchangeInfoStorage {
@@ -36,7 +35,7 @@ func (s *CsExchangeInfoStorage) initStatements() {
 	s.insertStatement = fmt.Sprintf("INSERT INTO %s (day, timestamp_ms, ex_info_hash, ex_info) VALUES (?, ?, ?, ?)", s.tableName)
 	s.selectDaysExInfoStatemenet = fmt.Sprintf("SELECT day FROM %s", s.tableName)
 	s.selectLastExInfoStatemenet = fmt.Sprintf("SELECT ex_info FROM %s WHERE day = ? ORDER BY timestamp_ms DESC LIMIT 1", s.tableName)
-	}
+}
 
 func (s CsExchangeInfoStorage) SendExchangeInfo(ctx context.Context, exInfo *model.ExchangeInfo) error {
 	payload, err := json.Marshal(exInfo)
@@ -44,7 +43,7 @@ func (s CsExchangeInfoStorage) SendExchangeInfo(ctx context.Context, exInfo *mod
 		s.logger.Error(err.Error())
 		return err
 	}
-	curTsMs := time.Now().UnixMilli()
+	curTsMs := exInfo.ServerTime
 	query := s.session.Query(s.insertStatement, getHourNo(curTsMs), curTsMs, exInfo.ExInfoHash(), payload).WithContext(ctx)
 	err = query.Exec()
 	if err != nil {
