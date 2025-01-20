@@ -60,7 +60,7 @@ spec:
         env:
           - name: SERVICE_NAME
             value: $(HOSTNAME)
-          - name: nestor.global.repo.hosts
+          - name: global.repo.hosts
             valueFrom: 
               configMapKeyRef:
                 name: cassandra-config
