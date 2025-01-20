@@ -42,18 +42,18 @@ func NewAppConfigFromEnv() *AppConfig {
 }
 
 type LocalRepoConfig struct {
-	DeltaColName      string                 `yaml:"delta.table.name"`
-	SnapshotColName   string                 `yaml:"snapshot.table.name"`
-	ExInfoColName     string                 `yaml:"exchange.info.table.name"`
-	BookTickerColName string                 `yaml:"book.ticker.table.name"`
+	DeltaColName      string                 `yaml:"delta.table"`
+	SnapshotColName   string                 `yaml:"snapshot.table"`
+	ExInfoColName     string                 `yaml:"exchange.info.table"`
+	BookTickerColName string                 `yaml:"book.ticker.table"`
 	MongoConfig       *mconf.MongoRepoConfig `yaml:"mongo"`
 }
 
 func NewLocalRepoConfigFromEnv(envPrefix string) *LocalRepoConfig {
-	deltaColName := os.Getenv(envPrefix + ".delta.table.name")
-	snapshotColName := os.Getenv(envPrefix + ".snapshot.table.name")
-	exInfoColName := os.Getenv(envPrefix + ".exchange.info.table.name")
-	bookTickerColName := os.Getenv(envPrefix + ".book.ticks.table.name")
+	deltaColName := os.Getenv(envPrefix + ".delta.table")
+	snapshotColName := os.Getenv(envPrefix + ".snapshot.table")
+	exInfoColName := os.Getenv(envPrefix + ".exchange.info.table")
+	bookTickerColName := os.Getenv(envPrefix + ".book.ticks.table")
 	mongoCfg := mconf.NewMongoRepoConfigFromEnv(envPrefix)
 	return &LocalRepoConfig{
 		DeltaColName:      deltaColName,
