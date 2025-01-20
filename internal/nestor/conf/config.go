@@ -15,7 +15,7 @@ type AppConfig struct {
 	ExchangeInfoUpdPerM int16                            `yaml:"binance.exchange.info.update.period.m"`
 	LocalRepoCfg        *LocalRepoConfig                 `yaml:"local.repo"`
 	DwarfUrl            *pconf.BaseUriConfig             `yaml:"dwarf.url"`
-	CsCfg               *conf.CsRepoConfig               `yaml:"glogal.repo"`
+	CsCfg               *conf.CsRepoConfig               `yaml:"glogal.repo.binace"`
 }
 
 func NewAppConfigFromEnv() *AppConfig {
@@ -29,7 +29,7 @@ func NewAppConfigFromEnv() *AppConfig {
 	if err != nil {
 		panic(err)
 	}
-	csConfig := conf.NewCsRepoConfigFromEnv("global.repo")
+	csConfig := conf.NewCsRepoConfigFromEnv("global.repo.binace")
 	dwarfCfg := pconf.NewBaseUriConfigFromEnv("dwarf.uri")
 	return &AppConfig{
 		BinanceHttpConfig:   binanceClientConfig,
