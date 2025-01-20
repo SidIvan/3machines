@@ -44,7 +44,7 @@ func (s CsExchangeInfoStorage) SendExchangeInfo(ctx context.Context, exInfo *mod
 		return err
 	}
 	curTsMs := exInfo.ServerTime
-	query := s.session.Query(s.insertStatement, getHourNo(curTsMs), curTsMs, exInfo.ExInfoHash(), payload).WithContext(ctx)
+	query := s.session.Query(s.insertStatement, getDayNo(curTsMs), curTsMs, exInfo.ExInfoHash(), payload).WithContext(ctx)
 	err = query.Exec()
 	if err != nil {
 		s.logger.Error(err.Error())
