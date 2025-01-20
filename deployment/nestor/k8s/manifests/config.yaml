@@ -13,9 +13,8 @@ data:
         schema=https://
         host=api.binance.com
         port=443
-    |
-    reconnect.period.m=720
-    exchange.info.update.period.m=5
+    reconnect.period.m: 720
+    exchange.info.update.period.m: 5
   local.repo: |
     delta.table.name=binance_deltas
     snapshot.table.name=binance_snapshots
