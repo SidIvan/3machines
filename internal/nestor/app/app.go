@@ -28,7 +28,6 @@ type App struct {
 	snapshotSvc         *svc.SnapshotSvc
 	exInfoSvc           *svc.ExchangeInfoSvc
 	bookTickerSvc       *svc.BookTickerSvc
-	globalRepo          svc.GlobalRepo
 	deltaStorage        csvc.DeltaStorage
 	snapshotStorage     csvc.SnapshotStorage
 	bookTicksStorage    csvc.BookTicksStorage
@@ -112,7 +111,7 @@ func (s *App) Start() {
 		}
 	}()
 	time.Sleep(2 * time.Second)
-	if err = s.globalRepo.SendFullExchangeInfo(baseContext, exInfo); err != nil {
+	if err = s.exchangeInfoStorage.SendExchangeInfo(baseContext, exInfo); err != nil {
 		s.logger.Error(err.Error())
 	}
 	var symbols []string
@@ -151,7 +150,7 @@ func (s *App) Stop(ctx context.Context) {
 		wg.Done()
 	}()
 	wg.Wait()
-	s.globalRepo.Disconnect(context.Background())
+	s.deltaStorage.Disconnect(context.Background())
 	s.logger.Info("End of graceful shutdown")
 }
 
