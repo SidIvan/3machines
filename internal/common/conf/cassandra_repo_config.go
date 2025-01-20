@@ -6,12 +6,12 @@ import (
 )
 
 type CsRepoConfig struct {
-	Hosts                 []string
-	KeySpace              string
-	DeltaTableName        string
-	SnapshotTableName     string
-	BookTicksTableName    string
-	ExchangeInfoTableName string
+	Hosts                 []string `yaml:"hosts"`
+	KeySpace              string   `yaml:"keyspace"`
+	DeltaTableName        string   `yaml:"delta.table.name"`
+	SnapshotTableName     string   `yaml:"snapshot.table.name"`
+	BookTicksTableName    string   `yaml:"book.ticks.table.name"`
+	ExchangeInfoTableName string   `yaml:"exchange.info.table.name"`
 }
 
 func NewCsRepoConfigFromEnv(envPrefix string) *CsRepoConfig {

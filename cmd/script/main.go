@@ -3,6 +3,7 @@ package main
 import (
 	"DeltaReceiver/internal/common/conf"
 	"DeltaReceiver/internal/common/model"
+	"DeltaReceiver/internal/common/repo/cs"
 	"DeltaReceiver/internal/common/repo/parquet"
 	"context"
 	"flag"
@@ -11,13 +12,43 @@ import (
 	"os"
 
 	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/gocql/gocql"
 	xs3 "github.com/xitongsys/parquet-go-source/s3"
 	"github.com/xitongsys/parquet-go/reader"
 	"gopkg.in/yaml.v3"
 )
 
 func main() {
-	GetDeltas()
+	csRepoCfg := conf.CsRepoConfig{
+		Hosts:                 []string{"91.198.220.162"},
+		KeySpace:              "binance_data",
+		DeltaTableName:        "deltas",
+		SnapshotTableName:     "snapshots",
+		ExchangeInfoTableName: "exchange_info",
+		BookTicksTableName:    "book_ticks",
+	}
+	cluster := gocql.NewCluster(csRepoCfg.Hosts...)
+	cluster.Keyspace = csRepoCfg.KeySpace
+	cluster.Port = 30042
+	session, err := cluster.CreateSession()
+	if err != nil {
+		panic(err)
+	}
+	repo := cs.NewCsDeltaStorage(session, csRepoCfg.DeltaTableName)
+	deltas := []model.Delta{{
+		Timestamp:     123,
+		Price:         "asd",
+		Count:         "sdfdsf",
+		UpdateId:      123123,
+		FirstUpdateId: 321321,
+		T:             true,
+		Symbol:        "ABOBA",
+	},
+	}
+	err = repo.SendDeltas(context.Background(), deltas)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func GetDeltas() {

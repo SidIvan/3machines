@@ -11,11 +11,11 @@ import (
 
 type AppConfig struct {
 	BinanceHttpConfig   *binance.BinanceHttpClientConfig `yaml:"binance.client"`
-	ReconnectPeriodM    int16                            `yaml:"reconnect.period.m"`
-	LocalRepoCfg        *LocalRepoConfig                 `yaml:"local.repo.config"`
-	ExchangeInfoUpdPerM int16                            `yaml:"ex.info.upd.per.m"`
+	ReconnectPeriodM    int16                            `yaml:"binance.reconnect.period.m"`
+	ExchangeInfoUpdPerM int16                            `yaml:"binance.exchange.info.update.period.m"`
+	LocalRepoCfg        *LocalRepoConfig                 `yaml:"local.repo"`
 	DwarfUrl            *pconf.BaseUriConfig             `yaml:"dwarf.url"`
-	CsCfg               *conf.CsRepoConfig
+	CsCfg               *conf.CsRepoConfig               `yaml:"glogal.repo"`
 }
 
 func NewAppConfigFromEnv() *AppConfig {
@@ -42,10 +42,10 @@ func NewAppConfigFromEnv() *AppConfig {
 }
 
 type LocalRepoConfig struct {
-	DeltaColName      string                 `yaml:"delta.collection.name"`
-	SnapshotColName   string                 `yaml:"snapshot.collection.name"`
-	ExInfoColName     string                 `yaml:"exchange.info.collection.name"`
-	BookTickerColName string                 `yaml:"book.ticker.collection.name"`
+	DeltaColName      string                 `yaml:"delta.table.name"`
+	SnapshotColName   string                 `yaml:"snapshot.table.name"`
+	ExInfoColName     string                 `yaml:"exchange.info.table.name"`
+	BookTickerColName string                 `yaml:"book.ticker.table.name"`
 	MongoConfig       *mconf.MongoRepoConfig `yaml:"mongo"`
 }
 
