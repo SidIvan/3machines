@@ -3,6 +3,7 @@ package svc
 import (
 	"DeltaReceiver/pkg/binance"
 	bmodel "DeltaReceiver/pkg/binance/model"
+	"DeltaReceiver/internal/common/svc"
 	"DeltaReceiver/pkg/log"
 	"context"
 	"encoding/json"
@@ -18,14 +19,14 @@ type TickerReceiver struct {
 	logger     *zap.Logger
 	receiver   *binance.BookTickerClient
 	localRepo  LocalRepo
-	globalRepo GlobalRepo
+	bookTicksStorage svc.BookTicksStorage
 	metrics    MetricsHolder
 	symbols    []string
 	shutdown   *atomic.Bool
 	done       chan struct{}
 }
 
-func NewTickerReceiver(cfg *binance.BinanceHttpClientConfig, symbols []string, localRepo LocalRepo, globalRepo GlobalRepo, metrics MetricsHolder) *TickerReceiver {
+func NewTickerReceiver(cfg *binance.BinanceHttpClientConfig, symbols []string, localRepo LocalRepo, bookTicksStorage svc.BookTicksStorage, metrics MetricsHolder) *TickerReceiver {
 	if len(symbols) == 0 {
 		return nil
 	}
@@ -36,7 +37,7 @@ func NewTickerReceiver(cfg *binance.BinanceHttpClientConfig, symbols []string, l
 		receiver:   binance.NewBookTickerClient(cfg, symbols),
 		symbols:    symbols,
 		localRepo:  localRepo,
-		globalRepo: globalRepo,
+		bookTicksStorage: bookTicksStorage,
 		metrics:    metrics,
 		shutdown:   &shutdown,
 		done:       make(chan struct{}),
@@ -87,7 +88,7 @@ func (s *TickerReceiver) ReceiveBatch(ctx context.Context) ([]bmodel.SymbolTick,
 
 func (s *TickerReceiver) SendBatch(ctx context.Context, ticks []bmodel.SymbolTick) error {
 	for i := 0; i < 3; i++ {
-		if err := s.globalRepo.SendBookTicks(ctx, ticks); err == nil {
+		if err := s.bookTicksStorage.SendBookTicks(ctx, ticks); err == nil {
 			s.metrics.ProcessTickMetrics(ticks, Send)
 			return nil
 		} else {
@@ -95,7 +96,7 @@ func (s *TickerReceiver) SendBatch(ctx context.Context, ticks []bmodel.SymbolTic
 			s.logger.Warn("failed send to Ch, retry")
 		}
 	}
-	s.globalRepo.Reconnect(ctx)
+	s.bookTicksStorage.Reconnect(ctx)
 	s.logger.Warn("failed send to Ch, try save to mongo")
 	for i := 0; i < 3; i++ {
 		if err := s.localRepo.SaveBookTicker(ctx, ticks); err == nil {

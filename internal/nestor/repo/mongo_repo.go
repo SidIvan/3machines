@@ -3,7 +3,7 @@ package repo
 import (
 	"DeltaReceiver/internal/common/model"
 	appConf "DeltaReceiver/internal/nestor/conf"
-	model2 "DeltaReceiver/internal/nestor/model"
+	model2 "DeltaReceiver/internal/common/model"
 	bmodel "DeltaReceiver/pkg/binance/model"
 	"DeltaReceiver/pkg/log"
 	"context"

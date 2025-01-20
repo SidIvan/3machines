@@ -6,11 +6,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/gorilla/websocket"
-	"go.uber.org/zap"
 	"net/http"
 	"strings"
 	"sync/atomic"
+
+	"github.com/gorilla/websocket"
+	"go.uber.org/zap"
 )
 
 type BookTickerClient struct {
@@ -26,7 +27,7 @@ func NewBookTickerClient(cfg *BinanceHttpClientConfig, symbols []string) *BookTi
 	shutdown.Store(false)
 	client := BookTickerClient{
 		logger:   log.GetLogger("DeltaReceiveClient"),
-		baseUri:  cfg.DeltaStreamBaseUriConfig.GetBaseUri(),
+		baseUri:  cfg.StreamBaseUriConfig.GetBaseUri(),
 		symbols:  symbols,
 		shutdown: &shutdown,
 	}

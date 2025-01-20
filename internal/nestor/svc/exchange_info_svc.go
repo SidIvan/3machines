@@ -1,6 +1,7 @@
 package svc
 
 import (
+	csvc "DeltaReceiver/internal/common/svc"
 	"DeltaReceiver/internal/nestor/cache"
 	"DeltaReceiver/internal/nestor/conf"
 	bmodel "DeltaReceiver/pkg/binance/model"
@@ -8,18 +9,19 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"go.uber.org/zap"
 	"os"
 	"strconv"
 	"sync/atomic"
 	"time"
+
+	"go.uber.org/zap"
 )
 
 type ExchangeInfoSvc struct {
 	logger        *zap.Logger
 	binanceClient BinanceClient
 	localRepo     LocalRepo
-	globalRepo    GlobalRepo
+	exInfoStorage csvc.ExchangeInfoStorage
 	metrics       MetricsHolder
 	cfg           *conf.AppConfig
 	shutdown      *atomic.Bool
@@ -27,7 +29,7 @@ type ExchangeInfoSvc struct {
 	exInfoCache   *cache.ExchangeInfoCache
 }
 
-func NewExchangeInfoSvc(config *conf.AppConfig, binanceClient BinanceClient, localRepo LocalRepo, globalRepo GlobalRepo, metrics MetricsHolder, infoCache *cache.ExchangeInfoCache) *ExchangeInfoSvc {
+func NewExchangeInfoSvc(config *conf.AppConfig, binanceClient BinanceClient, localRepo LocalRepo, exInfoStorage csvc.ExchangeInfoStorage, metrics MetricsHolder, infoCache *cache.ExchangeInfoCache) *ExchangeInfoSvc {
 	var shutdown atomic.Bool
 	shutdown.Store(false)
 	return &ExchangeInfoSvc{
@@ -35,7 +37,7 @@ func NewExchangeInfoSvc(config *conf.AppConfig, binanceClient BinanceClient, loc
 		binanceClient: binanceClient,
 		metrics:       metrics,
 		localRepo:     localRepo,
-		globalRepo:    globalRepo,
+		exInfoStorage: exInfoStorage,
 		cfg:           config,
 		shutdown:      &shutdown,
 		done:          make(chan struct{}),
@@ -62,7 +64,7 @@ func (s *ExchangeInfoSvc) StartReceiveExInfo(ctx context.Context) {
 		s.logger.Info(fmt.Sprintf("got exchange info with hash %d", exInfo.ExInfoHash()))
 		cancel()
 		ctxWithTimeout, cancel = context.WithTimeout(context.Background(), 20*time.Second)
-		lastSavedExInfo := s.globalRepo.GetLastFullExchangeInfo(ctxWithTimeout)
+		lastSavedExInfo := s.exInfoStorage.GetLastExchangeInfo(ctxWithTimeout)
 		cancel()
 		if err != nil {
 			s.logger.Error(err.Error())
@@ -82,7 +84,7 @@ func (s *ExchangeInfoSvc) StartReceiveExInfo(ctx context.Context) {
 func (s *ExchangeInfoSvc) SaveExchangeInfo(ctx context.Context, exInfo *bmodel.ExchangeInfo) error {
 	s.logger.Info("sending exchange info")
 	for i := 0; i < 3; i++ {
-		if err := s.globalRepo.SendFullExchangeInfo(ctx, exInfo); err == nil {
+		if err := s.exInfoStorage.SendExchangeInfo(ctx, exInfo); err == nil {
 			s.logger.Info("successfully sent to Ch")
 			s.metrics.ProcessExInfoMetrics(Send)
 			return nil
@@ -91,7 +93,7 @@ func (s *ExchangeInfoSvc) SaveExchangeInfo(ctx context.Context, exInfo *bmodel.E
 			//s.globalRepo.Reconnect(ctx)
 		}
 	}
-	s.globalRepo.Reconnect(ctx)
+	s.exInfoStorage.Reconnect(ctx)
 	s.logger.Warn("failed send to Ch, try save to mongo")
 	for i := 0; i < 3; i++ {
 		if err := s.localRepo.SaveExchangeInfo(ctx, exInfo); err == nil {

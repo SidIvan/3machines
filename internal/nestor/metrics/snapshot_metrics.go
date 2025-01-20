@@ -1,7 +1,7 @@
 package metrics
 
 import (
-	"DeltaReceiver/internal/nestor/model"
+	"DeltaReceiver/internal/common/model"
 	"DeltaReceiver/internal/nestor/svc"
 	"DeltaReceiver/pkg/log"
 	"fmt"

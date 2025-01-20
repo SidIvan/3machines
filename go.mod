@@ -13,6 +13,12 @@ require (
 )
 
 require (
+	github.com/gocql/gocql v1.7.0 // indirect
+	github.com/hailocab/go-hostpool v0.0.0-20160125115350-e80d13ce29ed // indirect
+	gopkg.in/inf.v0 v0.9.1 // indirect
+)
+
+require (
 	github.com/apache/arrow/go/arrow v0.0.0-20200730104253-651201b0f516 // indirect
 	github.com/apache/thrift v0.14.2 // indirect
 	github.com/aws/aws-sdk-go v1.54.19 // indirect

@@ -1,0 +1,34 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nestor-config
+data:
+  binance:
+    client:
+      stream.uri: |
+        schema=wss://
+        host=stream.binance.com
+        port=9443
+      http.uri: |
+        schema=https://
+        host=api.binance.com
+        port=443
+    |
+    reconnect.period.m=720
+    exchange.info.update.period.m=5
+  local.repo: |
+    delta.table.name=binance_deltas
+    snapshot.table.name=binance_snapshots
+    exchange.info.table.name=binance_exchange_info
+    book.ticks.table.name=binance_book_ticks
+  global.repo: 
+    binace: |
+      keyspace=binance_data
+      delta.table.name=deltas
+      snapshot.table=snapshots
+      book.ticks.table=book_ticks
+      exchange.info.table=exchange_info
+  dwarf.url: |
+    schema=http://
+    host=185.178.44.208
+    port=8080

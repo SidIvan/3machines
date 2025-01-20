@@ -1,11 +1,27 @@
 package conf
 
-import "fmt"
+import (
+	"fmt"
+	"os"
+	"strconv"
+)
 
 type BaseUriConfig struct {
 	Schema string `yaml:"schema"`
 	Host   string `yaml:"host"`
 	Port   int    `yaml:"port"`
+}
+
+func NewBaseUriConfigFromEnv(envPrefix string) *BaseUriConfig {
+	port, err := strconv.Atoi(os.Getenv(envPrefix + "_port"))
+	if err != nil {
+		panic(err)
+	}
+	return &BaseUriConfig{
+		Schema: os.Getenv(envPrefix + "_schema"),
+		Host:   os.Getenv(envPrefix + "_host"),
+		Port:   port,
+	}
 }
 
 func (cfg *BaseUriConfig) GetEndpoint() string {

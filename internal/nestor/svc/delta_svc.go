@@ -19,7 +19,6 @@ type DeltaReceiverSvc struct {
 	binanceClient        BinanceClient
 	deltaReceivers       []*DeltaReceiver
 	localRepo            LocalRepo
-	globalRepo           GlobalRepo
 	deltaStorage         csvc.DeltaStorage
 	metricsHolder        MetricsHolder
 	cfg                  *conf.AppConfig
@@ -33,7 +32,6 @@ func NewDeltaReceiverSvc(
 	config *conf.AppConfig,
 	binanceClient BinanceClient,
 	localRepo LocalRepo,
-	globalRepo GlobalRepo,
 	deltaStorage csvc.DeltaStorage,
 	metricsHolder MetricsHolder,
 	exInfoCache *cache.ExchangeInfoCache,
@@ -46,7 +44,6 @@ func NewDeltaReceiverSvc(
 		binanceClient:        binanceClient,
 		metricsHolder:        metricsHolder,
 		localRepo:            localRepo,
-		globalRepo:           globalRepo,
 		deltaStorage:         deltaStorage,
 		cfg:                  config,
 		shutdown:             &shutdown,
@@ -74,7 +71,7 @@ func (s *DeltaReceiverSvc) getAndActivateNewReceivers(ctx context.Context) []*De
 		for j := 0; j*numReceivers+i < len(symbols); j++ {
 			symbolsForReceiver = append(symbolsForReceiver, symbols[j*numReceivers+i])
 		}
-		if newReceiver := NewDeltaReceiver(s.cfg.BinanceHttpConfig, symbolsForReceiver, s.localRepo, s.globalRepo, s.deltaStorage, s.metricsHolder, s.deltaUpdateIdWatcher, s.deltaHolesStorage); newReceiver != nil {
+		if newReceiver := NewDeltaReceiver(s.cfg.BinanceHttpConfig, symbolsForReceiver, s.localRepo, s.deltaStorage, s.metricsHolder, s.deltaUpdateIdWatcher, s.deltaHolesStorage); newReceiver != nil {
 			newReceivers = append(newReceivers, newReceiver)
 		}
 	}

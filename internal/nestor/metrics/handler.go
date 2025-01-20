@@ -2,7 +2,7 @@ package metrics
 
 import (
 	"DeltaReceiver/internal/common/model"
-	model2 "DeltaReceiver/internal/nestor/model"
+	model2 "DeltaReceiver/internal/common/model"
 	"DeltaReceiver/internal/nestor/svc"
 	bmodel "DeltaReceiver/pkg/binance/model"
 	"DeltaReceiver/pkg/log"

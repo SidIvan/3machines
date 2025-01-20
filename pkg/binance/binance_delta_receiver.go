@@ -6,11 +6,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/gorilla/websocket"
-	"go.uber.org/zap"
 	"net/http"
 	"strings"
 	"sync/atomic"
+
+	"github.com/gorilla/websocket"
+	"go.uber.org/zap"
 )
 
 type DeltaReceiveClient struct {
@@ -26,7 +27,7 @@ func NewDeltaReceiveClient(cfg *BinanceHttpClientConfig, symbols []string) *Delt
 	shutdown.Store(false)
 	client := DeltaReceiveClient{
 		logger:   log.GetLogger("DeltaReceiveClient"),
-		baseUri:  cfg.DeltaStreamBaseUriConfig.GetBaseUri(),
+		baseUri:  cfg.StreamBaseUriConfig.GetBaseUri(),
 		symbols:  symbols,
 		shutdown: &shutdown,
 	}

@@ -1,0 +1,175 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: nestor_canary
+  labels:
+    app: nestor
+spec:
+  serviceName: nestor
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nestor
+      environment: canary
+  template:
+    metadata:
+      labels:
+        app: nestor
+        environment: canary
+    spec:
+      terminationGracePeriodSeconds: 300
+      containers:
+      - name: nestor-local-storage
+        image: mongo:6.0.20
+        imagePullPolicy: IfNotPresent
+        ports: 
+        - containerPort: 27017
+          name: mongosh
+        readinessProbe:
+          exec:
+            command:
+            - /bin/sh
+            - -c
+            - echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+          initialDelaySeconds: 30
+          timeoutSeconds: 15
+        volumeMounts:
+          - name: nestor-local-data
+            mountPath: /mongo_volume
+          
+      - name: nestor
+        image: sidivan/nestor:v1.0
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 9001
+          name: prometheus
+        resources:
+          limits:
+            cpu: "1000m"
+            memory: 2Gi
+          requests:
+            cpu: "1000m"
+            memory: 2Gi
+        env:
+          - name: SERVICE_NAME
+            value: $(HOSTNAME)
+          # binance client
+          - name: nestor_binance_stream_url_schema
+            valueFrom: 
+              configMapKeyRef:
+                name: nestor-config
+                key: binance.client.stream.uri.schema
+          - name: nestor_binance_stream_url_host
+            valueFrom: 
+              configMapKeyRef:
+                name: nestor-config
+                key: binance.client.stream.uri.host
+          - name: nestor_binance_stream_url_port
+            valueFrom: 
+              configMapKeyRef:
+                name: nestor-config
+                key: binance.client.stream.uri.port
+          - name: nestor_binance_http_url_schema
+            valueFrom: 
+              configMapKeyRef:
+                name: nestor-config
+                key: binance.client.http.uri.schema
+          - name: nestor_binance_http_url_host
+            valueFrom: 
+              configMapKeyRef:
+                name: nestor-config
+                key: binance.client.http.uri.host
+          - name: nestor_binance_http_url_port
+            valueFrom: 
+              configMapKeyRef:
+                name: nestor-config
+                key: binance.client.http.uri.port
+          # global repo
+          - name: nestor_global_repo_hosts
+            valueFrom: 
+              configMapKeyRef:
+                name: cassandra-config
+                key: hosts
+          - name: nestor_global_repo_keyspace
+            valueFrom: 
+              configMapKeyRef:
+                name: nestor-config
+                key: global.repo.binance.keyspace
+          - name: nestor_global_repo_delta_table_name
+            valueFrom: 
+              configMapKeyRef:
+                name: nestor-config
+                key: global.repo.binance.delta.table.name
+          - name: nestor_global_repo_snapshot_table_name
+            valueFrom: 
+              configMapKeyRef:
+                name: nestor-config
+                key: global.repo.binance.snapshot.table.name
+          - name: nestor_global_repo_exchange_info_table_name
+            valueFrom: 
+              configMapKeyRef:
+                name: nestor-config
+                key: global.repo.binance.exchange.info.table.name
+          - name: nestor_global_repo_book_ticks_table_name
+            valueFrom: 
+              configMapKeyRef:
+                name: nestor-config
+                key: global.repo.binance.book.ticks.table.name
+          # local repo
+          - name: nestor_local_repo_delta_table_name
+            valueFrom: 
+              configMapKeyRef:
+                name: nestor-config
+                key: local.repo.delta.table.name
+          - name: nestor_local_repo_snapshot_table_name
+            valueFrom: 
+              configMapKeyRef:
+                name: nestor-config
+                key: local.repo.snapshot.table.name
+          - name: nestor_local_repo_exchange_info_table_name
+            valueFrom: 
+              configMapKeyRef:
+                name: nestor-config
+                key: local.repo.exchange.info.table.name
+          - name: nestor_local_repo_book_ticks_table_name
+            valueFrom: 
+              configMapKeyRef:
+                name: nestor-config
+                key: local.repo.book.ticks.table.name
+          # dwarf
+          - name: nestor_dwarf_url_schema
+            valueFrom:
+              configMapKeyRef:
+                name: nestor-config
+                key: dwarf.url.schema
+          - name: nestor_dwarf_url_host
+            valueFrom:
+              configMapKeyRef:
+                name: nestor-config
+                key: dwarf.url.host
+          - name: nestor_dwarf_url_port
+            valueFrom:
+              configMapKeyRef:
+                name: nestor-config
+                key: dwarf.url.port
+          volumeMounts:
+            - name: nestor-logs
+              mountPath: /app/log
+            - name: certs
+              mountPath: /etc/ssl/certs/ca-certificates.crt
+      volumes:
+      - name: nestor-logs
+        hostPath:
+          path: /var/lib/nestor
+      - name: certs
+        hostPath:
+          path: /etc/ssl/certs/ca-certificates.crt
+  volumeClaimTemplates:
+  - metadata:
+      name: nestor-local-data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: nestor-local-storage-storage
+      resources:
+        requests:
+          storage: 30Gi

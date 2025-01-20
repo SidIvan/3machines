@@ -1,7 +1,8 @@
 package app
 
 import (
-	crepo "DeltaReceiver/internal/common/repo"
+	cconf "DeltaReceiver/internal/common/conf"
+	"DeltaReceiver/internal/common/repo/cs"
 	csvc "DeltaReceiver/internal/common/svc"
 	"DeltaReceiver/internal/nestor/cache"
 	"DeltaReceiver/internal/nestor/conf"
@@ -10,13 +11,13 @@ import (
 	"DeltaReceiver/internal/nestor/svc"
 	"DeltaReceiver/internal/nestor/web"
 	"DeltaReceiver/pkg/binance"
-	"DeltaReceiver/pkg/clickhouse"
 	"DeltaReceiver/pkg/log"
 	"context"
 	"net/http"
 	"sync"
 	"time"
 
+	"github.com/gocql/gocql"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.uber.org/zap"
 )
@@ -29,6 +30,9 @@ type App struct {
 	bookTickerSvc       *svc.BookTickerSvc
 	globalRepo          svc.GlobalRepo
 	deltaStorage        csvc.DeltaStorage
+	snapshotStorage     csvc.SnapshotStorage
+	bookTicksStorage    csvc.BookTicksStorage
+	exchangeInfoStorage csvc.ExchangeInfoStorage
 	localRepo           svc.LocalRepo
 	exInfoCache         *cache.ExchangeInfoCache
 	binanceClient       svc.BinanceClient
@@ -47,15 +51,18 @@ func NewApp(cfg *conf.AppConfig) *App {
 	exInfoCache := cache.NewExchangeInfoCache()
 	deltaHolesStorage := repo.NewDwarfHttpClient(cfg.DwarfUrl)
 	deltaHolesIdWatcher := cache.NewDeltaUpdateIdWatcher()
-	chPoolHolder := clickhouse.NewChPoolHolder(cfg.GlobalRepoConfig.ChPoolCfg)
-	globalRepo := repo.NewClickhouseRepo(chPoolHolder, cfg.GlobalRepoConfig)
-	deltaStorage := crepo.NewChDeltaStorage(chPoolHolder, cfg.GlobalRepoConfig.DatabaseName, cfg.GlobalRepoConfig.DeltaTable)
+	csCfg := cfg.CsCfg
+	csSession := initCs(csCfg)
+	deltaStorage := cs.NewCsDeltaStorage(csSession, csCfg.DeltaTableName)
+	snapshotStorage := cs.NewCsSnapshotStorage(csSession, csCfg.DeltaTableName)
+	bookTicksStorage := cs.NewCsBookTicksStorage(csSession, csCfg.DeltaTableName)
+	exchangeInfoStorage := cs.NewExchangeInfoStorage(csSession, csCfg.DeltaTableName)
 	localRepo := repo.NewLocalMongoRepo(cfg.LocalRepoCfg)
 	binanceClient := web.NewBinanceClient(cfg.BinanceHttpConfig, exInfoCache)
-	deltaRecSvc := svc.NewDeltaReceiverSvc(cfg, binanceClient, localRepo, globalRepo, deltaStorage, metricsHolder, exInfoCache, deltaHolesIdWatcher, deltaHolesStorage)
-	snapshotSvc := svc.NewSnapshotSvc(cfg, binanceClient, localRepo, globalRepo, metricsHolder, exInfoCache)
-	exInfoSvc := svc.NewExchangeInfoSvc(cfg, binanceClient, localRepo, globalRepo, metricsHolder, exInfoCache)
-	bookTickerSvc := svc.NewBookTickerSvc(cfg, binanceClient, localRepo, globalRepo, metricsHolder, exInfoCache)
+	deltaRecSvc := svc.NewDeltaReceiverSvc(cfg, binanceClient, localRepo, deltaStorage, metricsHolder, exInfoCache, deltaHolesIdWatcher, deltaHolesStorage)
+	snapshotSvc := svc.NewSnapshotSvc(cfg, binanceClient, localRepo, snapshotStorage, metricsHolder, exInfoCache)
+	exInfoSvc := svc.NewExchangeInfoSvc(cfg, binanceClient, localRepo, exchangeInfoStorage, metricsHolder, exInfoCache)
+	bookTickerSvc := svc.NewBookTickerSvc(cfg, binanceClient, localRepo, bookTicksStorage, metricsHolder, exInfoCache)
 	deltaFixer := svc.NewDeltaFixer(cfg, deltaStorage, localRepo)
 	return &App{
 		logger:              logger,
@@ -63,8 +70,10 @@ func NewApp(cfg *conf.AppConfig) *App {
 		snapshotSvc:         snapshotSvc,
 		exInfoSvc:           exInfoSvc,
 		bookTickerSvc:       bookTickerSvc,
-		globalRepo:          globalRepo,
 		deltaStorage:        deltaStorage,
+		bookTicksStorage:    bookTicksStorage,
+		exchangeInfoStorage: exchangeInfoStorage,
+		snapshotStorage:     snapshotStorage,
 		localRepo:           localRepo,
 		exInfoCache:         exInfoCache,
 		binanceClient:       binanceClient,
@@ -74,6 +83,16 @@ func NewApp(cfg *conf.AppConfig) *App {
 		deltaHolesStorage:   deltaHolesStorage,
 		cfg:                 cfg,
 	}
+}
+
+func initCs(cfg *cconf.CsRepoConfig) *gocql.Session {
+	cluster := gocql.NewCluster(cfg.Hosts...)
+	cluster.Keyspace = cfg.KeySpace
+	session, err := cluster.CreateSession()
+	if err != nil {
+		panic(err)
+	}
+	return session
 }
 
 func (s *App) Start() {

@@ -2,7 +2,6 @@ package svc
 
 import (
 	"DeltaReceiver/internal/common/model"
-	nmodel "DeltaReceiver/internal/nestor/model"
 	bmodel "DeltaReceiver/pkg/binance/model"
 	"context"
 
@@ -10,14 +9,14 @@ import (
 )
 
 type BinanceClient interface {
-	GetFullSnapshot(ctx context.Context, symbol string, depth int) ([]nmodel.DepthSnapshotPart, string, error)
+	GetFullSnapshot(ctx context.Context, symbol string, depth int) ([]model.DepthSnapshotPart, string, error)
 	GetFullExchangeInfo(context.Context) (*bmodel.ExchangeInfo, error)
 	GetBookTicks(ctx context.Context) ([]bmodel.SymbolTick, error)
 }
 
 type LocalRepo interface {
 	SaveDeltas(context.Context, []model.Delta) error
-	SaveSnapshot(context.Context, []nmodel.DepthSnapshotPart) error
+	SaveSnapshot(context.Context, []model.DepthSnapshotPart) error
 	SaveExchangeInfo(context.Context, *bmodel.ExchangeInfo) error
 	SaveBookTicker(context.Context, []bmodel.SymbolTick) error
 	GetDeltas(ctx context.Context, numDeltas int64) []model.DeltaWithId
@@ -27,7 +26,7 @@ type LocalRepo interface {
 }
 
 type GlobalRepo interface {
-	SendSnapshot(context.Context, []nmodel.DepthSnapshotPart) error
+	SendSnapshot(context.Context, []model.DepthSnapshotPart) error
 	Connect(ctx context.Context) error
 	Reconnect(ctx context.Context) error
 	SendFullExchangeInfo(ctx context.Context, exInfo *bmodel.ExchangeInfo) error
@@ -48,7 +47,7 @@ const (
 type MetricsHolder interface {
 	ProcessDeltaMetrics([]model.Delta, TypeOfEvent)
 	ProcessTickMetrics([]bmodel.SymbolTick, TypeOfEvent)
-	ProcessSnapshotMetrics([]nmodel.DepthSnapshotPart, TypeOfEvent)
+	ProcessSnapshotMetrics([]model.DepthSnapshotPart, TypeOfEvent)
 	ProcessExInfoMetrics(TypeOfEvent)
 	ProcessSystemMetrics()
 	UpdateMetrics([]bmodel.SymbolInfo)

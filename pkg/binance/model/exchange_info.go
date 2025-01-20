@@ -46,13 +46,13 @@ type RateLimitInfo struct {
 	Limit       int    `json:"limit"`
 }
 
-func ExInfoStringHash(s string) uint64 {
+func ExInfoStringHash(s string) int64 {
 	h := fnv.New64()
 	_, _ = h.Write([]byte(s))
-	return h.Sum64()
+	return int64(h.Sum64())
 }
 
-func (s *ExchangeInfo) ExInfoHash() uint64 {
+func (s *ExchangeInfo) ExInfoHash() int64 {
 	tmp := *s
 	tmp.ServerTime = 0
 	payload, _ := json.Marshal(tmp)

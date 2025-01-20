@@ -2,7 +2,7 @@ package repo
 
 import (
 	"DeltaReceiver/internal/common/conf"
-	model2 "DeltaReceiver/internal/nestor/model"
+	model2 "DeltaReceiver/internal/common/model"
 	bmodel "DeltaReceiver/pkg/binance/model"
 	"DeltaReceiver/pkg/clickhouse"
 	"DeltaReceiver/pkg/log"
@@ -142,7 +142,7 @@ const (
 func (s ClickhouseRepo) prepareExchangeInfoInsertBlock(exInfo *bmodel.ExchangeInfo) proto.Input {
 	timestampCol := new(proto.ColDateTime64).WithPrecision(3)
 	var exCol proto.ColStr
-	var hashCol proto.ColUInt64
+	var hashCol proto.ColInt64
 	timestampCol.Append(time.UnixMilli(exInfo.ServerTime))
 	payload, err := json.Marshal(exInfo)
 	if err != nil {
@@ -181,12 +181,12 @@ func (s ClickhouseRepo) SendFullExchangeInfo(ctx context.Context, exInfo *bmodel
 	return nil
 }
 
-func (s ClickhouseRepo) GetLastFullExchangeInfoHash(ctx context.Context) uint64 {
+func (s ClickhouseRepo) GetLastFullExchangeInfoHash(ctx context.Context) int64 {
 	if s.pool == nil {
 		return 0
 	}
-	var resp proto.ColUInt64
-	var hash uint64
+	var resp proto.ColInt64
+	var hash int64
 	if err := s.pool.Do(ctx, ch.Query{
 		Body: fmt.Sprintf("SELECT %s from %s.%s ORDER BY %s DESC LIMIT 1",
 			HashCol, s.cfg.DatabaseName, s.cfg.ExchangeInfoTable, TimestampCol),

@@ -1,0 +1,49 @@
+[Unit]
+Description=etcd service
+Documentation=https://github.com/coreos/etcd
+[Service]
+User=root
+Type=notify
+ExecStart=/usr/local/bin/etcd \
+ --name 147.45.175.238 \
+ --data-dir /var/lib/etcd \
+ --initial-advertise-peer-urls https://147.45.175.238:2380 \
+ --listen-peer-urls https://147.45.175.238:2380 \
+ --listen-client-urls https://147.45.175.238:2379,https://127.0.0.1:2379 \
+ --advertise-client-urls https://147.45.175.238:2379 \
+ --initial-cluster-token etcd-cluster-1 \
+ --initial-cluster 147.45.175.238=https://147.45.175.238:2380,85.234.110.54=https://85.234.110.54:2380 \
+ --client-cert-auth --trusted-ca-file=/etc/etcd/ca.pem \
+ --cert-file=/etc/etcd/etcd-server.pem --key-file=/etc/etcd/etcd-server-key.pem \
+ --peer-client-cert-auth --peer-trusted-ca-file=/etc/etcd/ca.pem \
+ --peer-cert-file=/etc/etcd/etcd-server.pem --peer-key-file=/etc/etcd/etcd-server-key.pem \
+ --initial-cluster-state new
+Restart=on-failure
+RestartSec=5
+[Install]
+WantedBy=multi-user.target
+
+[Unit]
+Description=etcd service
+Documentation=https://github.com/coreos/etcd
+[Service]
+User=root
+Type=notify
+ExecStart=/usr/local/bin/etcd \
+ --name 85.234.110.54 \
+ --data-dir /var/lib/etcd \
+ --initial-advertise-peer-urls https://85.234.110.54:2380 \
+ --listen-peer-urls https://85.234.110.54:2380 \
+ --listen-client-urls https://85.234.110.54:2379,https://127.0.0.1:2379 \
+ --advertise-client-urls https://85.234.110.54:2379 \
+ --initial-cluster-token etcd-cluster-1 \
+ --initial-cluster 147.45.175.238=https://147.45.175.238:2380,85.234.110.54=https://85.234.110.54:2380 \
+ --client-cert-auth --trusted-ca-file=/etc/etcd/ca.pem \
+ --cert-file=/etc/etcd/etcd-server.pem --key-file=/etc/etcd/etcd-server-key.pem \
+ --peer-client-cert-auth --peer-trusted-ca-file=/etc/etcd/ca.pem \
+ --peer-cert-file=/etc/etcd/etcd-server.pem --peer-key-file=/etc/etcd/etcd-server-key.pem \
+ --initial-cluster-state new
+Restart=on-failure
+RestartSec=5
+[Install]
+WantedBy=multi-user.target

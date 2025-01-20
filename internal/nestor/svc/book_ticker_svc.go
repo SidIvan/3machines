@@ -1,6 +1,7 @@
 package svc
 
 import (
+	"DeltaReceiver/internal/common/svc"
 	"DeltaReceiver/internal/nestor/cache"
 	"DeltaReceiver/internal/nestor/conf"
 	"DeltaReceiver/pkg/log"
@@ -15,32 +16,32 @@ import (
 )
 
 type BookTickerSvc struct {
-	logger          *zap.Logger
-	binanceClient   BinanceClient
-	tickerReceivers []*TickerReceiver
-	localRepo       LocalRepo
-	globalRepo      GlobalRepo
-	metrics         MetricsHolder
-	cfg             *conf.AppConfig
-	shutdown        *atomic.Bool
-	dRecWg          *sync.WaitGroup
-	exInfoCache     *cache.ExchangeInfoCache
+	logger           *zap.Logger
+	binanceClient    BinanceClient
+	tickerReceivers  []*TickerReceiver
+	localRepo        LocalRepo
+	bookTicksStorage svc.BookTicksStorage
+	metrics          MetricsHolder
+	cfg              *conf.AppConfig
+	shutdown         *atomic.Bool
+	dRecWg           *sync.WaitGroup
+	exInfoCache      *cache.ExchangeInfoCache
 }
 
-func NewBookTickerSvc(config *conf.AppConfig, binanceClient BinanceClient, localRepo LocalRepo, globalRepo GlobalRepo, metrics MetricsHolder, exInfoCache *cache.ExchangeInfoCache) *BookTickerSvc {
+func NewBookTickerSvc(config *conf.AppConfig, binanceClient BinanceClient, localRepo LocalRepo, bookTicksStorage svc.BookTicksStorage, metrics MetricsHolder, exInfoCache *cache.ExchangeInfoCache) *BookTickerSvc {
 	var shutdown atomic.Bool
 	var dRecWg sync.WaitGroup
 	shutdown.Store(false)
 	return &BookTickerSvc{
-		logger:        log.GetLogger("BookTickerSvc"),
-		binanceClient: binanceClient,
-		metrics:       metrics,
-		localRepo:     localRepo,
-		globalRepo:    globalRepo,
-		cfg:           config,
-		shutdown:      &shutdown,
-		dRecWg:        &dRecWg,
-		exInfoCache:   exInfoCache,
+		logger:           log.GetLogger("BookTickerSvc"),
+		binanceClient:    binanceClient,
+		metrics:          metrics,
+		localRepo:        localRepo,
+		bookTicksStorage: bookTicksStorage,
+		cfg:              config,
+		shutdown:         &shutdown,
+		dRecWg:           &dRecWg,
+		exInfoCache:      exInfoCache,
 	}
 }
 
@@ -62,7 +63,7 @@ func (s *BookTickerSvc) getNewReceivers(ctx context.Context) []*TickerReceiver {
 		for j := 0; j*numTickerReceivers+i < len(symbols); j++ {
 			symbolsForReceiver = append(symbolsForReceiver, symbols[j*numTickerReceivers+i])
 		}
-		if newReceiver := NewTickerReceiver(s.cfg.BinanceHttpConfig, symbolsForReceiver, s.localRepo, s.globalRepo, s.metrics); newReceiver != nil {
+		if newReceiver := NewTickerReceiver(s.cfg.BinanceHttpConfig, symbolsForReceiver, s.localRepo, s.bookTicksStorage, s.metrics); newReceiver != nil {
 			newReceivers = append(newReceivers, newReceiver)
 		}
 	}

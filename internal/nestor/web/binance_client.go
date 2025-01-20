@@ -2,7 +2,7 @@ package web
 
 import (
 	"DeltaReceiver/internal/nestor/cache"
-	"DeltaReceiver/internal/nestor/model"
+	"DeltaReceiver/internal/common/model"
 	"DeltaReceiver/pkg/binance"
 	bmodel "DeltaReceiver/pkg/binance/model"
 	"DeltaReceiver/pkg/log"

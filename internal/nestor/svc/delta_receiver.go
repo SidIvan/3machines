@@ -23,7 +23,6 @@ type DeltaReceiver struct {
 	logger               *zap.Logger
 	receiver             *binance.DeltaReceiveClient
 	localRepo            LocalRepo
-	globalRepo           GlobalRepo
 	deltaStorage         csvc.DeltaStorage
 	metrics              MetricsHolder
 	symbols              []string
@@ -36,7 +35,6 @@ type DeltaReceiver struct {
 func NewDeltaReceiver(
 	cfg *binance.BinanceHttpClientConfig,
 	symbols []string, localRepo LocalRepo,
-	globalRepo GlobalRepo,
 	deltaStorage csvc.DeltaStorage,
 	metrics MetricsHolder,
 	deltaUpdateIdWatcher *cache.DeltaUpdateIdWatcher,
@@ -51,7 +49,6 @@ func NewDeltaReceiver(
 		receiver:             binance.NewDeltaReceiveClient(cfg, symbols),
 		symbols:              symbols,
 		localRepo:            localRepo,
-		globalRepo:           globalRepo,
 		deltaStorage:         deltaStorage,
 		metrics:              metrics,
 		shutdown:             &shutdown,

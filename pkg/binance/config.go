@@ -3,8 +3,13 @@ package binance
 import "DeltaReceiver/pkg/conf"
 
 type BinanceHttpClientConfig struct {
-	DeltaStreamBaseUriConfig *conf.BaseUriConfig `yaml:"delta.stream.url"`
-	HttpBaseUriConfig        *conf.BaseUriConfig `yaml:"http.base.uri.config"`
-	Pair2Period              map[string]int16    `yaml:"delta.pairs"`
-	SnapshotPeriod           map[string]int16    `yaml:"snapshot.periods"`
+	StreamBaseUriConfig *conf.BaseUriConfig `yaml:"delta.stream.url"`
+	HttpBaseUriConfig   *conf.BaseUriConfig `yaml:"http.base.uri.config"`
+}
+
+func NewBinanceHttpClientConfigFromEnv(envPrefix string) *BinanceHttpClientConfig {
+	return &BinanceHttpClientConfig{
+		StreamBaseUriConfig: conf.NewBaseUriConfigFromEnv(envPrefix + "_stream_uri"),
+		HttpBaseUriConfig:   conf.NewBaseUriConfigFromEnv(envPrefix + "_http_uri"),
+	}
 }

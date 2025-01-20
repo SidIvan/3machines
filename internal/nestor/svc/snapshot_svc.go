@@ -1,9 +1,10 @@
 package svc
 
 import (
+	"DeltaReceiver/internal/common/svc"
+	"DeltaReceiver/internal/common/model"
 	"DeltaReceiver/internal/nestor/cache"
 	"DeltaReceiver/internal/nestor/conf"
-	"DeltaReceiver/internal/nestor/model"
 	"DeltaReceiver/pkg/log"
 	"context"
 	"encoding/json"
@@ -22,7 +23,7 @@ type SnapshotSvc struct {
 	snapshotQueue     []string
 	snapshotSchedules map[string]time.Time
 	localRepo         LocalRepo
-	globalRepo        GlobalRepo
+	snapshotStorage   svc.SnapshotStorage
 	metrics           MetricsHolder
 	cfg               *conf.AppConfig
 	shutdown          *atomic.Bool
@@ -30,7 +31,7 @@ type SnapshotSvc struct {
 	exInfoCache       *cache.ExchangeInfoCache
 }
 
-func NewSnapshotSvc(config *conf.AppConfig, binanceClient BinanceClient, localRepo LocalRepo, globalRepo GlobalRepo, metricsHolder MetricsHolder, infoCache *cache.ExchangeInfoCache) *SnapshotSvc {
+func NewSnapshotSvc(config *conf.AppConfig, binanceClient BinanceClient, localRepo LocalRepo, snapshotStorage svc.SnapshotStorage, metricsHolder MetricsHolder, infoCache *cache.ExchangeInfoCache) *SnapshotSvc {
 	var shutdown atomic.Bool
 	shutdown.Store(false)
 	return &SnapshotSvc{
@@ -38,7 +39,7 @@ func NewSnapshotSvc(config *conf.AppConfig, binanceClient BinanceClient, localRe
 		binanceClient:     binanceClient,
 		metrics:           metricsHolder,
 		localRepo:         localRepo,
-		globalRepo:        globalRepo,
+		snapshotStorage:   snapshotStorage,
 		snapshotSchedules: make(map[string]time.Time),
 		cfg:               config,
 		shutdown:          &shutdown,
@@ -116,7 +117,7 @@ func (s *SnapshotSvc) SaveSnapshot(ctx context.Context, snapshot []model.DepthSn
 	}
 	s.logger.Info(fmt.Sprintf("sending snapshot of %d parts [%s]", len(snapshot), snapshot[0].Symbol))
 	for i := 0; i < 3; i++ {
-		if err := s.globalRepo.SendSnapshot(ctx, snapshot); err == nil {
+		if err := s.snapshotStorage.SendSnapshot(ctx, snapshot); err == nil {
 			s.logger.Info(fmt.Sprintf("successfully sent to Ch [%s]", snapshot[0].Symbol))
 			s.metrics.ProcessSnapshotMetrics(snapshot, Send)
 			return nil
@@ -126,7 +127,7 @@ func (s *SnapshotSvc) SaveSnapshot(ctx context.Context, snapshot []model.DepthSn
 		}
 		//s.globalRepo.Reconnect(ctx)
 	}
-	s.globalRepo.Reconnect(ctx)
+	s.snapshotStorage.Reconnect(ctx)
 	s.logger.Warn(fmt.Sprintf("failed send to Ch, try save to mongo [%s]", snapshot[0].Symbol))
 	for i := 0; i < 3; i++ {
 		if err := s.localRepo.SaveSnapshot(ctx, snapshot); err == nil {
