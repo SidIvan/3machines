@@ -18,19 +18,19 @@ type AppConfig struct {
 	CsCfg               *conf.CsRepoConfig
 }
 
-func NewAppConfigFromEnv(envPrefix string) *AppConfig {
-	binanceClientConfig := binance.NewBinanceHttpClientConfigFromEnv(envPrefix + ".binance")
-	localRepoConfig := NewLocalRepoConfigFromEnv(envPrefix + ".local.repo")
-	reconnectPeriodM, err := strconv.Atoi(os.Getenv(envPrefix + ".reconnect.period.m"))
+func NewAppConfigFromEnv() *AppConfig {
+	binanceClientConfig := binance.NewBinanceHttpClientConfigFromEnv("binance")
+	localRepoConfig := NewLocalRepoConfigFromEnv("local.repo")
+	reconnectPeriodM, err := strconv.Atoi(os.Getenv("reconnect.period.m"))
 	if err != nil {
 		panic(err)
 	}
-	exchangeInfoUpdatePeriodM, err := strconv.Atoi(os.Getenv(envPrefix + ".exchange.info.update.period.m"))
+	exchangeInfoUpdatePeriodM, err := strconv.Atoi(os.Getenv("exchange.info.update.period.m"))
 	if err != nil {
 		panic(err)
 	}
-	csConfig := conf.NewCsRepoConfigFromEnv(envPrefix + ".global.repo")
-	dwarfCfg := pconf.NewBaseUriConfigFromEnv(envPrefix + ".dwarf.uri")
+	csConfig := conf.NewCsRepoConfigFromEnv("global.repo")
+	dwarfCfg := pconf.NewBaseUriConfigFromEnv("dwarf.uri")
 	return &AppConfig{
 		BinanceHttpConfig:   binanceClientConfig,
 		LocalRepoCfg:        localRepoConfig,

@@ -5,12 +5,12 @@ metadata:
 data:
   binance.client.stream.uri.schema: wss://
   binance.client.stream.uri.host: stream.binance.com
-  binance.client.stream.uri.port: 9443
+  binance.client.stream.uri.port: "9443"
   binance.client.http.urischema: https://
   binance.client.http.urihost: api.binance.com
-  binance.client.http.uriport: 443
-  binance.reconnect.period.m: 720
-  binance.exchange.info.update.period.m: 5
+  binance.client.http.uriport: "443"
+  binance.reconnect.period.m: "720"
+  binance.exchange.info.update.period.m: "5"
   local.repo.database: binance_data
   local.repo.delta.table.name: binance_deltas
   local.repo.snapshot.table.name: binance_snapshots
@@ -18,14 +18,14 @@ data:
   local.repo.book.ticks.table.name: binance_book_ticks
   local.repo.uri.schema: mongodb://
   local.repo.uri.host: localhost
-  local.repo.uri.port: 27017
-  local.repo.num.connection.retries: 3
-  local.repo.timeout.s: 3
+  local.repo.uri.port: "27017"
+  local.repo.num.connection.retries: "3"
+  local.repo.timeout.s: "3"
   global.repo.binace.keyspace: binance_data
   global.repo.binace.delta.table.name: deltas
   global.repo.binace.snapshot.table: snapshots
   global.repo.binace.book.ticks.table: book_ticks
   global.repo.binace.exchange.info.table: exchange_info
   dwarf.uri.schema: http://
-  dwarf.uri.host: 185.178.44.208
-  dwarf.uri.port: 8080
+  dwarf.uri.host: "185.178.44.208"
+  dwarf.uri.port: "8080"

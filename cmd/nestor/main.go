@@ -24,7 +24,7 @@ func main() {
 	// }
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer cancel()
-	cfg := conf.NewAppConfigFromEnv("nestor")
+	cfg := conf.NewAppConfigFromEnv()
 	a := app.NewApp(cfg)
 	a.Start()
 	<-ctx.Done()
