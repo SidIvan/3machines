@@ -15,12 +15,12 @@ type CsRepoConfig struct {
 }
 
 func NewCsRepoConfigFromEnv(envPrefix string) *CsRepoConfig {
-	hosts := strings.Split(os.Getenv(envPrefix+"_hosts"), ",")
-	keySpace := os.Getenv(envPrefix + "_keyspace")
-	deltaTableName := os.Getenv(envPrefix + "_delta_table_name")
-	snapshotTableName := os.Getenv(envPrefix + "_snapshot_table_name")
-	bookTicksTableName := os.Getenv(envPrefix + "_book_ticks_table_name")
-	exchangeInfoTableName := os.Getenv(envPrefix + "_exchange_info_table_name")
+	hosts := strings.Split(os.Getenv(envPrefix+".hosts"), ",")
+	keySpace := os.Getenv(envPrefix + ".keyspace")
+	deltaTableName := os.Getenv(envPrefix + ".delta.table.name")
+	snapshotTableName := os.Getenv(envPrefix + ".snapshot.table.name")
+	bookTicksTableName := os.Getenv(envPrefix + ".book.ticks.table.name")
+	exchangeInfoTableName := os.Getenv(envPrefix + ".exchange.info.table.name")
 	return &CsRepoConfig{
 		Hosts:                 hosts,
 		KeySpace:              keySpace,

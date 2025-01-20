@@ -9,7 +9,7 @@ type BinanceHttpClientConfig struct {
 
 func NewBinanceHttpClientConfigFromEnv(envPrefix string) *BinanceHttpClientConfig {
 	return &BinanceHttpClientConfig{
-		StreamBaseUriConfig: conf.NewBaseUriConfigFromEnv(envPrefix + "_stream_uri"),
-		HttpBaseUriConfig:   conf.NewBaseUriConfigFromEnv(envPrefix + "_http_uri"),
+		StreamBaseUriConfig: conf.NewBaseUriConfigFromEnv(envPrefix + ".stream.uri"),
+		HttpBaseUriConfig:   conf.NewBaseUriConfigFromEnv(envPrefix + ".http.uri"),
 	}
 }

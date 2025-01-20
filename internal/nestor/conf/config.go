@@ -19,18 +19,18 @@ type AppConfig struct {
 }
 
 func NewAppConfigFromEnv(envPrefix string) *AppConfig {
-	binanceClientConfig := binance.NewBinanceHttpClientConfigFromEnv(envPrefix + "_binance")
-	localRepoConfig := NewLocalRepoConfigFromEnv(envPrefix + "_local_repo")
-	reconnectPeriodM, err := strconv.Atoi(os.Getenv(envPrefix + "_reconnect_period_m"))
+	binanceClientConfig := binance.NewBinanceHttpClientConfigFromEnv(envPrefix + ".binance")
+	localRepoConfig := NewLocalRepoConfigFromEnv(envPrefix + ".local.repo")
+	reconnectPeriodM, err := strconv.Atoi(os.Getenv(envPrefix + ".reconnect.period.m"))
 	if err != nil {
 		panic(err)
 	}
-	exchangeInfoUpdatePeriodM, err := strconv.Atoi(os.Getenv(envPrefix + "_exchange_info_update_period_m"))
+	exchangeInfoUpdatePeriodM, err := strconv.Atoi(os.Getenv(envPrefix + ".exchange.info.update.period.m"))
 	if err != nil {
 		panic(err)
 	}
-	csConfig := conf.NewCsRepoConfigFromEnv(envPrefix + "_global_repo")
-	dwarfCfg := pconf.NewBaseUriConfigFromEnv(envPrefix + "_dwarf_uri")
+	csConfig := conf.NewCsRepoConfigFromEnv(envPrefix + ".global.repo")
+	dwarfCfg := pconf.NewBaseUriConfigFromEnv(envPrefix + ".dwarf.uri")
 	return &AppConfig{
 		BinanceHttpConfig:   binanceClientConfig,
 		LocalRepoCfg:        localRepoConfig,
@@ -50,10 +50,10 @@ type LocalRepoConfig struct {
 }
 
 func NewLocalRepoConfigFromEnv(envPrefix string) *LocalRepoConfig {
-	deltaColName := os.Getenv(envPrefix + "_delta_table_name")
-	snapshotColName := os.Getenv(envPrefix + "_snapshot_table_name")
-	exInfoColName := os.Getenv(envPrefix + "_exchange_info_table_name")
-	bookTickerColName := os.Getenv(envPrefix + "_book_ticks_table_name")
+	deltaColName := os.Getenv(envPrefix + ".delta.table.name")
+	snapshotColName := os.Getenv(envPrefix + ".snapshot.table.name")
+	exInfoColName := os.Getenv(envPrefix + ".exchange.info.table.name")
+	bookTickerColName := os.Getenv(envPrefix + ".book.ticks.table.name")
 	mongoCfg := mconf.NewMongoRepoConfigFromEnv(envPrefix)
 	return &LocalRepoConfig{
 		DeltaColName:      deltaColName,

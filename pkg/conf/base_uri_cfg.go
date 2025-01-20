@@ -13,13 +13,13 @@ type BaseUriConfig struct {
 }
 
 func NewBaseUriConfigFromEnv(envPrefix string) *BaseUriConfig {
-	port, err := strconv.Atoi(os.Getenv(envPrefix + "_port"))
+	port, err := strconv.Atoi(os.Getenv(envPrefix + ".port"))
 	if err != nil {
 		panic(err)
 	}
 	return &BaseUriConfig{
-		Schema: os.Getenv(envPrefix + "_schema"),
-		Host:   os.Getenv(envPrefix + "_host"),
+		Schema: os.Getenv(envPrefix + ".schema"),
+		Host:   os.Getenv(envPrefix + ".host"),
 		Port:   port,
 	}
 }
