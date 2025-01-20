@@ -50,7 +50,7 @@ func NewApp(cfg *conf.AppConfig) *App {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(rawCfg)
+	fmt.Println(string(rawCfg))
 	binance.InitLogger()
 	logger := log.GetLogger("App")
 	metricsHolder := metrics.NewMetrics()
