@@ -7,20 +7,20 @@ import (
 
 type CsRepoConfig struct {
 	Hosts                 []string `yaml:"hosts"`
-	KeySpace              string   `yaml:"keyspace"`
-	DeltaTableName        string   `yaml:"delta.table.name"`
-	SnapshotTableName     string   `yaml:"snapshot.table.name"`
-	BookTicksTableName    string   `yaml:"book.ticks.table.name"`
-	ExchangeInfoTableName string   `yaml:"exchange.info.table.name"`
+	KeySpace              string   `yaml:"binace.keyspace"`
+	DeltaTableName        string   `yaml:"binace.delta.table.name"`
+	SnapshotTableName     string   `yaml:"binace.snapshot.table.name"`
+	BookTicksTableName    string   `yaml:"binace.book.ticks.table.name"`
+	ExchangeInfoTableName string   `yaml:"binace.exchange.info.table.name"`
 }
 
 func NewCsRepoConfigFromEnv(envPrefix string) *CsRepoConfig {
 	hosts := strings.Split(os.Getenv(envPrefix+".hosts"), ",")
-	keySpace := os.Getenv(envPrefix + ".keyspace")
-	deltaTableName := os.Getenv(envPrefix + ".delta.table.name")
-	snapshotTableName := os.Getenv(envPrefix + ".snapshot.table.name")
-	bookTicksTableName := os.Getenv(envPrefix + ".book.ticks.table.name")
-	exchangeInfoTableName := os.Getenv(envPrefix + ".exchange.info.table.name")
+	keySpace := os.Getenv(envPrefix + ".binace.keyspace")
+	deltaTableName := os.Getenv(envPrefix + ".binace.delta.table.name")
+	snapshotTableName := os.Getenv(envPrefix + ".binace.snapshot.table.name")
+	bookTicksTableName := os.Getenv(envPrefix + ".binace.book.ticks.table.name")
+	exchangeInfoTableName := os.Getenv(envPrefix + ".binace.exchange.info.table.name")
 	return &CsRepoConfig{
 		Hosts:                 hosts,
 		KeySpace:              keySpace,
