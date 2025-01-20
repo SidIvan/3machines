@@ -13,7 +13,7 @@ import (
 	"go.uber.org/zap"
 )
 
-const FixerBatchSize = 100
+const FixerBatchSize = 20
 
 type DeltaFixer struct {
 	logger       *zap.Logger
