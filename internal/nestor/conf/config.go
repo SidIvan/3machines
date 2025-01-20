@@ -21,11 +21,11 @@ type AppConfig struct {
 func NewAppConfigFromEnv() *AppConfig {
 	binanceClientConfig := binance.NewBinanceHttpClientConfigFromEnv("binance.client")
 	localRepoConfig := NewLocalRepoConfigFromEnv("local.repo")
-	reconnectPeriodM, err := strconv.Atoi(os.Getenv("reconnect.period.m"))
+	reconnectPeriodM, err := strconv.Atoi(os.Getenv("binance.reconnect.period.m"))
 	if err != nil {
 		panic(err)
 	}
-	exchangeInfoUpdatePeriodM, err := strconv.Atoi(os.Getenv("exchange.info.update.period.m"))
+	exchangeInfoUpdatePeriodM, err := strconv.Atoi(os.Getenv("binance.exchange.info.update.period.m"))
 	if err != nil {
 		panic(err)
 	}
