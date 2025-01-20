@@ -19,7 +19,7 @@ type AppConfig struct {
 }
 
 func NewAppConfigFromEnv() *AppConfig {
-	binanceClientConfig := binance.NewBinanceHttpClientConfigFromEnv("binance")
+	binanceClientConfig := binance.NewBinanceHttpClientConfigFromEnv("binance.client")
 	localRepoConfig := NewLocalRepoConfigFromEnv("local.repo")
 	reconnectPeriodM, err := strconv.Atoi(os.Getenv("reconnect.period.m"))
 	if err != nil {
