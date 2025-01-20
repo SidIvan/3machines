@@ -177,11 +177,11 @@ spec:
               configMapKeyRef:
                 name: nestor-config
                 key: dwarf.uri.port
-          volumeMounts:
-            - name: nestor-logs
-              mountPath: /app/log
-            - name: certs
-              mountPath: /etc/ssl/certs/ca-certificates.crt
+        volumeMounts:
+          - name: nestor-logs
+            mountPath: /app/log
+          - name: certs
+            mountPath: /etc/ssl/certs/ca-certificates.crt
       volumes:
       - name: nestor-logs
         hostPath:
