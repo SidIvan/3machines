@@ -13,6 +13,7 @@ import (
 	"DeltaReceiver/pkg/binance"
 	"DeltaReceiver/pkg/log"
 	"context"
+	"fmt"
 	"net/http"
 	"sync"
 	"time"
@@ -20,6 +21,7 @@ import (
 	"github.com/gocql/gocql"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.uber.org/zap"
+	"gopkg.in/yaml.v3"
 )
 
 type App struct {
@@ -44,6 +46,11 @@ type App struct {
 
 func NewApp(cfg *conf.AppConfig) *App {
 	log.InitServiceName("nestor")
+	rawCfg, err := yaml.Marshal(cfg)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(rawCfg)
 	binance.InitLogger()
 	logger := log.GetLogger("App")
 	metricsHolder := metrics.NewMetrics()
