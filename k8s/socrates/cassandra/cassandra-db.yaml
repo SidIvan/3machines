@@ -31,10 +31,10 @@ spec:
           name: cql
         resources:
           limits:
-            cpu: "4000m"
+            cpu: "3500m"
             memory: 5Gi
           requests:
-            cpu: "4000m"
+            cpu: "3500m"
             memory: 5Gi
         securityContext:
           capabilities:
