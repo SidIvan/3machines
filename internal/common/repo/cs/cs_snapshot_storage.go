@@ -4,7 +4,10 @@ import (
 	"DeltaReceiver/internal/common/model"
 	"DeltaReceiver/pkg/log"
 	"context"
+	"errors"
 	"fmt"
+	"sync"
+	"sync/atomic"
 
 	"github.com/gocql/gocql"
 	"go.uber.org/zap"
@@ -33,6 +36,31 @@ func (s *CsSnapshotStorage) initStatements() {
 }
 
 func (s CsSnapshotStorage) SendSnapshot(ctx context.Context, snapshotParts []model.DepthSnapshotPart) error {
+	var wg sync.WaitGroup
+	var numSuccessInserts atomic.Int32
+	numInserts := 0
+	for i := 0; i < len(snapshotParts); i += batchSize {
+		numInserts++
+		wg.Add(1)
+		go func(batch []model.DepthSnapshotPart) error {
+			defer wg.Done()
+			err := s.sendSnapshotMicroBatch(ctx, batch)
+			if err != nil {
+				s.logger.Error(err.Error())
+				return err
+			}
+			numSuccessInserts.Add(1)
+			return nil
+		}(snapshotParts[i:min(len(snapshotParts), i+batchSize)])
+	}
+	wg.Wait()
+	if numSuccessInserts.Load() == int32(numInserts) {
+		return nil
+	}
+	return errors.New("batch not saved")
+}
+
+func (s CsSnapshotStorage) sendSnapshotMicroBatch(ctx context.Context, snapshotParts []model.DepthSnapshotPart) error {
 	batch := s.session.NewBatch(gocql.LoggedBatch).WithContext(ctx)
 	for _, snapshotPart := range snapshotParts {
 		batch.Query(s.insertStatement, snapshotPart.Symbol, getHourNo(snapshotPart.Timestamp), snapshotPart.Timestamp, snapshotPart.T, snapshotPart.Price, snapshotPart.Count, snapshotPart.LastUpdateId)

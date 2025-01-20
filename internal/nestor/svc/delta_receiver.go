@@ -18,7 +18,6 @@ import (
 )
 
 const BatchSize = 10000
-const insertBatchSize = 10
 
 type DeltaReceiver struct {
 	logger               *zap.Logger
@@ -77,7 +76,7 @@ func (s *DeltaReceiver) ReceiveAndSend(ctx context.Context) {
 			s.logger.Error(err.Error())
 		} else if batch != nil {
 			s.metrics.ProcessDeltaMetrics(batch, Receive)
-			if err = s.SendBatch(ctx, batch); err != nil {
+			if err = s.SaveBatch(ctx, batch); err != nil {
 				s.logger.Error(err.Error())
 			}
 			s.validateBatch(ctx, batch)
@@ -110,42 +109,46 @@ func (s *DeltaReceiver) ReceiveBatch(ctx context.Context) ([]model.Delta, error)
 	return deltas, nil
 }
 
-func (s *DeltaReceiver) SendBatch(ctx context.Context, deltas []model.Delta) error {
-	for i := 0; i < len(deltas); i += insertBatchSize {
-		err := s.sendBatch(ctx, deltas[i:min(len(deltas), i+insertBatchSize)])
-		if err != nil {
-			s.logger.Error(err.Error())
-			return err
-		}
+func (s *DeltaReceiver) SaveBatch(ctx context.Context, deltas []model.Delta) error {
+	err := s.sendBatchToGlobalRepo(ctx, deltas)
+	if err == nil {
+		return nil
 	}
-	return nil
+	s.logger.Error(err.Error())
+	err = s.sendBatchToLocalRepo(ctx, deltas)
+	if err == nil {
+		return nil
+	}
+	s.logger.Error(err.Error())
+	s.logger.Warn("failed save to mongo, attempting save to file")
+	// УСЁ ПРОПАЛО
+	return s.saveDeltasToFile(deltas)
 }
 
-func (s *DeltaReceiver) sendBatch(ctx context.Context, deltas []model.Delta) error {
+func (s *DeltaReceiver) sendBatchToGlobalRepo(ctx context.Context, deltas []model.Delta) error {
+	var err error
 	for i := 0; i < 3; i++ {
-		if err := s.deltaStorage.SendDeltas(ctx, deltas); err == nil {
+		if err = s.deltaStorage.SendDeltas(ctx, deltas); err == nil {
 			s.metrics.ProcessDeltaMetrics(deltas, Send)
 			return nil
 		} else {
 			s.logger.Error(err.Error())
-			// s.logger.Warn("failed send to Ch, retry")
 		}
 	}
-	s.deltaStorage.Reconnect(ctx)
-	// s.logger.Warn("failed send to Ch, try save to mongo")
+	return err
+}
+
+func (s *DeltaReceiver) sendBatchToLocalRepo(ctx context.Context, deltas []model.Delta) error {
+	var err error
 	for i := 0; i < 3; i++ {
-		if err := s.localRepo.SaveDeltas(ctx, deltas); err == nil {
+		if err = s.localRepo.SaveDeltas(ctx, deltas); err == nil {
 			s.metrics.ProcessDeltaMetrics(deltas, Save)
-			// s.logger.Info("successfully saved to mongo")
 			return nil
 		} else {
-			// s.logger.Warn("failed save to mongo, retry")
 			s.logger.Error(err.Error())
 		}
 	}
-	s.logger.Warn("failed save to mongo, attempting save to file")
-	// УСЁ ПРОПАЛО
-	return s.saveDeltasToFile(deltas)
+	return err
 }
 
 func (s *DeltaReceiver) saveDeltasToFile(deltas []model.Delta) error {

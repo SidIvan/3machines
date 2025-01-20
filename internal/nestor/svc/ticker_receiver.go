@@ -1,29 +1,30 @@
 package svc
 
 import (
+	"DeltaReceiver/internal/common/svc"
 	"DeltaReceiver/pkg/binance"
 	bmodel "DeltaReceiver/pkg/binance/model"
-	"DeltaReceiver/internal/common/svc"
 	"DeltaReceiver/pkg/log"
 	"context"
 	"encoding/json"
 	"fmt"
-	"go.uber.org/zap"
 	"os"
 	"strconv"
 	"sync/atomic"
 	"time"
+
+	"go.uber.org/zap"
 )
 
 type TickerReceiver struct {
-	logger     *zap.Logger
-	receiver   *binance.BookTickerClient
-	localRepo  LocalRepo
+	logger           *zap.Logger
+	receiver         *binance.BookTickerClient
+	localRepo        LocalRepo
 	bookTicksStorage svc.BookTicksStorage
-	metrics    MetricsHolder
-	symbols    []string
-	shutdown   *atomic.Bool
-	done       chan struct{}
+	metrics          MetricsHolder
+	symbols          []string
+	shutdown         *atomic.Bool
+	done             chan struct{}
 }
 
 func NewTickerReceiver(cfg *binance.BinanceHttpClientConfig, symbols []string, localRepo LocalRepo, bookTicksStorage svc.BookTicksStorage, metrics MetricsHolder) *TickerReceiver {
@@ -33,14 +34,14 @@ func NewTickerReceiver(cfg *binance.BinanceHttpClientConfig, symbols []string, l
 	var shutdown atomic.Bool
 	shutdown.Store(false)
 	return &TickerReceiver{
-		logger:     log.GetLogger("TickerReceiver"),
-		receiver:   binance.NewBookTickerClient(cfg, symbols),
-		symbols:    symbols,
-		localRepo:  localRepo,
+		logger:           log.GetLogger("TickerReceiver"),
+		receiver:         binance.NewBookTickerClient(cfg, symbols),
+		symbols:          symbols,
+		localRepo:        localRepo,
 		bookTicksStorage: bookTicksStorage,
-		metrics:    metrics,
-		shutdown:   &shutdown,
-		done:       make(chan struct{}),
+		metrics:          metrics,
+		shutdown:         &shutdown,
+		done:             make(chan struct{}),
 	}
 }
 
@@ -62,7 +63,7 @@ func (s *TickerReceiver) ReceiveAndSend(ctx context.Context) {
 			s.logger.Error(err.Error())
 		} else {
 			s.metrics.ProcessTickMetrics(batch, Receive)
-			if err = s.SendBatch(ctx, batch); err != nil {
+			if err = s.sendBatch(ctx, batch); err != nil {
 				s.logger.Error(err.Error())
 			}
 		}
@@ -86,42 +87,43 @@ func (s *TickerReceiver) ReceiveBatch(ctx context.Context) ([]bmodel.SymbolTick,
 	return ticks, nil
 }
 
-func (s *TickerReceiver) SendBatch(ctx context.Context, ticks []bmodel.SymbolTick) error {
-	for i := 0; i < len(ticks); i += insertBatchSize {
-		err := s.sendBatch(ctx, ticks[i:min(len(ticks), i+insertBatchSize)])
-		if err != nil {
-			s.logger.Error(err.Error())
-			return err
-		}
+func (s *TickerReceiver) sendBatch(ctx context.Context, ticks []bmodel.SymbolTick) error {
+	err := s.sendBatchToGlobalRepo(ctx, ticks)
+	if err == nil {
+		return nil
 	}
-	return nil
+	err = s.sendBatchToLocalRepo(ctx, ticks)
+	if err == nil {
+		return nil
+	}
+	// УСЁ ПРОПАЛО
+	return s.saveTicksToFile(ticks)
 }
 
-func (s *TickerReceiver) sendBatch(ctx context.Context, ticks []bmodel.SymbolTick) error {
+func (s *TickerReceiver) sendBatchToGlobalRepo(ctx context.Context, ticks []bmodel.SymbolTick) error {
+	var err error
 	for i := 0; i < 3; i++ {
-		if err := s.bookTicksStorage.SendBookTicks(ctx, ticks); err == nil {
+		if err = s.bookTicksStorage.SendBookTicks(ctx, ticks); err == nil {
 			s.metrics.ProcessTickMetrics(ticks, Send)
 			return nil
 		} else {
 			s.logger.Error(err.Error())
-			// s.logger.Warn("failed send to Ch, retry")
 		}
 	}
-	s.bookTicksStorage.Reconnect(ctx)
-	// s.logger.Warn("failed send to Ch, try save to mongo")
+	return err
+}
+
+func (s *TickerReceiver) sendBatchToLocalRepo(ctx context.Context, ticks []bmodel.SymbolTick) error {
+	var err error
 	for i := 0; i < 3; i++ {
 		if err := s.localRepo.SaveBookTicker(ctx, ticks); err == nil {
-			// s.logger.Info("successfully saved to mongo")
 			s.metrics.ProcessTickMetrics(ticks, Save)
 			return nil
 		} else {
-			// s.logger.Warn("failed save to mongo, retry")
 			s.logger.Error(err.Error())
 		}
 	}
-	// s.logger.Warn("failed save to mongo, attempting save to file")
-	// УСЁ ПРОПАЛО
-	return s.saveTicksToFile(ticks)
+	return err
 }
 
 func (s *TickerReceiver) saveTicksToFile(deltas []bmodel.SymbolTick) error {

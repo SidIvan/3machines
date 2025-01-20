@@ -5,7 +5,10 @@ import (
 	"DeltaReceiver/internal/common/svc"
 	"DeltaReceiver/pkg/log"
 	"context"
+	"errors"
 	"fmt"
+	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/gocql/gocql"
@@ -35,6 +38,31 @@ func (s *CsDeltaStorage) initStatements() {
 }
 
 func (s CsDeltaStorage) SendDeltas(ctx context.Context, deltas []model.Delta) error {
+	var wg sync.WaitGroup
+	var numSuccessInserts atomic.Int32
+	numInserts := 0
+	for i := 0; i < len(deltas); i += batchSize {
+		numInserts++
+		wg.Add(1)
+		go func(batch []model.Delta) error {
+			defer wg.Done()
+			err := s.sendDeltasMicroBatch(ctx, batch)
+			if err != nil {
+				s.logger.Error(err.Error())
+				return err
+			}
+			numSuccessInserts.Add(1)
+			return nil
+		}(deltas[i:min(len(deltas), i+batchSize)])
+	}
+	wg.Wait()
+	if numSuccessInserts.Load() == int32(numInserts) {
+		return nil
+	}
+	return errors.New("batch not saved")
+}
+
+func (s CsDeltaStorage) sendDeltasMicroBatch(ctx context.Context, deltas []model.Delta) error {
 	batch := s.session.NewBatch(gocql.LoggedBatch).WithContext(ctx)
 	for _, delta := range deltas {
 		batch.Query(s.insertStatement, delta.Symbol, getHourNo(delta.Timestamp), delta.Timestamp, delta.T, delta.Price, delta.Count, delta.FirstUpdateId, delta.UpdateId)

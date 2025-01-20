@@ -1,8 +1,8 @@
 package svc
 
 import (
-	"DeltaReceiver/internal/common/svc"
 	"DeltaReceiver/internal/common/model"
+	"DeltaReceiver/internal/common/svc"
 	"DeltaReceiver/internal/nestor/cache"
 	"DeltaReceiver/internal/nestor/conf"
 	"DeltaReceiver/pkg/log"
@@ -91,67 +91,61 @@ func (s *SnapshotSvc) StartReceiveAndSaveSnapshots(ctx context.Context) {
 
 func (s *SnapshotSvc) ReceiveAndSaveSnapshot(ctx context.Context, symbol string) (string, error) {
 	snapshot, limit, err := s.binanceClient.GetFullSnapshot(ctx, symbol, 5000)
+	defer func(err error) {
+		if err != nil {
+			s.logger.Error(fmt.Errorf("error while getting snapshot %s because of %w", symbol, err).Error())
+			s.snapshotSchedules[symbol] = time.Now().Add(10 * time.Minute)
+		}
+		if len(snapshot) < 10000 {
+			s.snapshotSchedules[symbol] = time.Now().Add(5 * 24 * time.Hour)
+		} else {
+			s.snapshotSchedules[symbol] = time.Now().Add(24 * time.Hour)
+		}
+	}(err)
 	if err != nil {
-		s.logger.Error(fmt.Errorf("error while getting snapshot %s because of %w", symbol, err).Error())
-		s.snapshotSchedules[symbol] = time.Now().Add(10 * time.Minute)
 		return limit, err
 	}
 	s.metrics.ProcessSnapshotMetrics(snapshot, Receive)
-	if err = s.SaveSnapshot(ctx, snapshot); err != nil {
-		s.logger.Error(fmt.Sprintf("error while saving snapshot %s", symbol))
-		s.snapshotSchedules[symbol] = time.Now().Add(10 * time.Minute)
-		return limit, err
-	}
-	if len(snapshot) < 10000 {
-		s.snapshotSchedules[symbol] = time.Now().Add(5 * 24 * time.Hour)
-	} else {
-		s.snapshotSchedules[symbol] = time.Now().Add(24 * time.Hour)
-	}
-	return limit, nil
-}
-
-func (s *SnapshotSvc) SaveSnapshot(ctx context.Context, snapshot []model.DepthSnapshotPart) error {
 	if len(snapshot) == 0 {
 		s.logger.Warn("empty snapshot")
-		return nil
+		return limit, nil
 	}
-	s.logger.Info(fmt.Sprintf("sending snapshot of %d parts [%s]", len(snapshot), snapshot[0].Symbol))
-	for i := 0; i < len(snapshot); i += insertBatchSize {
-		err := s.saveSnapshot(ctx, snapshot[i:min(len(snapshot), i+insertBatchSize)])
-		if err != nil {
-			s.logger.Error(err.Error())
-			return err
-		}
+	err = s.saveSnapshotToGlobalRepo(ctx, snapshot)
+	if err == nil {
+		return limit, nil
 	}
-	return nil
+	err = s.saveSnapshotToLocalRepo(ctx, snapshot)
+	if err == nil {
+		return limit, nil
+	}
+	// УСЁ ПРОПАЛО
+	return limit, s.saveSnapshotToFile(snapshot)
 }
 
-func (s *SnapshotSvc) saveSnapshot(ctx context.Context, snapshot []model.DepthSnapshotPart) error {
+func (s *SnapshotSvc) saveSnapshotToGlobalRepo(ctx context.Context, snapshot []model.DepthSnapshotPart) error {
+	var err error
 	for i := 0; i < 3; i++ {
 		if err := s.snapshotStorage.SendSnapshot(ctx, snapshot); err == nil {
-			// s.logger.Info(fmt.Sprintf("successfully sent to Ch [%s]", snapshot[0].Symbol))
 			s.metrics.ProcessSnapshotMetrics(snapshot, Send)
 			return nil
 		} else {
 			s.logger.Error(err.Error())
-			// s.logger.Warn(fmt.Sprintf("failed send to Ch, try to reconnect [%s]", snapshot[0].Symbol))
 		}
-		//s.globalRepo.Reconnect(ctx)
 	}
-	s.snapshotStorage.Reconnect(ctx)
-	// s.logger.Warn(fmt.Sprintf("failed send to Ch, try save to mongo [%s]", snapshot[0].Symbol))
+	return err
+}
+
+func (s *SnapshotSvc) saveSnapshotToLocalRepo(ctx context.Context, snapshot []model.DepthSnapshotPart) error {
+	var err error
 	for i := 0; i < 3; i++ {
 		if err := s.localRepo.SaveSnapshot(ctx, snapshot); err == nil {
 			s.metrics.ProcessSnapshotMetrics(snapshot, Save)
-			// s.logger.Info(fmt.Sprintf("successfully saved to mongo [%s]", snapshot[0].Symbol))
 			return nil
+		} else {
+			s.logger.Error(err.Error())
 		}
-		// s.logger.Warn(fmt.Sprintf("failed save to mongo, try to reconnect [%s]", snapshot[0].Symbol))
-		s.localRepo.Reconnect(ctx)
 	}
-	// s.logger.Warn(fmt.Sprintf("failed save to mongo, attempting save to file [%s]", snapshot[0].Symbol))
-	// УСЁ ПРОПАЛО
-	return s.saveSnapshotToFile(snapshot)
+	return err
 }
 
 func (s *SnapshotSvc) saveSnapshotToFile(snapshot []model.DepthSnapshotPart) error {

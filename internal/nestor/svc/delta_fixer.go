@@ -6,6 +6,7 @@ import (
 	"DeltaReceiver/internal/nestor/conf"
 	"DeltaReceiver/pkg/log"
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -70,14 +71,8 @@ func (s *DeltaFixer) sendDeltas(ctx context.Context, deltasWithIds []model.Delta
 	for _, delta := range deltasWithIds {
 		deltas = append(deltas, delta.GetDelta())
 	}
-	for i := 0; i < len(deltas); i += insertBatchSize {
-		err := s.sendSmallBatchDeltas(ctx, deltas[i:min(len(deltas), i+insertBatchSize)])
-		if err != nil {
-			s.logger.Error(err.Error())
-			return err
-		}
-	}
-	return nil
+	s.sendSmallBatchDeltas(ctx, deltas)
+	return errors.New("batch not inserted")
 }
 
 func (s *DeltaFixer) sendSmallBatchDeltas(ctx context.Context, deltas []model.Delta) error {
