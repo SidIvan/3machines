@@ -54,32 +54,32 @@ spec:
           - name: SERVICE_NAME
             value: $(HOSTNAME)
           # binance client
-          - name: nestor_binance_stream_url_schema
+          - name: nestor_binance_stream_uri_schema
             valueFrom: 
               configMapKeyRef:
                 name: nestor-config
                 key: binance.client.stream.uri.schema
-          - name: nestor_binance_stream_url_host
+          - name: nestor_binance_stream_uri_host
             valueFrom: 
               configMapKeyRef:
                 name: nestor-config
                 key: binance.client.stream.uri.host
-          - name: nestor_binance_stream_url_port
+          - name: nestor_binance_stream_uri_port
             valueFrom: 
               configMapKeyRef:
                 name: nestor-config
                 key: binance.client.stream.uri.port
-          - name: nestor_binance_http_url_schema
+          - name: nestor_binance_http_uri_schema
             valueFrom: 
               configMapKeyRef:
                 name: nestor-config
                 key: binance.client.http.uri.schema
-          - name: nestor_binance_http_url_host
+          - name: nestor_binance_http_uri_host
             valueFrom: 
               configMapKeyRef:
                 name: nestor-config
                 key: binance.client.http.uri.host
-          - name: nestor_binance_http_url_port
+          - name: nestor_binance_http_uri_port
             valueFrom: 
               configMapKeyRef:
                 name: nestor-config
@@ -116,6 +116,21 @@ spec:
                 name: nestor-config
                 key: global.repo.binance.book.ticks.table.name
           # local repo
+          - name: nestor_local_repo_uri_schema
+            valueFrom: 
+              configMapKeyRef:
+                name: nestor-config
+                key: local.repo.uri.schema
+          - name: nestor_local_repo_uri_host
+            valueFrom: 
+              configMapKeyRef:
+                name: nestor-config
+                key: local.repo.uri.host
+          - name: nestor_local_repo_uri_port
+            valueFrom: 
+              configMapKeyRef:
+                name: nestor-config
+                key: local.repo.uri.port
           - name: nestor_local_repo_delta_table_name
             valueFrom: 
               configMapKeyRef:
@@ -136,22 +151,32 @@ spec:
               configMapKeyRef:
                 name: nestor-config
                 key: local.repo.book.ticks.table.name
+          - name: nestor_local_repo_num_connection_retries
+            valueFrom: 
+              configMapKeyRef:
+                name: nestor-config
+                key: local.repo.binance.num.connection.retries
+          - name: nestor_local_repo_timeout_s
+            valueFrom: 
+              configMapKeyRef:
+                name: nestor-config
+                key: local.repo.binance.timeout.s
           # dwarf
-          - name: nestor_dwarf_url_schema
+          - name: nestor_dwarf_uri_schema
             valueFrom:
               configMapKeyRef:
                 name: nestor-config
-                key: dwarf.url.schema
-          - name: nestor_dwarf_url_host
+                key: dwarf.uri.schema
+          - name: nestor_dwarf_uri_host
             valueFrom:
               configMapKeyRef:
                 name: nestor-config
-                key: dwarf.url.host
-          - name: nestor_dwarf_url_port
+                key: dwarf.uri.host
+          - name: nestor_dwarf_uri_port
             valueFrom:
               configMapKeyRef:
                 name: nestor-config
-                key: dwarf.url.port
+                key: dwarf.uri.port
           volumeMounts:
             - name: nestor-logs
               mountPath: /app/log

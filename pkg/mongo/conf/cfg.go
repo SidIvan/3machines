@@ -14,13 +14,13 @@ type MongoRepoConfig struct {
 }
 
 func NewMongoRepoConfigFromEnv(envPrefix string) *MongoRepoConfig {
-	uriConfig := conf.NewBaseUriConfigFromEnv(envPrefix)
+	uriConfig := conf.NewBaseUriConfigFromEnv(envPrefix + "_uri")
 	timeoutS, err := strconv.Atoi(os.Getenv(envPrefix + "_timeout_s"))
 	if err != nil {
 		panic(err)
 	}
 	dbName := os.Getenv(envPrefix + "_database")
-	numConnRetries, err := strconv.Atoi(os.Getenv(envPrefix + "num_connection_retries"))
+	numConnRetries, err := strconv.Atoi(os.Getenv(envPrefix + "_num_connection_retries"))
 	if err != nil {
 		panic(err)
 	}

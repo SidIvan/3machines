@@ -30,7 +30,7 @@ func NewAppConfigFromEnv(envPrefix string) *AppConfig {
 		panic(err)
 	}
 	csConfig := conf.NewCsRepoConfigFromEnv(envPrefix + "_global_repo")
-	dwarfCfg := pconf.NewBaseUriConfigFromEnv(envPrefix + "_dwarf")
+	dwarfCfg := pconf.NewBaseUriConfigFromEnv(envPrefix + "_dwarf_uri")
 	return &AppConfig{
 		BinanceHttpConfig:   binanceClientConfig,
 		LocalRepoCfg:        localRepoConfig,
