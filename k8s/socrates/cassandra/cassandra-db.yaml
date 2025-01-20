@@ -32,10 +32,10 @@ spec:
         resources:
           limits:
             cpu: "3500m"
-            memory: 5Gi
+            memory: 4.5Gi
           requests:
             cpu: "3500m"
-            memory: 5Gi
+            memory: 4.5Gi
         securityContext:
           capabilities:
             add:
