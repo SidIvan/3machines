@@ -31,7 +31,7 @@ func NewCsDeltaStorage(session *gocql.Session, tableName string) *CsDeltaStorage
 }
 
 func (s *CsDeltaStorage) initStatements() {
-	s.insertStatement = fmt.Sprintf("INSERT INTO %s (symbol, hour, timestamp_ms, type, price, count, first_update_id, update_id) VALUES (?, ?, ?, ?, ?, ?, ?)", s.tableName)
+	s.insertStatement = fmt.Sprintf("INSERT INTO %s (symbol, hour, timestamp_ms, type, price, count, first_update_id, update_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", s.tableName)
 }
 
 func (s CsDeltaStorage) SendDeltas(ctx context.Context, deltas []model.Delta) error {

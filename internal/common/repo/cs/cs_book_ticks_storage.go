@@ -30,7 +30,7 @@ func NewCsBookTicksStorage(session *gocql.Session, tableName string) *CsBookTick
 }
 
 func (s *CsBookTicksStorage) initStatements() {
-	s.insertStatement = fmt.Sprintf("INSERT INTO %s (symbol, hour, timestamp_ms, update_id, ask_price, ask_count, bid_price, bid_count) VALUES (?, ?, ?, ?, ?, ?, ?)", s.tableName)
+	s.insertStatement = fmt.Sprintf("INSERT INTO %s (symbol, hour, timestamp_ms, update_id, ask_price, ask_count, bid_price, bid_count) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", s.tableName)
 }
 
 func (s CsBookTicksStorage) SendBookTicks(ctx context.Context, bookTicks []model.SymbolTick) error {

@@ -53,9 +53,9 @@ func NewApp(cfg *conf.AppConfig) *App {
 	csCfg := cfg.CsCfg
 	csSession := initCs(csCfg)
 	deltaStorage := cs.NewCsDeltaStorage(csSession, csCfg.DeltaTableName)
-	snapshotStorage := cs.NewCsSnapshotStorage(csSession, csCfg.DeltaTableName)
-	bookTicksStorage := cs.NewCsBookTicksStorage(csSession, csCfg.DeltaTableName)
-	exchangeInfoStorage := cs.NewExchangeInfoStorage(csSession, csCfg.DeltaTableName)
+	snapshotStorage := cs.NewCsSnapshotStorage(csSession, csCfg.SnapshotTableName)
+	bookTicksStorage := cs.NewCsBookTicksStorage(csSession, csCfg.BookTicksTableName)
+	exchangeInfoStorage := cs.NewExchangeInfoStorage(csSession, csCfg.ExchangeInfoTableName)
 	localRepo := repo.NewLocalMongoRepo(cfg.LocalRepoCfg)
 	binanceClient := web.NewBinanceClient(cfg.BinanceHttpConfig, exInfoCache)
 	deltaRecSvc := svc.NewDeltaReceiverSvc(cfg, binanceClient, localRepo, deltaStorage, metricsHolder, exInfoCache, deltaHolesIdWatcher, deltaHolesStorage)

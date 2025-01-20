@@ -29,7 +29,7 @@ func NewCsSnapshotStorage(session *gocql.Session, tableName string) *CsSnapshotS
 }
 
 func (s *CsSnapshotStorage) initStatements() {
-	s.insertStatement = fmt.Sprintf("INSERT INTO %s (symbol, hour, timestamp_ms, type, price, count, last_update_id) VALUES (?, ?, ?, ?, ?, ?)", s.tableName)
+	s.insertStatement = fmt.Sprintf("INSERT INTO %s (symbol, hour, timestamp_ms, type, price, count, last_update_id) VALUES (?, ?, ?, ?, ?, ?, ?)", s.tableName)
 }
 
 func (s CsSnapshotStorage) SendSnapshot(ctx context.Context, snapshotParts []model.DepthSnapshotPart) error {
