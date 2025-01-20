@@ -13,7 +13,7 @@ import (
 	"go.uber.org/zap"
 )
 
-const FixerBatchSize = 20
+const FixerBatchSize = 7500
 
 type DeltaFixer struct {
 	logger       *zap.Logger
@@ -70,6 +70,17 @@ func (s *DeltaFixer) sendDeltas(ctx context.Context, deltasWithIds []model.Delta
 	for _, delta := range deltasWithIds {
 		deltas = append(deltas, delta.GetDelta())
 	}
+	for i := 0; i < len(deltas); i += insertBatchSize {
+		err := s.sendSmallBatchDeltas(ctx, deltas[i:min(len(deltas), i+insertBatchSize)])
+		if err != nil {
+			s.logger.Error(err.Error())
+			return err
+		}
+	}
+	return nil
+}
+
+func (s *DeltaFixer) sendSmallBatchDeltas(ctx context.Context, deltas []model.Delta) error {
 	var err error
 	for i := 0; i < 3; i++ {
 		ctxWithTimeout, cancel := context.WithTimeout(ctx, 15*time.Second)

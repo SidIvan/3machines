@@ -87,28 +87,39 @@ func (s *TickerReceiver) ReceiveBatch(ctx context.Context) ([]bmodel.SymbolTick,
 }
 
 func (s *TickerReceiver) SendBatch(ctx context.Context, ticks []bmodel.SymbolTick) error {
+	for i := 0; i < len(ticks); i += insertBatchSize {
+		err := s.sendBatch(ctx, ticks[i:min(len(ticks), i+insertBatchSize)])
+		if err != nil {
+			s.logger.Error(err.Error())
+			return err
+		}
+	}
+	return nil
+}
+
+func (s *TickerReceiver) sendBatch(ctx context.Context, ticks []bmodel.SymbolTick) error {
 	for i := 0; i < 3; i++ {
 		if err := s.bookTicksStorage.SendBookTicks(ctx, ticks); err == nil {
 			s.metrics.ProcessTickMetrics(ticks, Send)
 			return nil
 		} else {
 			s.logger.Error(err.Error())
-			s.logger.Warn("failed send to Ch, retry")
+			// s.logger.Warn("failed send to Ch, retry")
 		}
 	}
 	s.bookTicksStorage.Reconnect(ctx)
-	s.logger.Warn("failed send to Ch, try save to mongo")
+	// s.logger.Warn("failed send to Ch, try save to mongo")
 	for i := 0; i < 3; i++ {
 		if err := s.localRepo.SaveBookTicker(ctx, ticks); err == nil {
-			s.logger.Info("successfully saved to mongo")
+			// s.logger.Info("successfully saved to mongo")
 			s.metrics.ProcessTickMetrics(ticks, Save)
 			return nil
 		} else {
-			s.logger.Warn("failed save to mongo, retry")
+			// s.logger.Warn("failed save to mongo, retry")
 			s.logger.Error(err.Error())
 		}
 	}
-	s.logger.Warn("failed save to mongo, attempting save to file")
+	// s.logger.Warn("failed save to mongo, attempting save to file")
 	// УСЁ ПРОПАЛО
 	return s.saveTicksToFile(ticks)
 }
