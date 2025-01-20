@@ -3,4 +3,4 @@ kind: ConfigMap
 metadata:
   name: cassandra-config
 data:
-  hosts: "cassandra-0.cassandra.default.svc.cluster.local,cassandra-1.cassandra.default.svc.cluster.local"
+  hosts: "cassandra-0.cassandra.default.svc.cluster.local"

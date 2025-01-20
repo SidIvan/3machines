@@ -149,7 +149,7 @@ func (s *SnapshotSvc) saveSnapshotToLocalRepo(ctx context.Context, snapshot []mo
 }
 
 func (s *SnapshotSvc) saveSnapshotToFile(snapshot []model.DepthSnapshotPart) error {
-	if file, err := os.Create("snapshot" + string(time.Now().UnixMilli())); err != nil {
+	if file, err := os.Create("snapshot" + string(rune(time.Now().UnixMilli()))); err != nil {
 		return err
 	} else if data, err := json.Marshal(snapshot); err != nil {
 		return err

@@ -39,7 +39,7 @@ func (s *DeltaFixer) Fix() {
 	for {
 		time.Sleep(1 * time.Second)
 		deltasWithIds := s.getLocalSavedDeltas(ctx)
-		if deltasWithIds == nil || len(deltasWithIds) == 0 {
+		if len(deltasWithIds) == 0 {
 			s.logger.Debug("cannot get unsent deltas, sleep")
 			time.Sleep(SleepTimeMin * time.Minute)
 			continue
