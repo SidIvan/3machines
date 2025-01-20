@@ -97,9 +97,6 @@ func initCs(cfg *cconf.CsRepoConfig) *gocql.Session {
 
 func (s *App) Start() {
 	baseContext := context.Background()
-	if err := s.globalRepo.Connect(baseContext); err != nil {
-		s.logger.Error(err.Error())
-	}
 	if err := s.localRepo.Connect(baseContext); err != nil {
 		s.logger.Error(err.Error())
 	}
