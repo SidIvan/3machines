@@ -13,6 +13,7 @@ type BaseUriConfig struct {
 }
 
 func NewBaseUriConfigFromEnv(envPrefix string) *BaseUriConfig {
+	fmt.Println(os.Environ())
 	port, err := strconv.Atoi(os.Getenv(envPrefix + ".port"))
 	if err != nil {
 		panic(err)
