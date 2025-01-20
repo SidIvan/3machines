@@ -3,35 +3,29 @@ kind: ConfigMap
 metadata:
   name: nestor-config
 data:
-  binance.client.stream.uri: |
-    schema=wss://
-    host=stream.binance.com
-    port=9443
-  binance.client.http.uri: |
-    schema=https://
-    host=api.binance.com
-    port=443
-  binance: |
-    reconnect.period.m=720
-    exchange.info.update.period.m=5
-  local.repo: |
-    database=binance_data
-    delta.table.name=binance_deltas
-    snapshot.table.name=binance_snapshots
-    exchange.info.table.name=binance_exchange_info
-    book.ticks.table.name=binance_book_ticks
-    uri.schema=mongodb://
-    uri.host=localhost
-    uri.port=27017
-    num.connection.retries=3
-    timeout.s=3
-  global.repo.binace: |
-    keyspace=binance_data
-    delta.table.name=deltas
-    snapshot.table=snapshots
-    book.ticks.table=book_ticks
-    exchange.info.table=exchange_info
-  dwarf.uri: |
-    schema=http://
-    host=185.178.44.208
-    port=8080
+  binance.client.stream.uri.schema: wss://
+  binance.client.stream.uri.host: stream.binance.com
+  binance.client.stream.uri.port: 9443
+  binance.client.http.urischema: https://
+  binance.client.http.urihost: api.binance.com
+  binance.client.http.uriport: 443
+  binance.reconnect.period.m: 720
+  binance.exchange.info.update.period.m: 5
+  local.repo.database: binance_data
+  local.repo.delta.table.name: binance_deltas
+  local.repo.snapshot.table.name: binance_snapshots
+  local.repo.exchange.info.table.name: binance_exchange_info
+  local.repo.book.ticks.table.name: binance_book_ticks
+  local.repo.uri.schema: mongodb://
+  local.repo.uri.host: localhost
+  local.repo.uri.port: 27017
+  local.repo.num.connection.retries: 3
+  local.repo.timeout.s: 3
+  global.repo.binace.keyspace: binance_data
+  global.repo.binace.delta.table.name: deltas
+  global.repo.binace.snapshot.table: snapshots
+  global.repo.binace.book.ticks.table: book_ticks
+  global.repo.binace.exchange.info.table: exchange_info
+  dwarf.uri.schema: http://
+  dwarf.uri.host: 185.178.44.208
+  dwarf.uri.port: 8080
