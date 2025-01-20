@@ -45,11 +45,11 @@ spec:
           name: prometheus
         resources:
           limits:
-            cpu: "1000m"
-            memory: 2Gi
+            cpu: "750m"
+            memory: 1.5Gi
           requests:
-            cpu: "1000m"
-            memory: 2Gi
+            cpu: "750m"
+            memory: 1.5Gi
         env:
           - name: SERVICE_NAME
             value: $(HOSTNAME)
