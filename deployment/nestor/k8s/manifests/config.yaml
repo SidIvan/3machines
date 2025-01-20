@@ -6,9 +6,9 @@ data:
   binance.client.stream.uri.schema: wss://
   binance.client.stream.uri.host: stream.binance.com
   binance.client.stream.uri.port: "9443"
-  binance.client.http.urischema: https://
-  binance.client.http.urihost: api.binance.com
-  binance.client.http.uriport: "443"
+  binance.client.http.uri.schema: https://
+  binance.client.http.uri.host: api.binance.com
+  binance.client.http.uri.port: "443"
   binance.reconnect.period.m: "720"
   binance.exchange.info.update.period.m: "5"
   local.repo.database: binance_data
