@@ -21,11 +21,6 @@ data:
   local.repo.uri.port: "27017"
   local.repo.num.connection.retries: "3"
   local.repo.timeout.s: "3"
-  global.repo.binace.keyspace: binance_data
-  global.repo.binace.delta.table: deltas
-  global.repo.binace.snapshot.table: snapshots
-  global.repo.binace.book.ticks.table: book_ticks
-  global.repo.binace.exchange.info.table: exchange_info
   dwarf.uri.schema: http://
   dwarf.uri.host: "185.178.44.208"
   dwarf.uri.port: "8080"

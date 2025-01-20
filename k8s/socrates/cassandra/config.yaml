@@ -3,4 +3,9 @@ kind: ConfigMap
 metadata:
   name: cassandra-config
 data:
-  hosts: "cassandra-0.cassandra.default.svc.cluster.local"
+  global.repo.hosts: "cassandra-0.cassandra.default.svc.cluster.local"
+  global.repo.binace.keyspace: binance_data
+  global.repo.binace.delta.table: deltas
+  global.repo.binace.snapshot.table: snapshots
+  global.repo.binace.book.ticks.table: book_ticks
+  global.repo.binace.exchange.info.table: exchange_info
