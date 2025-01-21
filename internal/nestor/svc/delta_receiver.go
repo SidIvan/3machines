@@ -79,7 +79,7 @@ func (s *DeltaReceiver) ReceiveAndSend(ctx context.Context) {
 			if err = s.SaveBatch(ctx, batch); err != nil {
 				s.logger.Error(err.Error())
 			}
-			s.validateBatch(ctx, batch)
+			// s.validateBatch(ctx, batch)
 		}
 	}
 	s.done <- struct{}{}
