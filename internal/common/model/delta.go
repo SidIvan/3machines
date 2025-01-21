@@ -7,12 +7,12 @@ import (
 )
 
 type Delta struct {
-	Timestamp     int64  `json:"timestamp" bson:"timestamp" parquet:"name=timestamp_ms, type=INT64"`
-	Price         string `json:"price" bson:"price" parquet:"name=price, type=BYTE_ARRAY, convertedtype=UTF8"`
-	Count         string `json:"count" bson:"count" parquet:"name=count, type=BYTE_ARRAY, convertedtype=UTF8"`
+	Timestamp     int64  `json:"timestamp" bson:"timestamp" parquet:"timestampMs"`
+	Price         string `json:"price" bson:"price" parquet:"price"`
+	Count         string `json:"count" bson:"count" parquet:"count"`
 	UpdateId      int64  `json:"updateId" bson:"updateId"`
 	FirstUpdateId int64  `json:"firstUpdateId" bson:"firstUpdateId"`
-	T             bool   `json:"type" bson:"type" parquet:"name=type, type=BOOLEAN"`
+	T             bool   `json:"type" bson:"type" parquet:"type"`
 	Symbol        string `json:"symbol" bson:"symbol"`
 }
 

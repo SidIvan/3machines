@@ -63,12 +63,8 @@ func (s *DeltaReceiveClient) Reconnect(ctx context.Context) error {
 		s.logger.Warn("graceful shutdown processing")
 		return nil
 	}
-	for i := 0; i < 3; i++ {
-		if err := s.dialer.Close(); err != nil {
-			s.logger.Warn(fmt.Errorf("connection was not closed %w", err).Error())
-		} else {
-			break
-		}
+	if err := s.dialer.Close(); err != nil {
+		s.logger.Warn(fmt.Errorf("connection was not closed %w", err).Error())
 	}
 	if err := s.Connect(ctx); err != nil {
 		s.logger.Warn(fmt.Errorf("connection was not reset %w", err).Error())
