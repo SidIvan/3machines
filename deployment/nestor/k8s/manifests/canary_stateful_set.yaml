@@ -66,7 +66,6 @@ spec:
         envFrom:
           - configMapRef:
               name: nestor-config
-        envFrom:
           - configMapRef:
               name: cassandra-config
         volumeMounts:
