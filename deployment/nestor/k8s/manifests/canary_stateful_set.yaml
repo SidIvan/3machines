@@ -67,7 +67,7 @@ spec:
             valueFrom: 
               configMapKeyRef:
                 name: cassandra-config
-                key: hosts
+                key: global.repo.hosts
         envFrom:
           - configMapRef:
               name: nestor-config
