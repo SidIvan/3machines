@@ -19,9 +19,6 @@ type TimePair struct {
 
 type DeltaStorage interface {
 	SendDeltas(context.Context, []model.Delta) error
-	GetDeltas(ctx context.Context, symbol, deltaType string, fromTime, toTime time.Time) ([]model.Delta, error)
-	DeleteDeltas(ctx context.Context, symbol string, fromTime, toTime time.Time) error
-	GetTsSegment(ctx context.Context, since time.Time) (map[string]TimePair, error)
 	Connect(ctx context.Context) error
 	Reconnect(ctx context.Context) error
 	Disconnect(ctx context.Context)

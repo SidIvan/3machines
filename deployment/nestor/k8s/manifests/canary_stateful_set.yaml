@@ -27,11 +27,11 @@ spec:
           name: mongosh
         resources:
           limits:
-            cpu: "250m"
-            memory: 0.5Gi
+            cpu: "500m"
+            memory: 1Gi
           requests:
             cpu: "250m"
-            memory: 0.5Gi
+            memory: 1Gi
         readinessProbe:
           exec:
             command:
@@ -59,7 +59,10 @@ spec:
             memory: 1Gi
         env:
           - name: SERVICE_NAME
-            value: $(HOSTNAME)
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: status.podIP
           - name: global.repo.hosts
             valueFrom: 
               configMapKeyRef:

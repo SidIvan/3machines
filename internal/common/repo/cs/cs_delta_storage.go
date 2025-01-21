@@ -20,6 +20,7 @@ type CsDeltaStorage struct {
 	session         *gocql.Session
 	tableName       string
 	insertStatement string
+	selectStatement string
 }
 
 func NewCsDeltaStorage(session *gocql.Session, tableName string) *CsDeltaStorage {
@@ -35,6 +36,7 @@ func NewCsDeltaStorage(session *gocql.Session, tableName string) *CsDeltaStorage
 
 func (s *CsDeltaStorage) initStatements() {
 	s.insertStatement = fmt.Sprintf("INSERT INTO %s (symbol, hour, timestamp_ms, type, price, count, first_update_id, update_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", s.tableName)
+	s.selectStatement = fmt.Sprintf("SELECT symbol, timestamp_ms, type, price, count, first_update_id, update_id FROM %s WHERE symbol = ? AND hour = ?", s.tableName)
 }
 
 func (s CsDeltaStorage) SendDeltas(ctx context.Context, deltas []model.Delta) error {
@@ -74,8 +76,18 @@ func (s CsDeltaStorage) sendDeltasMicroBatch(ctx context.Context, deltas []model
 	return err
 }
 
-func (s CsDeltaStorage) GetDeltas(ctx context.Context, symbol, deltaType string, fromTime, toTime time.Time) ([]model.Delta, error) {
-	return nil, nil
+func (s CsDeltaStorage) Get(ctx context.Context, key *model.ProcessingKey) ([]model.Delta, error) {
+	var delta model.Delta
+	var deltas []model.Delta
+	it := s.session.Query(s.selectStatement, key.Symbol, key.HourNo).WithContext(ctx).Iter()
+	for it.Scan(&delta) {
+		deltas = append(deltas, delta)
+	}
+	err := it.Close()
+	if err != nil {
+		s.logger.Error(err.Error())
+	}
+	return deltas, err
 }
 
 func (s CsDeltaStorage) DeleteDeltas(ctx context.Context, symbol string, fromTime, toTime time.Time) error {

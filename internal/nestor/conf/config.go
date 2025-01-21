@@ -29,7 +29,7 @@ func NewAppConfigFromEnv() *AppConfig {
 	if err != nil {
 		panic(err)
 	}
-	csConfig := conf.NewCsRepoConfigFromEnv("global.repo")
+	csConfig := conf.NewCsRepoConfigFromEnv("socrates")
 	dwarfCfg := pconf.NewBaseUriConfigFromEnv("dwarf.uri")
 	return &AppConfig{
 		BinanceHttpConfig:   binanceClientConfig,
