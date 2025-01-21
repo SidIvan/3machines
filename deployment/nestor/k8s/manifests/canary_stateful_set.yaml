@@ -28,10 +28,10 @@ spec:
         resources:
           limits:
             cpu: "400m"
-            memory: 750Mb
+            memory: 750Mi
           requests:
             cpu: "400m"
-            memory: 750Mb
+            memory: 750Mi
         readinessProbe:
           exec:
             command:
