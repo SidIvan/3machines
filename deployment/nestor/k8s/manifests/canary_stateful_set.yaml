@@ -27,11 +27,11 @@ spec:
           name: mongosh
         resources:
           limits:
-            cpu: "500m"
-            memory: 1Gi
+            cpu: "400m"
+            memory: 750Mb
           requests:
-            cpu: "250m"
-            memory: 1Gi
+            cpu: "400m"
+            memory: 750Mb
         readinessProbe:
           exec:
             command:
@@ -52,10 +52,10 @@ spec:
           name: prometheus
         resources:
           limits:
-            cpu: "500m"
+            cpu: "400m"
             memory: 1Gi
           requests:
-            cpu: "500m"
+            cpu: "400m"
             memory: 1Gi
         env:
           - name: SERVICE_NAME
