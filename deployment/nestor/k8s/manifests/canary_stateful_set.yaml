@@ -76,7 +76,7 @@ spec:
       volumes:
       - name: nestor-logs
         hostPath:
-          path: /var/lib/nestor
+          path: /var/log/nestor
       - name: certs
         hostPath:
           path: /etc/ssl/certs/ca-certificates.crt
