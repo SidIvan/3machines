@@ -3,7 +3,7 @@ kind: ConfigMap
 metadata:
   name: cassandra-config
 data:
-  socrates.hosts: "cassandra-0.cassandra.default.svc.cluster.local"
+  socrates.hosts: "cassandra-0.cassandra.default.svc.cluster.local,cassandra-1.cassandra.default.svc.cluster.local,cassandra-2.cassandra.default.svc.cluster.local,cassandra-3.cassandra.default.svc.cluster.local"
   socrates.binace.keyspace: binance_data
   socrates.binace.delta.table: deltas
   socrates.binace.snapshot.table: snapshots
