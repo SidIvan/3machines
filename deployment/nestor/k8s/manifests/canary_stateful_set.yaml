@@ -26,9 +26,9 @@ spec:
         - containerPort: 27017
           name: mongosh
         resources:
-          limits:
-            cpu: "750m"
-            memory: 1Gi
+          # limits:
+          #   cpu: "750m"
+          #   memory: 1Gi
           requests:
             cpu: "750m"
             memory: 1Gi
@@ -51,9 +51,9 @@ spec:
         - containerPort: 9001
           name: prometheus
         resources:
-          limits:
-            cpu: "1000m"
-            memory: 2Gi
+          # limits:
+          #   cpu: "1000m"
+          #   memory: 2Gi
           requests:
             cpu: "1000m"
             memory: 2Gi
