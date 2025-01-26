@@ -6,7 +6,7 @@ metadata:
     app: cassandra
 spec:
   serviceName: cassandra
-  replicas: 1
+  replicas: 4
   selector:
     matchLabels:
       app: cassandra
@@ -30,12 +30,12 @@ spec:
         - containerPort: 9042
           name: cql
         resources:
-          limits:
-            cpu: "3000m"
-            memory: 4Gi
+          # limits:
+          #   cpu: "3000m"
+          #   memory: 4Gi
           requests:
             cpu: "3000m"
-            memory: 4Gi
+            memory: 6Gi
         securityContext:
           capabilities:
             add:
@@ -62,13 +62,15 @@ spec:
           - name: CASSANDRA_CLUSTER_NAME
             value: "SOCRATES"
           - name: CASSANDRA_DC
-            valueFrom:
-              fieldRef:
-                fieldPath: spec.nodeName
+            value: "SOCRATES"
+            # valueFrom:
+            #   fieldRef:
+            #     fieldPath: spec.nodeName
           - name: CASSANDRA_RACK
-            valueFrom:
-              fieldRef:
-                fieldPath: spec.nodeName
+            value: "SOCRATES"
+            # valueFrom:
+            #   fieldRef:
+            #     fieldPath: spec.nodeName
           - name: CASSANDRA_NUM_TOKENS
             value: "256"
           - name: POD_IP
@@ -95,7 +97,7 @@ spec:
       storageClassName: socrates-storage
       resources:
         requests:
-          storage: 75Gi
+          storage: 60Gi
 ---
 kind: StorageClass
 apiVersion: storage.k8s.io/v1
