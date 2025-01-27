@@ -33,22 +33,6 @@ spec:
           requests:
             cpu: "1m"
             memory: 1.5Gi
-        readinessProbe:
-          exec:
-            command:
-            - sh
-            - -c
-            - "zookeeper-ready 2181"
-          initialDelaySeconds: 10
-          timeoutSeconds: 5
-        livenessProbe:
-          exec:
-            command:
-            - sh
-            - -c
-            - "zookeeper-ready 2181"
-          initialDelaySeconds: 10
-          timeoutSeconds: 5
         volumeMounts:
         - name: zk-data
           mountPath: /var/lib/zookeeper
