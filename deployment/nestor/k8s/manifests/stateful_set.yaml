@@ -15,7 +15,7 @@ spec:
     metadata:
       labels:
         app: nestor
-        environment: canary
+        environment: prod
     spec:
       terminationGracePeriodSeconds: 300
       containers:
