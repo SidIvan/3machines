@@ -8,6 +8,6 @@ spec:
   selector:
     app: zk
   ports:
-      port: 2181
+    - port: 2181
       targetPort: 2181
       nodePort: 32181
