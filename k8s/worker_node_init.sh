@@ -26,3 +26,6 @@ sudo apt-get install -y kubelet kubeadm kubectl
 sudo apt-mark hold kubelet kubeadm kubectl
 
 sudo swapoff -a
+
+sudo containerd config default > /etc/containerd/config.toml
+modprobe br_netfilter
