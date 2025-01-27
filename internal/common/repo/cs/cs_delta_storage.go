@@ -66,6 +66,7 @@ func (s CsDeltaStorage) SendDeltas(ctx context.Context, deltas []model.Delta) er
 
 func (s CsDeltaStorage) sendDeltasMicroBatch(ctx context.Context, deltas []model.Delta) error {
 	batch := s.session.NewBatch(gocql.LoggedBatch).WithContext(ctx)
+	batch.SetConsistency(gocql.LocalQuorum)
 	for _, delta := range deltas {
 		batch.Query(s.insertStatement, delta.Symbol, getHourNo(delta.Timestamp), delta.Timestamp, delta.T, delta.Price, delta.Count, delta.FirstUpdateId, delta.UpdateId)
 	}

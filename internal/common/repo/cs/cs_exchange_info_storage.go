@@ -45,6 +45,7 @@ func (s CsExchangeInfoStorage) SendExchangeInfo(ctx context.Context, exInfo *mod
 	}
 	curTsMs := exInfo.ServerTime
 	query := s.session.Query(s.insertStatement, getDayNo(curTsMs), curTsMs, exInfo.ExInfoHash(), payload).WithContext(ctx)
+	query.SetConsistency(gocql.LocalQuorum)
 	err = query.Exec()
 	if err != nil {
 		s.logger.Error(err.Error())

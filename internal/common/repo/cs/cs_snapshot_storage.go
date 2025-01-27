@@ -62,6 +62,7 @@ func (s CsSnapshotStorage) SendSnapshot(ctx context.Context, snapshotParts []mod
 
 func (s CsSnapshotStorage) sendSnapshotMicroBatch(ctx context.Context, snapshotParts []model.DepthSnapshotPart) error {
 	batch := s.session.NewBatch(gocql.LoggedBatch).WithContext(ctx)
+	batch.SetConsistency(gocql.LocalQuorum)
 	for _, snapshotPart := range snapshotParts {
 		batch.Query(s.insertStatement, snapshotPart.Symbol, getHourNo(snapshotPart.Timestamp), snapshotPart.Timestamp, snapshotPart.T, snapshotPart.Price, snapshotPart.Count, snapshotPart.LastUpdateId)
 	}

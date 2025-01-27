@@ -62,6 +62,7 @@ func (s CsBookTicksStorage) SendBookTicks(ctx context.Context, bookTicks []model
 
 func (s CsBookTicksStorage) sendMicroBatch(ctx context.Context, bookTicks []model.SymbolTick) error {
 	batch := s.session.NewBatch(gocql.LoggedBatch).WithContext(ctx)
+	batch.SetConsistency(gocql.LocalQuorum)
 	for _, bookTick := range bookTicks {
 		batch.Query(s.insertStatement, bookTick.Symbol, getHourNo(bookTick.Timestamp), bookTick.Timestamp, bookTick.UpdateId, bookTick.AskPrice, bookTick.AskQuantity, bookTick.BidPrice, bookTick.BidQuantity)
 	}
