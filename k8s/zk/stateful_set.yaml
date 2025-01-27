@@ -26,10 +26,10 @@ spec:
           name: server
         - containerPort: 3888
           name: leader-election
+        envFrom:
+          - configMapRef:
+              name: zk-config
         resources:
-          # limits:
-          #   cpu: "750m"
-          #   memory: 1Gi
           requests:
             cpu: "1m"
             memory: 1.5Gi
