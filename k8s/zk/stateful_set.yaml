@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: zk
-        image: zookeeper:3.9
+        image: zookeeper:3.8.4
         imagePullPolicy: IfNotPresent
         ports: 
         - containerPort: 2181
