@@ -49,9 +49,9 @@ spec:
               - nodetool drain
         env:
           - name: MAX_HEAP_SIZE
-            value: 3072M
+            value: 8192M
           - name: HEAP_NEWSIZE
-            value: 768M
+            value: 2048M
           - name: CASSANDRA_ENDPOINT_SNITCH
             value: "GossipingPropertyFileSnitch"
           - name: CASSANDRA_SEEDS
