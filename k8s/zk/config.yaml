@@ -3,4 +3,4 @@ kind: ConfigMap
 metadata:
   name: zk-config
 data:
-  ZOO_SERVERS: "zk-0.zk-hs.default.svc.cluster.local"
+  ZOO_SERVERS: "server.1=zk-0.zk-hs.default.svc.cluster.local:2888:3888;2181"
