@@ -4,4 +4,4 @@ metadata:
   name: zk-config
 data:
   ZOO_SERVERS: "server.1=zk-0.zk-hs.default.svc.cluster.local:2888:3888;2181"
-  JVMFLAGS: "zookeeper.extendedTypesEnabled=true"
+  JVMFLAGS: "-Dzookeeper.extendedTypesEnabled=true"
