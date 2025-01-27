@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: zk-nodeport-service
+  namespace: default
+spec:
+  type: NodePort
+  selector:
+    app: zk
+  ports:
+      port: 2181
+      targetPort: 2181
+      nodePort: 32181

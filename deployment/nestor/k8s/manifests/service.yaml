@@ -5,7 +5,6 @@ metadata:
     app: nestor
   name: nestor
 spec:
-  clusterIP: None
   ports:
   - port: 9042
   selector:
