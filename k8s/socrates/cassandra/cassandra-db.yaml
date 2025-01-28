@@ -99,7 +99,7 @@ spec:
       storageClassName: socrates-storage
       resources:
         requests:
-          storage: 80Gi
+          storage: 95Gi
 ---
 kind: StorageClass
 apiVersion: storage.k8s.io/v1
