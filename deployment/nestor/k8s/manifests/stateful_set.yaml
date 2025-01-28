@@ -19,7 +19,7 @@ spec:
     spec:
       terminationGracePeriodSeconds: 300
       nodeSelector:
-        app: zk
+        app: nestor
         environment: prod
       containers:
       - name: nestor-local-storage
