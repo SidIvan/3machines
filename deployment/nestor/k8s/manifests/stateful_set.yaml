@@ -17,7 +17,7 @@ spec:
         app: nestor
         environment: prod
     spec:
-      terminationGracePeriodSeconds: 300
+      terminationGracePeriodSeconds: 60
       nodeSelector:
         app: nestor
         environment: prod
