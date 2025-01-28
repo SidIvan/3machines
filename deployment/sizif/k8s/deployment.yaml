@@ -1,9 +1,9 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: nginx-deployment
+  name: sizif-deployment
   labels:
-    app: nginx
+    app: zk
 spec:
   replicas: 1
   selector:
