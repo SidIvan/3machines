@@ -12,14 +12,11 @@ type ParquetStorage[T any] interface {
 type SocratesStorage[T any] interface {
 	GetKeys(context.Context) ([]model.ProcessingKey, error)
 	Get(context.Context, *model.ProcessingKey) ([]T, error)
-}
-
-type DataValidator[T any] interface {
-	Validate([]T) bool
+	Delete(context.Context, *model.ProcessingKey) error
 }
 
 type DataTransformator[T any] interface {
-	Transform([]T) []T
+	Transform([]T, *model.ProcessingKey) ([]T, bool)
 }
 
 type LockOpStatus int8

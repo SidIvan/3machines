@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+  labels:
+    app: nginx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: zk
+  template:
+    metadata:
+      labels:
+        app: zk
+    spec:
+      containers:
+      - name: sizif
+        image: sidivan/sizif:v1.0
+        envFrom:
+          - configMapRef:
+              name: sizif-config
+          - configMapRef:
+              name: cassandra-config
+          - secretRef:
+              name: b2-creds
+        

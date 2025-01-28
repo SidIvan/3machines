@@ -33,7 +33,7 @@ func NewExchangeInfoStorage(session *gocql.Session, tableName string) *CsExchang
 
 func (s *CsExchangeInfoStorage) initStatements() {
 	s.insertStatement = fmt.Sprintf("INSERT INTO %s (day, timestamp_ms, ex_info_hash, ex_info) VALUES (?, ?, ?, ?)", s.tableName)
-	s.selectDaysExInfoStatemenet = fmt.Sprintf("SELECT day FROM %s", s.tableName)
+	s.selectDaysExInfoStatemenet = fmt.Sprintf("SELECT DISTINCT day FROM %s", s.tableName)
 	s.selectLastExInfoStatemenet = fmt.Sprintf("SELECT ex_info FROM %s WHERE day = ? ORDER BY timestamp_ms DESC LIMIT 1", s.tableName)
 }
 

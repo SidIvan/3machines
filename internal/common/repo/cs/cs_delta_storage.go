@@ -2,25 +2,25 @@ package cs
 
 import (
 	"DeltaReceiver/internal/common/model"
-	"DeltaReceiver/internal/common/svc"
 	"DeltaReceiver/pkg/log"
 	"context"
 	"errors"
 	"fmt"
 	"sync"
 	"sync/atomic"
-	"time"
 
 	"github.com/gocql/gocql"
 	"go.uber.org/zap"
 )
 
 type CsDeltaStorage struct {
-	logger          *zap.Logger
-	session         *gocql.Session
-	tableName       string
-	insertStatement string
-	selectStatement string
+	logger              *zap.Logger
+	session             *gocql.Session
+	tableName           string
+	insertStatement     string
+	selectStatement     string
+	selectKeysStatement string
+	deleteKeyStatement  string
 }
 
 func NewCsDeltaStorage(session *gocql.Session, tableName string) *CsDeltaStorage {
@@ -37,6 +37,8 @@ func NewCsDeltaStorage(session *gocql.Session, tableName string) *CsDeltaStorage
 func (s *CsDeltaStorage) initStatements() {
 	s.insertStatement = fmt.Sprintf("INSERT INTO %s (symbol, hour, timestamp_ms, type, price, count, first_update_id, update_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", s.tableName)
 	s.selectStatement = fmt.Sprintf("SELECT symbol, timestamp_ms, type, price, count, first_update_id, update_id FROM %s WHERE symbol = ? AND hour = ?", s.tableName)
+	s.selectKeysStatement = fmt.Sprintf("SELECT distinct (symbol, hour) FROM %s", s.tableName)
+	s.deleteKeyStatement = fmt.Sprintf("DELETE FROM %s WHERE symbol = ? AND hour = ?", s.tableName)
 }
 
 func (s CsDeltaStorage) SendDeltas(ctx context.Context, deltas []model.Delta) error {
@@ -68,7 +70,7 @@ func (s CsDeltaStorage) sendDeltasMicroBatch(ctx context.Context, deltas []model
 	batch := s.session.NewBatch(gocql.LoggedBatch).WithContext(ctx)
 	batch.SetConsistency(gocql.LocalQuorum)
 	for _, delta := range deltas {
-		batch.Query(s.insertStatement, delta.Symbol, getHourNo(delta.Timestamp), delta.Timestamp, delta.T, delta.Price, delta.Count, delta.FirstUpdateId, delta.UpdateId)
+		batch.Query(s.insertStatement, delta.Symbol, GetHourNo(delta.Timestamp), delta.Timestamp, delta.T, delta.Price, delta.Count, delta.FirstUpdateId, delta.UpdateId)
 	}
 	err := s.session.ExecuteBatch(batch)
 	if err != nil {
@@ -91,12 +93,28 @@ func (s CsDeltaStorage) Get(ctx context.Context, key *model.ProcessingKey) ([]mo
 	return deltas, err
 }
 
-func (s CsDeltaStorage) DeleteDeltas(ctx context.Context, symbol string, fromTime, toTime time.Time) error {
-	return nil
+func (s CsDeltaStorage) GetKeys(ctx context.Context) ([]model.ProcessingKey, error) {
+	var key model.ProcessingKey
+	var keys []model.ProcessingKey
+	it := s.session.Query(s.selectKeysStatement).WithContext(ctx).Iter()
+	for it.Scan(&key) {
+		keys = append(keys, key)
+	}
+	err := it.Close()
+	if err != nil {
+		s.logger.Error(err.Error())
+	}
+	return keys, err
 }
 
-func (s CsDeltaStorage) GetTsSegment(ctx context.Context, since time.Time) (map[string]svc.TimePair, error) {
-	return nil, nil
+func (s CsDeltaStorage) Delete(ctx context.Context, key *model.ProcessingKey) error {
+	var query = s.session.Query(s.deleteKeyStatement, key.Symbol, key.HourNo).WithContext(ctx)
+	query.SetConsistency(gocql.All)
+	err := query.Exec()
+	if err != nil {
+		s.logger.Error(err.Error())
+	}
+	return err
 }
 
 func (s CsDeltaStorage) Connect(ctx context.Context) error {

@@ -1,4 +1,4 @@
-CREATE KEYSPACE IF NOT EXISTS binance_data WITH REPLICATION = {'class':'NetworkTopologyStrategy','3266281-df55181':'1'};
+CREATE KEYSPACE IF NOT EXISTS binance_data WITH REPLICATION = {'class':'NetworkTopologyStrategy','SOCRATES':'3'};
 
 USE binance_data;
 

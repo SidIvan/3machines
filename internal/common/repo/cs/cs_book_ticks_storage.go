@@ -64,7 +64,7 @@ func (s CsBookTicksStorage) sendMicroBatch(ctx context.Context, bookTicks []mode
 	batch := s.session.NewBatch(gocql.LoggedBatch).WithContext(ctx)
 	batch.SetConsistency(gocql.LocalQuorum)
 	for _, bookTick := range bookTicks {
-		batch.Query(s.insertStatement, bookTick.Symbol, getHourNo(bookTick.Timestamp), bookTick.Timestamp, bookTick.UpdateId, bookTick.AskPrice, bookTick.AskQuantity, bookTick.BidPrice, bookTick.BidQuantity)
+		batch.Query(s.insertStatement, bookTick.Symbol, GetHourNo(bookTick.Timestamp), bookTick.Timestamp, bookTick.UpdateId, bookTick.AskPrice, bookTick.AskQuantity, bookTick.BidPrice, bookTick.BidQuantity)
 	}
 	err := s.session.ExecuteBatch(batch)
 	if err != nil {

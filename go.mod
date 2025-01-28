@@ -7,8 +7,10 @@ toolchain go1.22.11
 require (
 	github.com/Backblaze/blazer v0.7.1
 	github.com/ClickHouse/ch-go v0.61.1
+	github.com/go-zookeeper/zk v1.0.4
 	github.com/gocql/gocql v1.7.0
 	github.com/gorilla/websocket v1.5.1
+	github.com/parquet-go/parquet-go v0.24.0
 	github.com/pbnjay/memory v0.0.0-20210728143218-7b4eea64cf58
 	github.com/prometheus/client_golang v1.18.0
 	go.mongodb.org/mongo-driver v1.13.1
@@ -21,7 +23,6 @@ require (
 	github.com/hailocab/go-hostpool v0.0.0-20160125115350-e80d13ce29ed // indirect
 	github.com/mattn/go-runewidth v0.0.15 // indirect
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
-	github.com/parquet-go/parquet-go v0.24.0 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 )

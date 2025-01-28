@@ -2,16 +2,26 @@ package conf
 
 import (
 	"DeltaReceiver/internal/common/conf"
+	"os"
+	"strconv"
 )
 
 type AppConfig struct {
-	ParquetStorageCfg       *ParquetConfig     `yaml:"parquet.storage"`
-	GlobalRepoConfig        *conf.CsRepoConfig `yaml:"global.repo.config"`
-	NumWorkerThreads        int                `yaml:"num.parallel.processes"`
-	IsDeleteProcessedDeltas bool               `yaml:"delete.processed.deltas"`
-	ProcessDeltasFrom       string             `yaml:"process.deltas.from"`
+	ZkCfg        *ZkConfig          `yaml:"zk"`
+	B2Cfg        *B2Config          `yaml:"b2"`
+	SocratesCfg  *conf.CsRepoConfig `yaml:"socrates"`
+	DeltaWorkers int                `yaml:"workers.binance.deltas"`
 }
 
-type ParquetConfig struct {
-	BasePath string `yaml:"base.path"`
+func AppConfigFromEnv(prefix string) *AppConfig {
+	deltaWorkers, err := strconv.Atoi(os.Getenv(prefix + ".workers.binance.deltas"))
+	if err != nil {
+		panic(err)
+	}
+	return &AppConfig{
+		ZkCfg:        ZkConfigFromEnv("zk"),
+		B2Cfg:        B2ConfigFromEnv("b2"),
+		SocratesCfg:  conf.NewCsRepoConfigFromEnv("socrates"),
+		DeltaWorkers: deltaWorkers,
+	}
 }
