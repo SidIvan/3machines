@@ -24,4 +24,16 @@ spec:
               name: cassandra-config
           - secretRef:
               name: b2-creds
+        volumeMounts:
+          - name: sizif-logs
+            mountPath: /app/log
+          - name: certs
+            mountPath: /etc/ssl/certs/ca-certificates.crt
+      volumes:
+      - name: sizif-logs
+        hostPath:
+          path: /var/log/sizif/$(POD_NAME) 
+      - name: certs
+        hostPath:
+          path: /etc/ssl/certs/ca-certificates.crt
         
