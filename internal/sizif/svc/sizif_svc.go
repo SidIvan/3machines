@@ -35,7 +35,7 @@ func NewSizifSvc[T any](serviceType string, socratesStorage SocratesStorage[T], 
 
 func (s *SizifSvc[T]) Start(ctx context.Context) {
 	for _, worker := range s.workers {
-		worker.Start(ctx)
+		go worker.Start(ctx)
 	}
 	for {
 		keys, err := s.socratesStorage.GetKeys(ctx)
