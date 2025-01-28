@@ -18,6 +18,9 @@ spec:
         environment: prod
     spec:
       terminationGracePeriodSeconds: 300
+      nodeSelector:
+        app: zk
+        environment: prod
       containers:
       - name: nestor-local-storage
         image: mongo:6.0.20

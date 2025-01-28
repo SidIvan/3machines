@@ -16,6 +16,8 @@ spec:
         app: cassandra
     spec:
       terminationGracePeriodSeconds: 300
+      nodeSelector:
+        app: cassandra
       containers:
       - name: cassandra
         image: cassandra:5.0.2

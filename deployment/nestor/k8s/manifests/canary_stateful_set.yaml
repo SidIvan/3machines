@@ -17,6 +17,9 @@ spec:
         app: nestor
         environment: canary
     spec:
+      nodeSelector:
+        app: zk
+        environment: canary
       terminationGracePeriodSeconds: 300
       containers:
       - name: nestor-local-storage

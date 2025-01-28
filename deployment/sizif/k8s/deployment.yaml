@@ -3,17 +3,19 @@ kind: Deployment
 metadata:
   name: sizif-deployment
   labels:
-    app: zk
+    app: sizif
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: zk
+      app: sizif
   template:
     metadata:
       labels:
-        app: zk
+        app: sizif
     spec:
+      nodeSelector:
+        app: zk
       containers:
       - name: sizif
         image: sidivan/sizif:v1.0
