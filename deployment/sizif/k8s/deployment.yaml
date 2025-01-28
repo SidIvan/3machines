@@ -19,6 +19,7 @@ spec:
       containers:
       - name: sizif
         image: sidivan/sizif:v1.0
+        imagePullPolicy: Always
         envFrom:
           - configMapRef:
               name: sizif-config
