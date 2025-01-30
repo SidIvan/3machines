@@ -10,5 +10,5 @@ data:
   socrates.binace.snapshot.table: snapshots
   socrates.binace.snapshot.key.table: snapshots_keys
   socrates.binace.book.ticks.table: book_ticks
-  socrates.binace.book.ticks.key.table: book_ticks_key
+  socrates.binace.book.ticks.key.table: book_ticks_keys
   socrates.binace.exchange.info.table: exchange_info

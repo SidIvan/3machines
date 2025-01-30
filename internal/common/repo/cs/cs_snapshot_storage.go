@@ -87,10 +87,11 @@ func (s CsSnapshotStorage) sendKeys(ctx context.Context, deltas []model.DepthSna
 		}
 	}
 	sentSnapshotsKeysMut.Unlock()
-	var wg sync.WaitGroup
-	var numSuccessInserts atomic.Int32
-	numInserts := 0
+	s.logger.Info(fmt.Sprintf("got %d new keys", len(newKeys)))
 	for j := 0; j < 3; j++ {
+		var wg sync.WaitGroup
+		var numSuccessInserts atomic.Int32
+		numInserts := 0
 		for i := 0; i < len(newKeys); i += batchSize {
 			numInserts++
 			wg.Add(1)
@@ -99,10 +100,11 @@ func (s CsSnapshotStorage) sendKeys(ctx context.Context, deltas []model.DepthSna
 					numSuccessInserts.Add(1)
 				}
 				wg.Done()
-			}(newKeys[i:min(i, len(newKeys))])
+			}(newKeys[i:min(i+batchSize, len(newKeys))])
 		}
 		wg.Wait()
 		if numSuccessInserts.Load() == int32(numInserts) {
+			s.logger.Info(fmt.Sprintf("successfully insert new keys", len(newKeys)))
 			return nil
 		}
 	}

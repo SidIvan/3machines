@@ -102,10 +102,11 @@ func (s CsDeltaStorage) sendKeys(ctx context.Context, deltas []model.Delta) erro
 		}
 	}
 	sentDeltaKeysMut.Unlock()
-	var wg sync.WaitGroup
-	var numSuccessInserts atomic.Int32
-	numInserts := 0
+	s.logger.Info(fmt.Sprintf("got %d new keys", len(newKeys)))
 	for j := 0; j < 3; j++ {
+		var wg sync.WaitGroup
+		var numSuccessInserts atomic.Int32
+		numInserts := 0
 		for i := 0; i < len(newKeys); i += batchSize {
 			numInserts++
 			wg.Add(1)
@@ -118,6 +119,7 @@ func (s CsDeltaStorage) sendKeys(ctx context.Context, deltas []model.Delta) erro
 		}
 		wg.Wait()
 		if numSuccessInserts.Load() == int32(numInserts) {
+			s.logger.Info(fmt.Sprintf("successfully insert %d new keys", len(newKeys)))
 			return nil
 		}
 	}
