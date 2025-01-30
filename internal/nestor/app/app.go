@@ -59,7 +59,7 @@ func NewApp(cfg *conf.AppConfig) *App {
 	deltaHolesIdWatcher := cache.NewDeltaUpdateIdWatcher()
 	csCfg := cfg.CsCfg
 	csSession := initCs(csCfg)
-	deltaStorage := cs.NewCsDeltaStorage(csSession, csCfg.DeltaTableName)
+	deltaStorage := cs.NewCsDeltaStorage(csSession, csCfg.DeltaTableName, csCfg.DeltaKeyTableName)
 	snapshotStorage := cs.NewCsSnapshotStorage(csSession, csCfg.SnapshotTableName)
 	bookTicksStorage := cs.NewCsBookTicksStorage(csSession, csCfg.BookTicksTableName)
 	exchangeInfoStorage := cs.NewExchangeInfoStorage(csSession, csCfg.ExchangeInfoTableName)

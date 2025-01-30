@@ -58,8 +58,6 @@ func (s *ExchangeInfoSvc) StartReceiveExInfo(ctx context.Context) {
 		if err == nil {
 			s.metrics.UpdateMetrics(exInfo.Symbols)
 			s.metrics.ProcessExInfoMetrics(Receive)
-		} else {
-			continue
 		}
 		s.logger.Info(fmt.Sprintf("got exchange info with hash %d", exInfo.ExInfoHash()))
 		cancel()

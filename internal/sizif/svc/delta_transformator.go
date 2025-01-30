@@ -26,17 +26,17 @@ func (s DeltaTransformator) Transform(deltas []model.Delta, key *model.Processin
 		s.logger.Warn(fmt.Sprintf("empty batch for key %s", key))
 		return deltas, false
 	}
-	maxAllowedTsMs := key.HourNo * millisInHour
-	minAllowedTsMs := maxAllowedTsMs - millisInHour + 1
+	minAllowedTsMs := key.HourNo * millisInHour
+	maxAllowedTsMs := minAllowedTsMs + millisInHour - 1
 	deltasOutsideTimeRange := 0
 	for _, delta := range deltas {
 		if delta.Timestamp > maxAllowedTsMs || delta.Timestamp < minAllowedTsMs {
+			s.logger.Debug(delta.String())
 			deltasOutsideTimeRange++
 		}
 	}
 	validByTimeRange := true
 	if deltasOutsideTimeRange > 0 {
-		s.logger.Warn(fmt.Sprintf("%d entries outside time range for key %s", deltasOutsideTimeRange, key))
 		validByTimeRange = false
 	}
 	sort.Slice(deltas, func(i, j int) bool {
@@ -46,13 +46,16 @@ func (s DeltaTransformator) Transform(deltas []model.Delta, key *model.Processin
 	lastUpdateId := deltas[0].UpdateId
 	for i := 1; i < len(deltas); i++ {
 		if deltas[i].FirstUpdateId-lastUpdateId > 1 {
+			// s.logger.Info(fmt.Sprintf("hole %d %d", lastUpdateId, deltas[i].FirstUpdateId))
 			deltaHoles++
 		}
 		lastUpdateId = deltas[i].UpdateId
 	}
 	validByHoles := true
 	if deltaHoles > 0 {
-		s.logger.Warn(fmt.Sprintf("%d holes for key %s", deltaHoles, key))
+		// s.logger.Warn(fmt.Sprintf("%d holes for key %s", deltaHoles, key))
+		// data, _ := json.Marshal(deltas)
+		// s.logger.Info("holed batch" + string(data))
 		validByHoles = false
 	}
 	return deltas, validByHoles && validByTimeRange

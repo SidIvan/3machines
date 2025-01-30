@@ -63,9 +63,11 @@ func (s *TickerReceiver) ReceiveAndSend(ctx context.Context) {
 			s.logger.Error(err.Error())
 		} else {
 			s.metrics.ProcessTickMetrics(batch, Receive)
-			if err = s.sendBatch(ctx, batch); err != nil {
-				s.logger.Error(err.Error())
-			}
+			go func() {
+				if err = s.sendBatch(ctx, batch); err != nil {
+					s.logger.Error(err.Error())
+				}
+			}()
 		}
 	}
 	s.done <- struct{}{}

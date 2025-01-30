@@ -6,6 +6,7 @@ data:
   socrates.hosts: "cassandra-0.cassandra.default.svc.cluster.local,cassandra-1.cassandra.default.svc.cluster.local,cassandra-2.cassandra.default.svc.cluster.local,cassandra-3.cassandra.default.svc.cluster.local"
   socrates.binace.keyspace: binance_data
   socrates.binace.delta.table: deltas
+  socrates.binace.delta.key.table: deltas_keys
   socrates.binace.snapshot.table: snapshots
   socrates.binace.book.ticks.table: book_ticks
   socrates.binace.exchange.info.table: exchange_info

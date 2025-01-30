@@ -46,17 +46,13 @@ func (s *SizifWorker[T]) Start(ctx context.Context) {
 
 func (s *SizifWorker[T]) lockAndProcessKey(ctx context.Context, key model.ProcessingKey) {
 	s.logger.Debug(fmt.Sprintf("Start processing key %s", key.String()))
-	for i := 0; i < 3; i++ {
-		lockStatus, err := s.keyLocker.Lock(ctx, &key)
-		if err != nil {
-			s.logger.Error(err.Error())
-			sleep(3)
-			continue
-		}
-		if lockStatus == AlreadyLocked {
-			s.logger.Debug(fmt.Sprintf("Key %s already processing or processed", key.String()))
-			return
-		}
+	lockStatus := s.lock(ctx, key)
+	if lockStatus == AlreadyLocked {
+		s.logger.Debug(fmt.Sprintf("Key %s already processing", key.String()))
+		return
+	} else if lockStatus == AlreadyProcessed {
+		s.logger.Debug(fmt.Sprintf("Key %s already processed, delete it's data", key.String()))
+		s.deleteKeyData(ctx, &key)
 	}
 	for i := 0; i < 3; i++ {
 		err := s.processKey(ctx, key)
@@ -69,6 +65,19 @@ func (s *SizifWorker[T]) lockAndProcessKey(ctx context.Context, key model.Proces
 	}
 }
 
+func (s *SizifWorker[T]) lock(ctx context.Context, key model.ProcessingKey) LockOpStatus {
+	for i := 0; i < 3; i++ {
+		lockStatus, err := s.keyLocker.Lock(ctx, &key)
+		if err != nil {
+			s.logger.Error(err.Error())
+			sleep(3)
+			continue
+		}
+		return lockStatus
+	}
+	return AlreadyLocked
+}
+
 func (s *SizifWorker[T]) processKey(ctx context.Context, key model.ProcessingKey) error {
 	var data []T
 	var err error
@@ -78,6 +87,10 @@ func (s *SizifWorker[T]) processKey(ctx context.Context, key model.ProcessingKey
 			break
 		}
 		s.logger.Error(err.Error())
+	}
+	if len(data) == 0 {
+		s.logger.Info(fmt.Sprintf("no data for key %s, delete it", &key))
+		
 	}
 	transformedData, isDataValid := s.dataTransformator.Transform(data, &key)
 	if !isDataValid {
@@ -89,18 +102,23 @@ func (s *SizifWorker[T]) processKey(ctx context.Context, key model.ProcessingKey
 			for j := 0; j < 3; j++ {
 				err = s.keyLocker.MarkProcessed(ctx, &key)
 				if err == nil {
-					for k := 0; k < 3; k++ {
-						err = s.socratesStorage.Delete(ctx, &key)
-						if err == nil {
-							return nil
-						}
-						s.logger.Error(err.Error())
-					}
-					return nil
+					return s.deleteKeyData(ctx, &key)
 				}
 				s.logger.Error(err.Error())
 			}
 			return err
+		}
+		s.logger.Error(err.Error())
+	}
+	return err
+}
+
+func (s *SizifWorker[T]) deleteKeyData(ctx context.Context, key *model.ProcessingKey) error {
+	var err error
+	for k := 0; k < 3; k++ {
+		err = s.socratesStorage.Delete(ctx, key)
+		if err == nil {
+			return nil
 		}
 		s.logger.Error(err.Error())
 	}

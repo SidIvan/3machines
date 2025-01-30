@@ -4,7 +4,7 @@ import "time"
 
 var epochStart = time.Unix(0, 0).UTC()
 
-const batchSize int = 200
+const batchSize int = 25
 
 func getDayNo(timestampMs int64) int64 {
 	return int64(GetHourNo(timestampMs) / 24)

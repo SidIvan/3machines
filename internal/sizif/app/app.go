@@ -35,7 +35,7 @@ func NewApp(cfg *conf.AppConfig) *App {
 	}
 	fmt.Println(string(rawCfg))
 	zkConn, b2Bucket, csSession := initConnections(cfg)
-	deltaSocratesStorage := cs.NewCsDeltaStorage(csSession, cfg.SocratesCfg.DeltaTableName)
+	deltaSocratesStorage := cs.NewCsDeltaStorage(csSession, cfg.SocratesCfg.DeltaTableName, cfg.SocratesCfg.DeltaKeyTableName)
 	deltaParquetStorage := b2pqt.NewB2ParquetStorage[model.Delta](b2Bucket, "binance/deltas")
 	deltaTransformator := svc.NewDeltaTransformator()
 	deltaLocker := lock.NewZkLocker("binance/deltas", zkConn)

@@ -17,7 +17,7 @@ import (
 	"go.uber.org/zap"
 )
 
-const BatchSize = 10000
+const BatchSize = 1000
 
 type DeltaReceiver struct {
 	logger               *zap.Logger
@@ -76,9 +76,11 @@ func (s *DeltaReceiver) ReceiveAndSend(ctx context.Context) {
 			s.logger.Error(err.Error())
 		} else if batch != nil {
 			s.metrics.ProcessDeltaMetrics(batch, Receive)
-			if err = s.SaveBatch(ctx, batch); err != nil {
-				s.logger.Error(err.Error())
-			}
+			go func() {
+				if err = s.SaveBatch(ctx, batch); err != nil {
+					s.logger.Error(err.Error())
+				}
+			}()
 			// s.validateBatch(ctx, batch)
 		}
 	}

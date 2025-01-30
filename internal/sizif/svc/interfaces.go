@@ -12,6 +12,7 @@ type ParquetStorage[T any] interface {
 type SocratesStorage[T any] interface {
 	GetKeys(context.Context) ([]model.ProcessingKey, error)
 	Get(context.Context, *model.ProcessingKey) ([]T, error)
+	DeleteKey(context.Context, *model.ProcessingKey) error
 	Delete(context.Context, *model.ProcessingKey) error
 }
 
@@ -24,6 +25,7 @@ type LockOpStatus int8
 const (
 	LockedSuccessfully LockOpStatus = 0
 	AlreadyLocked      LockOpStatus = 1
+	AlreadyProcessed   LockOpStatus = 2
 )
 
 type KeyLocker interface {

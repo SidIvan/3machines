@@ -6,6 +6,7 @@ import (
 	"DeltaReceiver/pkg/log"
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/go-zookeeper/zk"
@@ -31,14 +32,40 @@ type LockType []byte
 var (
 	locked    LockType      = []byte("1")
 	processed LockType      = []byte("2")
-	ttl       time.Duration = time.Hour
+	ttl       time.Duration = time.Hour * 24 * 7
 )
 
 func (s ZkLocker) Lock(ctx context.Context, key *model.ProcessingKey) (svc.LockOpStatus, error) {
 	lockPath := s.createZkPath(key)
 	_, err := s.conn.CreateTTL(lockPath, locked, zk.FlagTTL, zk.WorldACL(zk.PermAll), ttl)
 	if err != nil {
-		if err == zk.ErrNodeExists {
+		if err == zk.ErrNoNode {
+			lockSubPaths := strings.Split(lockPath, "/")
+			nodePath := ""
+			for i := 1; i < len(lockSubPaths)-1; i++ {
+				nodePath += "/" + lockSubPaths[i]
+				exists, _, err := s.conn.Exists(nodePath)
+				if err != nil {
+					return svc.AlreadyLocked, err
+				}
+				if !exists {
+					_, err = s.conn.Create(nodePath, []byte{}, zk.FlagPersistent, zk.WorldACL(zk.PermAll))
+					if err != nil {
+						s.logger.Error(err.Error())
+						return svc.AlreadyLocked, err
+					}
+				}
+			}
+			return s.Lock(ctx, key)
+		} else if err == zk.ErrNodeExists {
+			if status, _, err := s.conn.Get(lockPath); err != nil {
+				s.logger.Error(err.Error())
+				return svc.AlreadyLocked, err
+			} else if status[0] == processed[0] {
+				return svc.AlreadyProcessed, nil
+			} else {
+				return svc.AlreadyLocked, nil
+			}
 			return svc.AlreadyLocked, nil
 		} else {
 			s.logger.Error(err.Error())

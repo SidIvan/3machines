@@ -42,14 +42,14 @@ func (s *SizifSvc[T]) Start(ctx context.Context) {
 		if err != nil {
 			s.logger.Error(err.Error())
 		} else {
-			curHourNo := cs.GetHourNo(time.Now().UnixMilli())
+			maxAllowedHourNo := cs.GetHourNo(time.Now().UnixMilli()) - 1
 			for _, key := range keys {
-				if curHourNo-key.HourNo > 3 {
+				if key.HourNo <= maxAllowedHourNo {
 					s.taskQueue <- key
 				}
 			}
 		}
-		sleep(10 * 60)
+		sleep(60)
 	}
 }
 

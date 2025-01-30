@@ -57,7 +57,7 @@ func (s *BookTickerSvc) getNewReceivers(ctx context.Context) []*TickerReceiver {
 	}
 	s.logger.Info(fmt.Sprintf("start get ticks of %d different symbols", len(symbols)))
 	var newReceivers []*TickerReceiver
-	numTickerReceivers := 20
+	numTickerReceivers := 5
 	for i := 0; i < numTickerReceivers; i++ {
 		var symbolsForReceiver []string
 		for j := 0; j*numTickerReceivers+i < len(symbols); j++ {

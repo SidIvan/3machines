@@ -1,4 +1,4 @@
-CREATE KEYSPACE IF NOT EXISTS binance_data WITH REPLICATION = {'class':'NetworkTopologyStrategy','SOCRATES':'3'};
+CREATE KEYSPACE IF NOT EXISTS binance_data WITH REPLICATION = {'class':'NetworkTopologyStrategy','SOCRATES':'2'};
 
 USE binance_data;
 
@@ -14,6 +14,12 @@ CREATE TABLE IF NOT EXISTS deltas (
     PRIMARY KEY ((symbol, hour), timestamp_ms, type, price)
 );
 
+CREATE TABLE IF NOT EXISTS deltas_keys (
+    symbol ascii,
+    hour bigint,
+    PRIMARY KEY ((symbol, hour))
+);
+
 CREATE TABLE IF NOT EXISTS snapshots (
     symbol ascii,
     timestamp_ms bigint,
@@ -23,6 +29,12 @@ CREATE TABLE IF NOT EXISTS snapshots (
     count ascii,
     last_update_id bigint,
     PRIMARY KEY ((symbol, hour), timestamp_ms, type, price)
+);
+
+CREATE TABLE IF NOT EXISTS snapshots_keys (
+    symbol ascii,
+    hour bigint,
+    PRIMARY KEY ((symbol, hour))
 );
 
 CREATE TABLE IF NOT EXISTS book_ticks (
@@ -35,6 +47,12 @@ CREATE TABLE IF NOT EXISTS book_ticks (
     ask_price ascii,
     ask_quantity ascii,
     PRIMARY KEY ((symbol, hour), timestamp_ms, update_id)
+);
+
+CREATE TABLE IF NOT EXISTS book_ticks_keys (
+    symbol ascii,
+    hour bigint,
+    PRIMARY KEY ((symbol, hour))
 );
 
 CREATE TABLE IF NOT EXISTS exchange_info (
