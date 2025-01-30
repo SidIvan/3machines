@@ -20,7 +20,7 @@ spec:
         app: cassandra
       containers:
       - name: cassandra
-        image: cassandra:5.0.2
+        image: sidivan/cassandra:v1.0
         imagePullPolicy: Always
         ports:
         - containerPort: 7000
