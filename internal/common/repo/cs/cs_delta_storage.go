@@ -115,7 +115,7 @@ func (s CsDeltaStorage) sendKeys(ctx context.Context, deltas []model.Delta) erro
 					numSuccessInserts.Add(1)
 				}
 				wg.Done()
-			}(newKeys[i:min(i, len(newKeys))])
+			}(newKeys[i:min(i+batchSize, len(newKeys))])
 		}
 		wg.Wait()
 		if numSuccessInserts.Load() == int32(numInserts) {
