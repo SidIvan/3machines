@@ -157,6 +157,7 @@ func (s *App) Stop(ctx context.Context) {
 		wg.Done()
 	}()
 	wg.Wait()
+	time.Sleep(30 * time.Second)
 	s.deltaStorage.Disconnect(context.Background())
 	s.logger.Info("End of graceful shutdown")
 }

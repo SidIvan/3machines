@@ -83,22 +83,33 @@ func (s CsDeltaStorage) SendDeltas(ctx context.Context, deltas []model.Delta) er
 func (s CsDeltaStorage) sendKeys(ctx context.Context, deltas []model.Delta) error {
 	var err error
 	for i := 0; i < 3; i++ {
-		batch := s.session.NewBatch(gocql.LoggedBatch).WithContext(ctx)
-		batch.SetConsistency(gocql.LocalQuorum)
 		uniqueKeys := make(map[model.ProcessingKey]struct{})
+		var keysBatch []model.ProcessingKey
 		for _, delta := range deltas {
 			deltaKey := model.ProcessingKey{
 				Symbol: delta.Symbol,
 				HourNo: GetHourNo(delta.Timestamp),
 			}
 			if _, ok := uniqueKeys[deltaKey]; !ok {
-				batch.Query(s.insertStatement, delta.Symbol, GetHourNo(delta.Timestamp), delta.Timestamp, delta.T, delta.Price, delta.Count, delta.FirstUpdateId, delta.UpdateId)
+				keysBatch = append(keysBatch, deltaKey)
+				if len(keysBatch) == batchSize {
+					s.sendKeysBatch(ctx, keysBatch)
+				}
 			}
 		}
-		err = s.session.ExecuteBatch(batch)
-		if err != nil {
-			s.logger.Error(err.Error())
-		}
+	}
+	return err
+}
+
+func (s CsDeltaStorage) sendKeysBatch(ctx context.Context, keys []model.ProcessingKey) error {
+	batch := s.session.NewBatch(gocql.LoggedBatch).WithContext(ctx)
+	batch.SetConsistency(gocql.LocalQuorum)
+	for _, key := range keys {
+		batch.Query(s.insertKeyStatement, key.Symbol, key.HourNo)
+	}
+	err := s.session.ExecuteBatch(batch)
+	if err != nil {
+		s.logger.Error(err.Error())
 	}
 	return err
 }

@@ -1,0 +1,1042 @@
+#
+num_tokens: 256
+"/etc/cassandra/cassandra.yaml" 2249L, 111594B                                                                                                                                                         1,0-1         Top
+# NOTE:
+#   See https://cassandra.apache.org/doc/latest/configuration/ for
+#   full explanations of configuration directives
+# /NOTE
+
+# NOTE:
+#   This file is provided in two versions:
+#     - cassandra.yaml: Contains configuration defaults for a "compatible"
+#       configuration that operates using settings that are backwards-compatible
+#       and interoperable with machines running older versions of Cassandra.
+#       This version is provided to facilitate pain-free upgrades for existing
+#       users of Cassandra running in production who want to gradually and
+#       carefully introduce new features.
+#     - cassandra_latest.yaml: Contains configuration defaults that enable
+#       the latest features of Cassandra, including improved functionality as
+#       well as higher performance. This version is provided for new users of
+#       Cassandra who want to get the most out of their cluster, and for users
+#       evaluating the technology.
+# /NOTE
+
+# The name of the cluster. This is mainly used to prevent machines in
+# one logical cluster from joining another.
+cluster_name: SOCRATES
+
+# This defines the number of tokens randomly assigned to this node on the ring
+# The more tokens, relative to other nodes, the larger the proportion of data
+# that this node will store. You probably want all nodes to have the same number
+# of tokens assuming they have equal hardware capability.
+#
+# If you leave this unspecified, Cassandra will use the default of 1 token for legacy compatibility,
+# and will use the initial_token as described below.
+#
+# Specifying initial_token will override this setting on the node's initial start,
+# on subsequent starts, this setting will apply even if initial token is set.
+#
+# See https://cassandra.apache.org/doc/latest/getting-started/production.html#tokens for
+# best practice information about num_tokens.
+#
+num_tokens: 256
+
+# Triggers automatic allocation of num_tokens tokens for this node. The allocation
+# algorithm attempts to choose tokens in a way that optimizes replicated load over
+/mate
+      - seeds: "cassandra-0.cassandra.default.svc.cluster.local,cassandra-1.cassandra.default.svc.cluster.local,cassandra-2.cassandra.default.svc.cluster.local,cassandra-3.cassandra.default.svc.cluster.local"
+      # If set to "true", SimpleSeedProvider will return all IP addresses for a DNS name,
+      # based on the configured name service on the system. Defaults to "false".
+      #  resolve_multiple_ip_addresses_per_dns_record: "false"
+
+# For workloads with more data than can fit in memory, Cassandra's
+# bottleneck will be reads that need to fetch data from
+# disk. "concurrent_reads" should be set to (16 * number_of_drives) in
+# order to allow the operations to enqueue low enough in the stack
+# that the OS and drives can reorder them. Same applies to
+# "concurrent_counter_writes", since counter writes read the current
+# values before incrementing and writing them back.
+#
+# On the other hand, since writes are almost never IO bound, the ideal
+# number of "concurrent_writes" is dependent on the number of cores in
+# your system; (8 * number_of_cores) is a good rule of thumb.
+concurrent_reads: 32
+concurrent_writes: 32
+concurrent_counter_writes: 32
+
+# For materialized view writes, as there is a read involved, so this should
+# be limited by the less of concurrent reads or concurrent writes.
+concurrent_materialized_view_writes: 32
+
+# Maximum memory to use for inter-node and client-server networking buffers.
+#
+# Defaults to the smaller of 1/16 of heap or 128MB. This pool is allocated off-heap,
+# so is in addition to the memory allocated for heap. The cache also has on-heap
+# overhead which is roughly 128 bytes per chunk (i.e. 0.2% of the reserved size
+# if the default 64k chunk size is used).
+# Memory is only allocated when needed.
+# Min unit: MiB
+# networking_cache_size: 128MiB
+
+# Enable the sstable chunk cache.  The chunk cache will store recently accessed
+# sections of the sstable in-memory as uncompressed buffers.
+# file_cache_enabled: false
+
+# Maximum memory to use for sstable chunk cache and buffer pooling.
+# 32MB of this are reserved for pooling buffers, the rest is used for chunk cache
+# that holds uncompressed sstable chunks.
+# Defaults to the smaller of 1/4 of heap or 512MB. This pool is allocated off-heap,
+/materialized view
+# fine and if you experience problems with compaction running too
+# slowly or too fast, you should look at
+# compaction_throughput first.
+#
+# concurrent_compactors defaults to the smaller of (number of disks,
+# number of cores), with a minimum of 2 and a maximum of 8.
+#
+# If your data directories are backed by SSD, you should increase this
+# to the number of cores.
+# concurrent_compactors: 1
+
+# Number of simultaneous repair validations to allow. If not set or set to
+# a value less than 1, it defaults to the value of concurrent_compactors.
+# To set a value greeater than concurrent_compactors at startup, the system
+# property cassandra.allow_unlimited_concurrent_validations must be set to
+# true. To dynamically resize to a value > concurrent_compactors on a running
+# node, first call the bypassConcurrentValidatorsLimit method on the
+# org.apache.cassandra.db:type=StorageService mbean
+# concurrent_validations: 0
+
+# Number of simultaneous materialized view builder tasks to allow.
+concurrent_materialized_view_builders: 1
+
+# Throttles compaction to the given total throughput across the entire
+# system. The faster you insert data, the faster you need to compact in
+# order to keep the sstable count down, but in general, setting this to
+# 16 to 32 times the rate you are inserting data is more than sufficient.
+# Setting this to 0 disables throttling. Note that this accounts for all types
+# of compaction, including validation compaction (building Merkle trees
+# for repairs).
+compaction_throughput: 64MiB/s
+
+# When compacting, the replacement sstable(s) can be opened before they
+# are completely written, and used in place of the prior sstables for
+# any range that has been written. This helps to smoothly transfer reads
+# between the sstables, reducing page cache churn and keeping hot rows hot
+# Set sstable_preemptive_open_interval to null for disabled which is equivalent to
+# sstable_preemptive_open_interval_in_mb being negative
+# Min unit: MiB
+sstable_preemptive_open_interval: 50MiB
+
+# Starting from 4.1 sstables support UUID based generation identifiers. They are disabled by default
+/materialized view
+# configure the read and write consistency levels for modifications to auth tables
+update-alternatives: using /usr/bin/vim.basic to provide /usr/bin/vimdiff (vimdiff) in auto mode
+update-alternatives: using /usr/bin/vim.basic to provide /usr/bin/rvim (rvim) in auto mode
+update-alternatives: using /usr/bin/vim.basic to provide /usr/bin/rview (rview) in auto mode
+update-alternatives: using /usr/bin/vim.basic to provide /usr/bin/vi (vi) in auto mode
+update-alternatives: warning: skip creation of /usr/share/man/da/man1/vi.1.gz because associated file /usr/share/man/da/man1/vim.1.gz (of link group vi) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/de/man1/vi.1.gz because associated file /usr/share/man/de/man1/vim.1.gz (of link group vi) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/fr/man1/vi.1.gz because associated file /usr/share/man/fr/man1/vim.1.gz (of link group vi) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/it/man1/vi.1.gz because associated file /usr/share/man/it/man1/vim.1.gz (of link group vi) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/ja/man1/vi.1.gz because associated file /usr/share/man/ja/man1/vim.1.gz (of link group vi) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/pl/man1/vi.1.gz because associated file /usr/share/man/pl/man1/vim.1.gz (of link group vi) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/ru/man1/vi.1.gz because associated file /usr/share/man/ru/man1/vim.1.gz (of link group vi) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/man1/vi.1.gz because associated file /usr/share/man/man1/vim.1.gz (of link group vi) doesn't exist
+update-alternatives: using /usr/bin/vim.basic to provide /usr/bin/view (view) in auto mode
+update-alternatives: warning: skip creation of /usr/share/man/da/man1/view.1.gz because associated file /usr/share/man/da/man1/vim.1.gz (of link group view) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/de/man1/view.1.gz because associated file /usr/share/man/de/man1/vim.1.gz (of link group view) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/fr/man1/view.1.gz because associated file /usr/share/man/fr/man1/vim.1.gz (of link group view) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/it/man1/view.1.gz because associated file /usr/share/man/it/man1/vim.1.gz (of link group view) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/ja/man1/view.1.gz because associated file /usr/share/man/ja/man1/vim.1.gz (of link group view) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/pl/man1/view.1.gz because associated file /usr/share/man/pl/man1/vim.1.gz (of link group view) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/ru/man1/view.1.gz because associated file /usr/share/man/ru/man1/vim.1.gz (of link group view) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/man1/view.1.gz because associated file /usr/share/man/man1/vim.1.gz (of link group view) doesn't exist
+update-alternatives: using /usr/bin/vim.basic to provide /usr/bin/ex (ex) in auto mode
+update-alternatives: warning: skip creation of /usr/share/man/da/man1/ex.1.gz because associated file /usr/share/man/da/man1/vim.1.gz (of link group ex) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/de/man1/ex.1.gz because associated file /usr/share/man/de/man1/vim.1.gz (of link group ex) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/fr/man1/ex.1.gz because associated file /usr/share/man/fr/man1/vim.1.gz (of link group ex) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/it/man1/ex.1.gz because associated file /usr/share/man/it/man1/vim.1.gz (of link group ex) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/ja/man1/ex.1.gz because associated file /usr/share/man/ja/man1/vim.1.gz (of link group ex) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/pl/man1/ex.1.gz because associated file /usr/share/man/pl/man1/vim.1.gz (of link group ex) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/ru/man1/ex.1.gz because associated file /usr/share/man/ru/man1/vim.1.gz (of link group ex) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/man1/ex.1.gz because associated file /usr/share/man/man1/vim.1.gz (of link group ex) doesn't exist
+update-alternatives: using /usr/bin/vim.basic to provide /usr/bin/editor (editor) in auto mode
+update-alternatives: warning: skip creation of /usr/share/man/da/man1/editor.1.gz because associated file /usr/share/man/da/man1/vim.1.gz (of link group editor) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/de/man1/editor.1.gz because associated file /usr/share/man/de/man1/vim.1.gz (of link group editor) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/fr/man1/editor.1.gz because associated file /usr/share/man/fr/man1/vim.1.gz (of link group editor) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/it/man1/editor.1.gz because associated file /usr/share/man/it/man1/vim.1.gz (of link group editor) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/ja/man1/editor.1.gz because associated file /usr/share/man/ja/man1/vim.1.gz (of link group editor) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/pl/man1/editor.1.gz because associated file /usr/share/man/pl/man1/vim.1.gz (of link group editor) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/ru/man1/editor.1.gz because associated file /usr/share/man/ru/man1/vim.1.gz (of link group editor) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/man1/editor.1.gz because associated file /usr/share/man/man1/vim.1.gz (of link group editor) doesn't exist
+Processing triggers for libc-bin (2.35-0ubuntu3.8) ...
+root@cassandra-1:/# vim /etc/cassandra/cassandra.yaml
+root@cassandra-1:/# exit
+exit
+root@4063519-df55181:~/CryptoHuynja/deployment/sizif/k8s# k exec -it cassandra-2 -- /bin/bash
+root@cassandra-2:/# apt update
+Get:1 http://security.ubuntu.com/ubuntu jammy-security InRelease [129 kB]
+Get:2 http://archive.ubuntu.com/ubuntu jammy InRelease [270 kB]
+Get:3 http://security.ubuntu.com/ubuntu jammy-security/restricted amd64 Packages [3,606 kB]
+Get:4 http://security.ubuntu.com/ubuntu jammy-security/universe amd64 Packages [1,229 kB]
+Get:5 http://security.ubuntu.com/ubuntu jammy-security/multiverse amd64 Packages [45.2 kB]
+Get:6 http://security.ubuntu.com/ubuntu jammy-security/main amd64 Packages [2,603 kB]
+Get:7 http://archive.ubuntu.com/ubuntu jammy-updates InRelease [128 kB]
+Get:8 http://archive.ubuntu.com/ubuntu jammy-backports InRelease [127 kB]
+Get:9 http://archive.ubuntu.com/ubuntu jammy/multiverse amd64 Packages [266 kB]
+Get:10 http://archive.ubuntu.com/ubuntu jammy/main amd64 Packages [1,792 kB]
+Get:11 http://archive.ubuntu.com/ubuntu jammy/restricted amd64 Packages [164 kB]
+Get:12 http://archive.ubuntu.com/ubuntu jammy/universe amd64 Packages [17.5 MB]
+Get:13 http://archive.ubuntu.com/ubuntu jammy-updates/universe amd64 Packages [1,521 kB]
+Get:14 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 Packages [2,904 kB]
+Get:15 http://archive.ubuntu.com/ubuntu jammy-updates/multiverse amd64 Packages [53.3 kB]
+Get:16 http://archive.ubuntu.com/ubuntu jammy-updates/restricted amd64 Packages [3,742 kB]
+Get:17 http://archive.ubuntu.com/ubuntu jammy-backports/main amd64 Packages [81.4 kB]
+Get:18 http://archive.ubuntu.com/ubuntu jammy-backports/universe amd64 Packages [35.2 kB]
+Fetched 36.2 MB in 9s (4,012 kB/s)
+Reading package lists... Done
+Building dependency tree... Done
+Reading state information... Done
+5 packages can be upgraded. Run 'apt list --upgradable' to see them.
+root@cassandra-2:/# apt install vim
+Reading package lists... Done
+Building dependency tree... Done
+Reading state information... Done
+The following additional packages will be installed:
+  libgpm2 libpython3.10 libsodium23 vim-common vim-runtime xxd
+Suggested packages:
+  gpm ctags vim-doc vim-scripts
+The following NEW packages will be installed:
+  libgpm2 libpython3.10 libsodium23 vim vim-common vim-runtime xxd
+0 upgraded, 7 newly installed, 0 to remove and 5 not upgraded.
+Need to get 10.8 MB of archives.
+After this operation, 44.7 MB of additional disk space will be used.
+Do you want to continue? [Y/n] Y
+Get:1 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 xxd amd64 2:8.2.3995-1ubuntu2.22 [52.0 kB]
+Get:2 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 vim-common all 2:8.2.3995-1ubuntu2.22 [81.5 kB]
+Get:3 http://archive.ubuntu.com/ubuntu jammy/main amd64 libgpm2 amd64 1.20.7-10build1 [15.3 kB]
+Get:4 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 libpython3.10 amd64 3.10.12-1~22.04.8 [1,949 kB]
+Get:5 http://archive.ubuntu.com/ubuntu jammy/main amd64 libsodium23 amd64 1.0.18-1build2 [164 kB]
+Get:6 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 vim-runtime all 2:8.2.3995-1ubuntu2.22 [6,835 kB]
+Get:7 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 vim amd64 2:8.2.3995-1ubuntu2.22 [1,732 kB]
+Fetched 10.8 MB in 2s (6,817 kB/s)
+debconf: delaying package configuration, since apt-utils is not installed
+Selecting previously unselected package xxd.
+(Reading database ... 8911 files and directories currently installed.)
+Preparing to unpack .../0-xxd_2%3a8.2.3995-1ubuntu2.22_amd64.deb ...
+Unpacking xxd (2:8.2.3995-1ubuntu2.22) ...
+Selecting previously unselected package vim-common.
+Preparing to unpack .../1-vim-common_2%3a8.2.3995-1ubuntu2.22_all.deb ...
+Unpacking vim-common (2:8.2.3995-1ubuntu2.22) ...
+viSelecting previously unselected package libgpm2:amd64.
+Preparing to unpack .../2-libgpm2_1.20.7-10build1_amd64.deb ...
+Unpacking libgpm2:amd64 (1.20.7-10build1) ...
+Selecting previously unselected package libpython3.10:amd64.
+Preparing to unpack .../3-libpython3.10_3.10.12-1~22.04.8_amd64.deb ...
+Unpacking libpython3.10:amd64 (3.10.12-1~22.04.8) ...
+Selecting previously unselected package libsodium23:amd64.
+Preparing to unpack .../4-libsodium23_1.0.18-1build2_amd64.deb ...
+Unpacking libsodium23:amd64 (1.0.18-1build2) ...
+mSelecting previously unselected package vim-runtime.
+Preparing to unpack .../5-vim-runtime_2%3a8.2.3995-1ubuntu2.22_all.deb ...
+Adding 'diversion of /usr/share/vim/vim82/doc/help.txt to /usr/share/vim/vim82/doc/help.txt.vim-tiny by vim-runtime'
+Adding 'diversion of /usr/share/vim/vim82/doc/tags to /usr/share/vim/vim82/doc/tags.vim-tiny by vim-runtime'
+Unpacking vim-runtime (2:8.2.3995-1ubuntu2.22) ...
+Selecting previously unselected package vim.
+Preparing to unpack .../6-vim_2%3a8.2.3995-1ubuntu2.22_amd64.deb ...
+Unpacking vim (2:8.2.3995-1ubuntu2.22) ...
+Setting up libpython3.10:amd64 (3.10.12-1~22.04.8) ...
+Setting up libsodium23:amd64 (1.0.18-1build2) ...
+Setting up libgpm2:amd64 (1.20.7-10build1) ...
+Setting up xxd (2:8.2.3995-1ubuntu2.22) ...
+Setting up vim-common (2:8.2.3995-1ubuntu2.22) ...
+Setting up vim-runtime (2:8.2.3995-1ubuntu2.22) ...
+Setting up vim (2:8.2.3995-1ubuntu2.22) ...
+update-alternatives: using /usr/bin/vim.basic to provide /usr/bin/vim (vim) in auto mode
+
+# Cassandra storage config YAML
+
+# NOTE:
+#   See https://cassandra.apache.org/doc/latest/configuration/ for
+#   full explanations of configuration directives
+# /NOTE
+
+# NOTE:
+#   This file is provided in two versions:
+#     - cassandra.yaml: Contains configuration defaults for a "compatible"
+#       configuration that operates using settings that are backwards-compatible
+#       and interoperable with machines running older versions of Cassandra.
+#       This version is provided to facilitate pain-free upgrades for existing
+#       users of Cassandra running in production who want to gradually and
+#       carefully introduce new features.
+#     - cassandra_latest.yaml: Contains configuration defaults that enable
+#       the latest features of Cassandra, including improved functionality as
+#       well as higher performance. This version is provided for new users of
+#       Cassandra who want to get the most out of their cluster, and for users
+#       evaluating the technology.
+# /NOTE
+
+# The name of the cluster. This is mainly used to prevent machines in
+# one logical cluster from joining another.
+cluster_name: SOCRATES
+
+# This defines the number of tokens randomly assigned to this node on the ring
+# The more tokens, relative to other nodes, the larger the proportion of data
+# that this node will store. You probably want all nodes to have the same number
+# of tokens assuming they have equal hardware capability.
+#
+# If you leave this unspecified, Cassandra will use the default of 1 token for legacy compatibility,
+# and will use the initial_token as described below.
+#
+# Specifying initial_token will override this setting on the node's initial start,
+# on subsequent starts, this setting will apply even if initial token is set.
+#
+# See https://cassandra.apache.org/doc/latest/getting-started/production.html#tokens for
+# best practice information about num_tokens.
+#
+num_tokens: 256
+"/etc/cassandra/cassandra.yaml" 2249L, 111600B                                                                                                                                                         1,0-1         Top
+
+# Cassandra storage config YAML
+
+# NOTE:
+#   See https://cassandra.apache.org/doc/latest/configuration/ for
+#   full explanations of configuration directives
+# /NOTE
+
+# NOTE:
+#   This file is provided in two versions:
+#     - cassandra.yaml: Contains configuration defaults for a "compatible"
+#       configuration that operates using settings that are backwards-compatible
+#       and interoperable with machines running older versions of Cassandra.
+#       This version is provided to facilitate pain-free upgrades for existing
+#       users of Cassandra running in production who want to gradually and
+#       carefully introduce new features.
+#     - cassandra_latest.yaml: Contains configuration defaults that enable
+#       the latest features of Cassandra, including improved functionality as
+#       well as higher performance. This version is provided for new users of
+#       Cassandra who want to get the most out of their cluster, and for users
+#       evaluating the technology.
+# /NOTE
+
+# The name of the cluster. This is mainly used to prevent machines in
+# one logical cluster from joining another.
+cluster_name: SOCRATES
+
+# This defines the number of tokens randomly assigned to this node on the ring
+# The more tokens, relative to other nodes, the larger the proportion of data
+# that this node will store. You probably want all nodes to have the same number
+# of tokens assuming they have equal hardware capability.
+#
+# If you leave this unspecified, Cassandra will use the default of 1 token for legacy compatibility,
+# and will use the initial_token as described below.
+#
+# Specifying initial_token will override this setting on the node's initial start,
+# on subsequent starts, this setting will apply even if initial token is set.
+#
+# See https://cassandra.apache.org/doc/latest/getting-started/production.html#tokens for
+# best practice information about num_tokens.
+#
+num_tokens: 256
+"/etc/cassandra/cassandra.yaml" 2249L, 111600B                                                                                                                                                         1,0-1         Top
+# NOTE:
+#   See https://cassandra.apache.org/doc/latest/configuration/ for
+#   full explanations of configuration directives
+# /NOTE
+
+# NOTE:
+#   This file is provided in two versions:
+#     - cassandra.yaml: Contains configuration defaults for a "compatible"
+#       configuration that operates using settings that are backwards-compatible
+#       and interoperable with machines running older versions of Cassandra.
+#       This version is provided to facilitate pain-free upgrades for existing
+#       users of Cassandra running in production who want to gradually and
+#       carefully introduce new features.
+#     - cassandra_latest.yaml: Contains configuration defaults that enable
+#       the latest features of Cassandra, including improved functionality as
+#       well as higher performance. This version is provided for new users of
+#       Cassandra who want to get the most out of their cluster, and for users
+#       evaluating the technology.
+# /NOTE
+
+# The name of the cluster. This is mainly used to prevent machines in
+# one logical cluster from joining another.
+cluster_name: SOCRATES
+
+# This defines the number of tokens randomly assigned to this node on the ring
+# The more tokens, relative to other nodes, the larger the proportion of data
+# that this node will store. You probably want all nodes to have the same number
+# of tokens assuming they have equal hardware capability.
+#
+# If you leave this unspecified, Cassandra will use the default of 1 token for legacy compatibility,
+# and will use the initial_token as described below.
+#
+# Specifying initial_token will override this setting on the node's initial start,
+# on subsequent starts, this setting will apply even if initial token is set.
+#
+# See https://cassandra.apache.org/doc/latest/getting-started/production.html#tokens for
+# best practice information about num_tokens.
+#
+num_tokens: 256
+
+# Triggers automatic allocation of num_tokens tokens for this node. The allocation
+# algorithm attempts to choose tokens in a way that optimizes replicated load over
+/mate
+      - seeds: "cassandra-0.cassandra.default.svc.cluster.local,cassandra-1.cassandra.default.svc.cluster.local,cassandra-2.cassandra.default.svc.cluster.local,cassandra-3.cassandra.default.svc.cluster.local"
+      # If set to "true", SimpleSeedProvider will return all IP addresses for a DNS name,
+      # based on the configured name service on the system. Defaults to "false".
+      #  resolve_multiple_ip_addresses_per_dns_record: "false"
+
+# For workloads with more data than can fit in memory, Cassandra's
+# bottleneck will be reads that need to fetch data from
+# disk. "concurrent_reads" should be set to (16 * number_of_drives) in
+# order to allow the operations to enqueue low enough in the stack
+# that the OS and drives can reorder them. Same applies to
+# "concurrent_counter_writes", since counter writes read the current
+# values before incrementing and writing them back.
+#
+# On the other hand, since writes are almost never IO bound, the ideal
+# number of "concurrent_writes" is dependent on the number of cores in
+# your system; (8 * number_of_cores) is a good rule of thumb.
+concurrent_reads: 32
+concurrent_writes: 32
+concurrent_counter_writes: 32
+
+# For materialized view writes, as there is a read involved, so this should
+# be limited by the less of concurrent reads or concurrent writes.
+concurrent_materialized_view_writes: 32
+
+# Maximum memory to use for inter-node and client-server networking buffers.
+#
+# Defaults to the smaller of 1/16 of heap or 128MB. This pool is allocated off-heap,
+# so is in addition to the memory allocated for heap. The cache also has on-heap
+# overhead which is roughly 128 bytes per chunk (i.e. 0.2% of the reserved size
+# if the default 64k chunk size is used).
+# Memory is only allocated when needed.
+# Min unit: MiB
+# networking_cache_size: 128MiB
+
+# Enable the sstable chunk cache.  The chunk cache will store recently accessed
+# sections of the sstable in-memory as uncompressed buffers.
+# file_cache_enabled: false
+
+# Maximum memory to use for sstable chunk cache and buffer pooling.
+# 32MB of this are reserved for pooling buffers, the rest is used for chunk cache
+# that holds uncompressed sstable chunks.
+# Defaults to the smaller of 1/4 of heap or 512MB. This pool is allocated off-heap,
+/materialized view
+# fine and if you experience problems with compaction running too
+# slowly or too fast, you should look at
+# compaction_throughput first.
+#
+# concurrent_compactors defaults to the smaller of (number of disks,
+# number of cores), with a minimum of 2 and a maximum of 8.
+#
+# If your data directories are backed by SSD, you should increase this
+# to the number of cores.
+# concurrent_compactors: 1
+
+# Number of simultaneous repair validations to allow. If not set or set to
+# a value less than 1, it defaults to the value of concurrent_compactors.
+# To set a value greeater than concurrent_compactors at startup, the system
+# property cassandra.allow_unlimited_concurrent_validations must be set to
+# true. To dynamically resize to a value > concurrent_compactors on a running
+# node, first call the bypassConcurrentValidatorsLimit method on the
+# org.apache.cassandra.db:type=StorageService mbean
+# concurrent_validations: 0
+
+# Number of simultaneous materialized view builder tasks to allow.
+concurrent_materialized_view_builders: 1
+
+# Throttles compaction to the given total throughput across the entire
+# system. The faster you insert data, the faster you need to compact in
+# order to keep the sstable count down, but in general, setting this to
+# 16 to 32 times the rate you are inserting data is more than sufficient.
+# Setting this to 0 disables throttling. Note that this accounts for all types
+# of compaction, including validation compaction (building Merkle trees
+# for repairs).
+compaction_throughput: 64MiB/s
+
+# When compacting, the replacement sstable(s) can be opened before they
+# are completely written, and used in place of the prior sstables for
+# any range that has been written. This helps to smoothly transfer reads
+# between the sstables, reducing page cache churn and keeping hot rows hot
+# Set sstable_preemptive_open_interval to null for disabled which is equivalent to
+# sstable_preemptive_open_interval_in_mb being negative
+# Min unit: MiB
+sstable_preemptive_open_interval: 50MiB
+
+# Starting from 4.1 sstables support UUID based generation identifiers. They are disabled by default
+/materialized view
+# configure the read and write consistency levels for modifications to auth tables
+update-alternatives: using /usr/bin/vim.basic to provide /usr/bin/vimdiff (vimdiff) in auto mode
+update-alternatives: using /usr/bin/vim.basic to provide /usr/bin/rvim (rvim) in auto mode
+update-alternatives: using /usr/bin/vim.basic to provide /usr/bin/rview (rview) in auto mode
+update-alternatives: using /usr/bin/vim.basic to provide /usr/bin/vi (vi) in auto mode
+update-alternatives: warning: skip creation of /usr/share/man/da/man1/vi.1.gz because associated file /usr/share/man/da/man1/vim.1.gz (of link group vi) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/de/man1/vi.1.gz because associated file /usr/share/man/de/man1/vim.1.gz (of link group vi) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/fr/man1/vi.1.gz because associated file /usr/share/man/fr/man1/vim.1.gz (of link group vi) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/it/man1/vi.1.gz because associated file /usr/share/man/it/man1/vim.1.gz (of link group vi) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/ja/man1/vi.1.gz because associated file /usr/share/man/ja/man1/vim.1.gz (of link group vi) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/pl/man1/vi.1.gz because associated file /usr/share/man/pl/man1/vim.1.gz (of link group vi) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/ru/man1/vi.1.gz because associated file /usr/share/man/ru/man1/vim.1.gz (of link group vi) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/man1/vi.1.gz because associated file /usr/share/man/man1/vim.1.gz (of link group vi) doesn't exist
+update-alternatives: using /usr/bin/vim.basic to provide /usr/bin/view (view) in auto mode
+update-alternatives: warning: skip creation of /usr/share/man/da/man1/view.1.gz because associated file /usr/share/man/da/man1/vim.1.gz (of link group view) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/de/man1/view.1.gz because associated file /usr/share/man/de/man1/vim.1.gz (of link group view) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/fr/man1/view.1.gz because associated file /usr/share/man/fr/man1/vim.1.gz (of link group view) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/it/man1/view.1.gz because associated file /usr/share/man/it/man1/vim.1.gz (of link group view) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/ja/man1/view.1.gz because associated file /usr/share/man/ja/man1/vim.1.gz (of link group view) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/pl/man1/view.1.gz because associated file /usr/share/man/pl/man1/vim.1.gz (of link group view) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/ru/man1/view.1.gz because associated file /usr/share/man/ru/man1/vim.1.gz (of link group view) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/man1/view.1.gz because associated file /usr/share/man/man1/vim.1.gz (of link group view) doesn't exist
+update-alternatives: using /usr/bin/vim.basic to provide /usr/bin/ex (ex) in auto mode
+update-alternatives: warning: skip creation of /usr/share/man/da/man1/ex.1.gz because associated file /usr/share/man/da/man1/vim.1.gz (of link group ex) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/de/man1/ex.1.gz because associated file /usr/share/man/de/man1/vim.1.gz (of link group ex) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/fr/man1/ex.1.gz because associated file /usr/share/man/fr/man1/vim.1.gz (of link group ex) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/it/man1/ex.1.gz because associated file /usr/share/man/it/man1/vim.1.gz (of link group ex) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/ja/man1/ex.1.gz because associated file /usr/share/man/ja/man1/vim.1.gz (of link group ex) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/pl/man1/ex.1.gz because associated file /usr/share/man/pl/man1/vim.1.gz (of link group ex) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/ru/man1/ex.1.gz because associated file /usr/share/man/ru/man1/vim.1.gz (of link group ex) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/man1/ex.1.gz because associated file /usr/share/man/man1/vim.1.gz (of link group ex) doesn't exist
+update-alternatives: using /usr/bin/vim.basic to provide /usr/bin/editor (editor) in auto mode
+update-alternatives: warning: skip creation of /usr/share/man/da/man1/editor.1.gz because associated file /usr/share/man/da/man1/vim.1.gz (of link group editor) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/de/man1/editor.1.gz because associated file /usr/share/man/de/man1/vim.1.gz (of link group editor) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/fr/man1/editor.1.gz because associated file /usr/share/man/fr/man1/vim.1.gz (of link group editor) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/it/man1/editor.1.gz because associated file /usr/share/man/it/man1/vim.1.gz (of link group editor) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/ja/man1/editor.1.gz because associated file /usr/share/man/ja/man1/vim.1.gz (of link group editor) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/pl/man1/editor.1.gz because associated file /usr/share/man/pl/man1/vim.1.gz (of link group editor) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/ru/man1/editor.1.gz because associated file /usr/share/man/ru/man1/vim.1.gz (of link group editor) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/man1/editor.1.gz because associated file /usr/share/man/man1/vim.1.gz (of link group editor) doesn't exist
+Processing triggers for libc-bin (2.35-0ubuntu3.8) ...
+root@cassandra-2:/# vim /etc/cassandra/cassandra.yaml
+root@cassandra-2:/# exit
+exit
+root@4063519-df55181:~/CryptoHuynja/deployment/sizif/k8s# k exec -it cassandra-3 -- /bin/bash
+root@cassandra-3:/# atp update
+bash: atp: command not found
+root@cassandra-3:/# apt update
+Get:1 http://archive.ubuntu.com/ubuntu jammy InRelease [270 kB]
+Get:2 http://security.ubuntu.com/ubuntu jammy-security InRelease [129 kB]
+Get:3 http://archive.ubuntu.com/ubuntu jammy-updates InRelease [128 kB]
+Get:4 http://archive.ubuntu.com/ubuntu jammy-backports InRelease [127 kB]
+Get:5 http://archive.ubuntu.com/ubuntu jammy/multiverse amd64 Packages [266 kB]
+Get:6 http://archive.ubuntu.com/ubuntu jammy/main amd64 Packages [1,792 kB]
+Get:7 http://archive.ubuntu.com/ubuntu jammy/universe amd64 Packages [17.5 MB]
+Get:8 http://archive.ubuntu.com/ubuntu jammy/restricted amd64 Packages [164 kB]
+Get:9 http://archive.ubuntu.com/ubuntu jammy-updates/multiverse amd64 Packages [53.3 kB]
+Get:10 http://archive.ubuntu.com/ubuntu jammy-updates/restricted amd64 Packages [3,742 kB]
+Get:11 http://archive.ubuntu.com/ubuntu jammy-updates/universe amd64 Packages [1,521 kB]
+Get:12 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 Packages [2,904 kB]
+Get:13 http://archive.ubuntu.com/ubuntu jammy-backports/main amd64 Packages [81.4 kB]
+Get:14 http://archive.ubuntu.com/ubuntu jammy-backports/universe amd64 Packages [35.2 kB]
+Get:15 http://security.ubuntu.com/ubuntu jammy-security/restricted amd64 Packages [3,606 kB]
+Get:16 http://security.ubuntu.com/ubuntu jammy-security/multiverse amd64 Packages [45.2 kB]
+Get:17 http://security.ubuntu.com/ubuntu jammy-security/universe amd64 Packages [1,229 kB]
+Get:18 http://security.ubuntu.com/ubuntu jammy-security/main amd64 Packages [2,603 kB]
+98% [15 Packages store 0 B]                                                                                                                                                                                1,271 kB/s 0saFetched 36.2 MB in 10s (3,778 kB/s)
+Reading package lists... Done
+Building dependency tree... Done
+Reading state information... Done
+5 packages can be upgraded. Run 'apt list --upgradable' to see them.
+root@cassandra-3:/# apt install vim
+Reading package lists... Done
+Building dependency tree... Done
+Reading state information... Done
+The following additional packages will be installed:
+  libgpm2 libpython3.10 libsodium23 vim-common vim-runtime xxd
+Suggested packages:
+  gpm ctags vim-doc vim-scripts
+The following NEW packages will be installed:
+  libgpm2 libpython3.10 libsodium23 vim vim-common vim-runtime xxd
+0 upgraded, 7 newly installed, 0 to remove and 5 not upgraded.
+Need to get 10.8 MB of archives.
+After this operation, 44.7 MB of additional disk space will be used.
+Do you want to continue? [Y/n] Y
+Get:1 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 xxd amd64 2:8.2.3995-1ubuntu2.22 [52.0 kB]
+Get:2 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 vim-common all 2:8.2.3995-1ubuntu2.22 [81.5 kB]
+Get:3 http://archive.ubuntu.com/ubuntu jammy/main amd64 libgpm2 amd64 1.20.7-10build1 [15.3 kB]
+Get:4 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 libpython3.10 amd64 3.10.12-1~22.04.8 [1,949 kB]
+Get:5 http://archive.ubuntu.com/ubuntu jammy/main amd64 libsodium23 amd64 1.0.18-1build2 [164 kB]
+Get:6 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 vim-runtime all 2:8.2.3995-1ubuntu2.22 [6,835 kB]
+Get:7 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 vim amd64 2:8.2.3995-1ubuntu2.22 [1,732 kB]
+Fetched 10.8 MB in 2s (6,735 kB/s)
+debconf: delaying package configuration, since apt-utils is not installed
+Selecting previously unselected package xxd.
+(Reading database ... 8911 files and directories currently installed.)
+Preparing to unpack .../0-xxd_2%3a8.2.3995-1ubuntu2.22_amd64.deb ...
+Unpacking xxd (2:8.2.3995-1ubuntu2.22) ...
+Selecting previously unselected package vim-common.
+Preparing to unpack .../1-vim-common_2%3a8.2.3995-1ubuntu2.22_all.deb ...
+Unpacking vim-common (2:8.2.3995-1ubuntu2.22) ...
+Selecting previously unselected package libgpm2:amd64.
+Preparing to unpack .../2-libgpm2_1.20.7-10build1_amd64.deb ...
+Unpacking libgpm2:amd64 (1.20.7-10build1) ...
+Selecting previously unselected package libpython3.10:amd64.
+Preparing to unpack .../3-libpython3.10_3.10.12-1~22.04.8_amd64.deb ...
+Unpacking libpython3.10:amd64 (3.10.12-1~22.04.8) ...
+Selecting previously unselected package libsodium23:amd64.
+Preparing to unpack .../4-libsodium23_1.0.18-1build2_amd64.deb ...
+Unpacking libsodium23:amd64 (1.0.18-1build2) ...
+Selecting previously unselected package vim-runtime.
+Preparing to unpack .../5-vim-runtime_2%3a8.2.3995-1ubuntu2.22_all.deb ...
+Adding 'diversion of /usr/share/vim/vim82/doc/help.txt to /usr/share/vim/vim82/doc/help.txt.vim-tiny by vim-runtime'
+Adding 'diversion of /usr/share/vim/vim82/doc/tags to /usr/share/vim/vim82/doc/tags.vim-tiny by vim-runtime'
+Unpacking vim-runtime (2:8.2.3995-1ubuntu2.22) ...
+Selecting previously unselected package vim.
+Preparing to unpack .../6-vim_2%3a8.2.3995-1ubuntu2.22_amd64.deb ...
+Unpacking vim (2:8.2.3995-1ubuntu2.22) ...
+Setting up libpython3.10:amd64 (3.10.12-1~22.04.8) ...
+Setting up libsodium23:amd64 (1.0.18-1build2) ...
+Setting up libgpm2:amd64 (1.20.7-10build1) ...
+Setting up xxd (2:8.2.3995-1ubuntu2.22) ...
+Setting up vim-common (2:8.2.3995-1ubuntu2.22) ...
+Setting up vim-runtime (2:8.2.3995-1ubuntu2.22) ...
+Setting up vim (2:8.2.3995-1ubuntu2.22) ...
+update-alternatives: using /usr/bin/vim.basic to provide /usr/bin/vim (vim) in auto mode
+
+# Cassandra storage config YAML
+
+# NOTE:
+#   See https://cassandra.apache.org/doc/latest/configuration/ for
+#   full explanations of configuration directives
+# /NOTE
+
+# NOTE:
+#   This file is provided in two versions:
+#     - cassandra.yaml: Contains configuration defaults for a "compatible"
+#       configuration that operates using settings that are backwards-compatible
+#       and interoperable with machines running older versions of Cassandra.
+#       This version is provided to facilitate pain-free upgrades for existing
+#       users of Cassandra running in production who want to gradually and
+#       carefully introduce new features.
+#     - cassandra_latest.yaml: Contains configuration defaults that enable
+#       the latest features of Cassandra, including improved functionality as
+#       well as higher performance. This version is provided for new users of
+#       Cassandra who want to get the most out of their cluster, and for users
+#       evaluating the technology.
+# /NOTE
+
+# The name of the cluster. This is mainly used to prevent machines in
+# one logical cluster from joining another.
+cluster_name: SOCRATES
+
+# This defines the number of tokens randomly assigned to this node on the ring
+# The more tokens, relative to other nodes, the larger the proportion of data
+# that this node will store. You probably want all nodes to have the same number
+# of tokens assuming they have equal hardware capability.
+#
+# If you leave this unspecified, Cassandra will use the default of 1 token for legacy compatibility,
+# and will use the initial_token as described below.
+#
+# Specifying initial_token will override this setting on the node's initial start,
+# on subsequent starts, this setting will apply even if initial token is set.
+#
+# See https://cassandra.apache.org/doc/latest/getting-started/production.html#tokens for
+# best practice information about num_tokens.
+#
+num_tokens: 256
+"/etc/cassandra/cassandra.yaml" 2249L, 111594B                                                                                                                                                         1,0-1         Top
+
+# Cassandra storage config YAML
+
+# NOTE:
+#   See https://cassandra.apache.org/doc/latest/configuration/ for
+#   full explanations of configuration directives
+# /NOTE
+
+# NOTE:
+#   This file is provided in two versions:
+#     - cassandra.yaml: Contains configuration defaults for a "compatible"
+#       configuration that operates using settings that are backwards-compatible
+#       and interoperable with machines running older versions of Cassandra.
+#       This version is provided to facilitate pain-free upgrades for existing
+#       users of Cassandra running in production who want to gradually and
+#       carefully introduce new features.
+#     - cassandra_latest.yaml: Contains configuration defaults that enable
+#       the latest features of Cassandra, including improved functionality as
+#       well as higher performance. This version is provided for new users of
+#       Cassandra who want to get the most out of their cluster, and for users
+#       evaluating the technology.
+# /NOTE
+
+# The name of the cluster. This is mainly used to prevent machines in
+# one logical cluster from joining another.
+cluster_name: SOCRATES
+
+# This defines the number of tokens randomly assigned to this node on the ring
+# The more tokens, relative to other nodes, the larger the proportion of data
+# that this node will store. You probably want all nodes to have the same number
+# of tokens assuming they have equal hardware capability.
+#
+# If you leave this unspecified, Cassandra will use the default of 1 token for legacy compatibility,
+# and will use the initial_token as described below.
+#
+# Specifying initial_token will override this setting on the node's initial start,
+# on subsequent starts, this setting will apply even if initial token is set.
+#
+# See https://cassandra.apache.org/doc/latest/getting-started/production.html#tokens for
+# best practice information about num_tokens.
+#
+num_tokens: 256
+"/etc/cassandra/cassandra.yaml" 2249L, 111594B                                                                                                                                                         1,0-1         Top
+# NOTE:
+#   See https://cassandra.apache.org/doc/latest/configuration/ for
+#   full explanations of configuration directives
+# /NOTE
+
+# NOTE:
+#   This file is provided in two versions:
+#     - cassandra.yaml: Contains configuration defaults for a "compatible"
+#       configuration that operates using settings that are backwards-compatible
+#       and interoperable with machines running older versions of Cassandra.
+#       This version is provided to facilitate pain-free upgrades for existing
+#       users of Cassandra running in production who want to gradually and
+#       carefully introduce new features.
+#     - cassandra_latest.yaml: Contains configuration defaults that enable
+#       the latest features of Cassandra, including improved functionality as
+#       well as higher performance. This version is provided for new users of
+#       Cassandra who want to get the most out of their cluster, and for users
+#       evaluating the technology.
+# /NOTE
+
+# The name of the cluster. This is mainly used to prevent machines in
+# one logical cluster from joining another.
+cluster_name: SOCRATES
+
+# This defines the number of tokens randomly assigned to this node on the ring
+# The more tokens, relative to other nodes, the larger the proportion of data
+# that this node will store. You probably want all nodes to have the same number
+# of tokens assuming they have equal hardware capability.
+#
+# If you leave this unspecified, Cassandra will use the default of 1 token for legacy compatibility,
+# and will use the initial_token as described below.
+#
+# Specifying initial_token will override this setting on the node's initial start,
+# on subsequent starts, this setting will apply even if initial token is set.
+#
+# See https://cassandra.apache.org/doc/latest/getting-started/production.html#tokens for
+# best practice information about num_tokens.
+#
+num_tokens: 256
+
+# Triggers automatic allocation of num_tokens tokens for this node. The allocation
+# algorithm attempts to choose tokens in a way that optimizes replicated load over
+/mate
+      - seeds: "cassandra-0.cassandra.default.svc.cluster.local,cassandra-1.cassandra.default.svc.cluster.local,cassandra-2.cassandra.default.svc.cluster.local,cassandra-3.cassandra.default.svc.cluster.local"
+      # If set to "true", SimpleSeedProvider will return all IP addresses for a DNS name,
+      # based on the configured name service on the system. Defaults to "false".
+      #  resolve_multiple_ip_addresses_per_dns_record: "false"
+
+# For workloads with more data than can fit in memory, Cassandra's
+# bottleneck will be reads that need to fetch data from
+# disk. "concurrent_reads" should be set to (16 * number_of_drives) in
+# order to allow the operations to enqueue low enough in the stack
+# that the OS and drives can reorder them. Same applies to
+# "concurrent_counter_writes", since counter writes read the current
+# values before incrementing and writing them back.
+#
+# On the other hand, since writes are almost never IO bound, the ideal
+# number of "concurrent_writes" is dependent on the number of cores in
+# your system; (8 * number_of_cores) is a good rule of thumb.
+concurrent_reads: 32
+concurrent_writes: 32
+concurrent_counter_writes: 32
+
+# For materialized view writes, as there is a read involved, so this should
+# be limited by the less of concurrent reads or concurrent writes.
+concurrent_materialized_view_writes: 32
+
+# Maximum memory to use for inter-node and client-server networking buffers.
+#
+# Defaults to the smaller of 1/16 of heap or 128MB. This pool is allocated off-heap,
+# so is in addition to the memory allocated for heap. The cache also has on-heap
+# overhead which is roughly 128 bytes per chunk (i.e. 0.2% of the reserved size
+# if the default 64k chunk size is used).
+# Memory is only allocated when needed.
+# Min unit: MiB
+# networking_cache_size: 128MiB
+
+# Enable the sstable chunk cache.  The chunk cache will store recently accessed
+# sections of the sstable in-memory as uncompressed buffers.
+# file_cache_enabled: false
+
+# Maximum memory to use for sstable chunk cache and buffer pooling.
+# 32MB of this are reserved for pooling buffers, the rest is used for chunk cache
+# that holds uncompressed sstable chunks.
+# Defaults to the smaller of 1/4 of heap or 512MB. This pool is allocated off-heap,
+/materialized viee
+
+# Cassandra storage config YAML
+
+# NOTE:
+#   See https://cassandra.apache.org/doc/latest/configuration/ for
+#   full explanations of configuration directives
+# /NOTE
+
+# NOTE:
+#   This file is provided in two versions:
+#     - cassandra.yaml: Contains configuration defaults for a "compatible"
+#       configuration that operates using settings that are backwards-compatible
+#       and interoperable with machines running older versions of Cassandra.
+#       This version is provided to facilitate pain-free upgrades for existing
+#       users of Cassandra running in production who want to gradually and
+#       carefully introduce new features.
+#     - cassandra_latest.yaml: Contains configuration defaults that enable
+#       the latest features of Cassandra, including improved functionality as
+#       well as higher performance. This version is provided for new users of
+#       Cassandra who want to get the most out of their cluster, and for users
+#       evaluating the technology.
+# /NOTE
+
+# The name of the cluster. This is mainly used to prevent machines in
+# one logical cluster from joining another.
+cluster_name: SOCRATES
+
+# This defines the number of tokens randomly assigned to this node on the ring
+# The more tokens, relative to other nodes, the larger the proportion of data
+# that this node will store. You probably want all nodes to have the same number
+# of tokens assuming they have equal hardware capability.
+#
+# If you leave this unspecified, Cassandra will use the default of 1 token for legacy compatibility,
+# and will use the initial_token as described below.
+#
+# Specifying initial_token will override this setting on the node's initial start,
+# on subsequent starts, this setting will apply even if initial token is set.
+#
+# See https://cassandra.apache.org/doc/latest/getting-started/production.html#tokens for
+# best practice information about num_tokens.
+#
+num_tokens: 256
+/materialized vie
+      - seeds: "cassandra-0.cassandra.default.svc.cluster.local,cassandra-1.cassandra.default.svc.cluster.local,cassandra-2.cassandra.default.svc.cluster.local,cassandra-3.cassandra.default.svc.cluster.local"
+      # If set to "true", SimpleSeedProvider will return all IP addresses for a DNS name,
+      # based on the configured name service on the system. Defaults to "false".
+      #  resolve_multiple_ip_addresses_per_dns_record: "false"
+
+# For workloads with more data than can fit in memory, Cassandra's
+# bottleneck will be reads that need to fetch data from
+# disk. "concurrent_reads" should be set to (16 * number_of_drives) in
+# order to allow the operations to enqueue low enough in the stack
+# that the OS and drives can reorder them. Same applies to
+# "concurrent_counter_writes", since counter writes read the current
+# values before incrementing and writing them back.
+#
+# On the other hand, since writes are almost never IO bound, the ideal
+# number of "concurrent_writes" is dependent on the number of cores in
+# your system; (8 * number_of_cores) is a good rule of thumb.
+concurrent_reads: 32
+concurrent_writes: 32
+concurrent_counter_writes: 32
+
+# For materialized view writes, as there is a read involved, so this should
+# be limited by the less of concurrent reads or concurrent writes.
+concurrent_materialized_view_writes: 32
+
+# Maximum memory to use for inter-node and client-server networking buffers.
+#
+# Defaults to the smaller of 1/16 of heap or 128MB. This pool is allocated off-heap,
+# so is in addition to the memory allocated for heap. The cache also has on-heap
+# overhead which is roughly 128 bytes per chunk (i.e. 0.2% of the reserved size
+# if the default 64k chunk size is used).
+# Memory is only allocated when needed.
+# Min unit: MiB
+# networking_cache_size: 128MiB
+
+# Enable the sstable chunk cache.  The chunk cache will store recently accessed
+# sections of the sstable in-memory as uncompressed buffers.
+# file_cache_enabled: false
+
+# Maximum memory to use for sstable chunk cache and buffer pooling.
+# 32MB of this are reserved for pooling buffers, the rest is used for chunk cache
+# that holds uncompressed sstable chunks.
+# Defaults to the smaller of 1/4 of heap or 512MB. This pool is allocated off-heap,
+/materialized view
+# fine and if you experience problems with compaction running too
+# slowly or too fast, you should look at
+# compaction_throughput first.
+#
+# concurrent_compactors defaults to the smaller of (number of disks,
+# number of cores), with a minimum of 2 and a maximum of 8.
+#
+# If your data directories are backed by SSD, you should increase this
+# to the number of cores.
+# concurrent_compactors: 1
+
+# Number of simultaneous repair validations to allow. If not set or set to
+# a value less than 1, it defaults to the value of concurrent_compactors.
+# To set a value greeater than concurrent_compactors at startup, the system
+# property cassandra.allow_unlimited_concurrent_validations must be set to
+# true. To dynamically resize to a value > concurrent_compactors on a running
+# node, first call the bypassConcurrentValidatorsLimit method on the
+# org.apache.cassandra.db:type=StorageService mbean
+# concurrent_validations: 0
+
+# Number of simultaneous materialized view builder tasks to allow.
+concurrent_materialized_view_builders: 1
+
+# Throttles compaction to the given total throughput across the entire
+# system. The faster you insert data, the faster you need to compact in
+# order to keep the sstable count down, but in general, setting this to
+# 16 to 32 times the rate you are inserting data is more than sufficient.
+# Setting this to 0 disables throttling. Note that this accounts for all types
+# of compaction, including validation compaction (building Merkle trees
+# for repairs).
+compaction_throughput: 64MiB/s
+
+# When compacting, the replacement sstable(s) can be opened before they
+# are completely written, and used in place of the prior sstables for
+# any range that has been written. This helps to smoothly transfer reads
+# between the sstables, reducing page cache churn and keeping hot rows hot
+# Set sstable_preemptive_open_interval to null for disabled which is equivalent to
+# sstable_preemptive_open_interval_in_mb being negative
+# Min unit: MiB
+sstable_preemptive_open_interval: 50MiB
+
+# Starting from 4.1 sstables support UUID based generation identifiers. They are disabled by default
+/materialized view
+# configure the read and write consistency levels for modifications to auth tables
+update-alternatives: using /usr/bin/vim.basic to provide /usr/bin/vimdiff (vimdiff) in auto mode
+update-alternatives: using /usr/bin/vim.basic to provide /usr/bin/rvim (rvim) in auto mode
+update-alternatives: using /usr/bin/vim.basic to provide /usr/bin/rview (rview) in auto mode
+update-alternatives: using /usr/bin/vim.basic to provide /usr/bin/vi (vi) in auto mode
+update-alternatives: warning: skip creation of /usr/share/man/da/man1/vi.1.gz because associated file /usr/share/man/da/man1/vim.1.gz (of link group vi) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/de/man1/vi.1.gz because associated file /usr/share/man/de/man1/vim.1.gz (of link group vi) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/fr/man1/vi.1.gz because associated file /usr/share/man/fr/man1/vim.1.gz (of link group vi) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/it/man1/vi.1.gz because associated file /usr/share/man/it/man1/vim.1.gz (of link group vi) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/ja/man1/vi.1.gz because associated file /usr/share/man/ja/man1/vim.1.gz (of link group vi) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/pl/man1/vi.1.gz because associated file /usr/share/man/pl/man1/vim.1.gz (of link group vi) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/ru/man1/vi.1.gz because associated file /usr/share/man/ru/man1/vim.1.gz (of link group vi) doesn't exist
+update-alternatives: warning: skip creation of /usr/share/man/man1/vi.1.gz because associated file /usr/share/man/man1/vim.1.gz (of link group vi) doesn't exist
+update-alternatives: using /usr/bin/vim.basic to provide /usr/bin/view (view) in auto mode
+update-alternatives: warning: skip creation of /usr/share/man/da/man1/view.1.gz because associated file /usr/share/man/da/man1/vim.1.gz (of link group view) doesn't exist
+# auth_write_consistency_level: EACH_QUORUM
+
+# Delays on auth resolution can lead to a thundering herd problem on reconnects; this option will enable
+# warming of auth caches prior to node completing startup. See CASSANDRA-16958
+# auth_cache_warming_enabled: false
+
+# If enabled, dynamic data masking allows to attach CQL masking functions to the columns of a table.
+# Users without the UNMASK permission will see an obscured version of the values of the columns with an attached mask.
+# If dynamic data masking is disabled it won't be allowed to create new column masks, although it will still be possible
+# to drop any previously existing masks. Also, any existing mask will be ignored at query time, so all users will see
+# the clear values of the masked columns.
+# Defaults to false to disable dynamic data masking.
+# dynamic_data_masking_enabled: false
+
+#########################
+# EXPERIMENTAL FEATURES #
+#########################
+
+# Enables materialized view creation on this node.
+# Materialized views are considered experimental and are not recommended for production use.
+materialized_views_enabled: true
+
+# Enables SASI index creation on this node.
+# SASI indexes are considered experimental and are not recommended for production use.
+sasi_indexes_enabled: false
+
+# Enables creation of transiently replicated keyspaces on this node.
+# Transient replication is experimental and is not recommended for production use.
+transient_replication_enabled: false
+
+# Enables the used of 'ALTER ... DROP COMPACT STORAGE' statements on this node.
+# 'ALTER ... DROP COMPACT STORAGE' is considered experimental and is not recommended for production use.
+drop_compact_storage_enabled: false
+
+# Whether or not USE <keyspace> is allowed. This is enabled by default to avoid failure on upgrade.
+#use_statements_enabled: true
+
+# When the client triggers a protocol exception or unknown issue (Cassandra bug) we increment
+# a client metric showing this; this logic will exclude specific subnets from updating these
+# metrics
+#client_error_reporting_exclusions:
+#  subnets:
+"/etc/cassandra/cassandra.yaml" 2249L, 111593B                                                                                                                                                         1918,32       85%
+# auth_write_consistency_level: EACH_QUORUM
+
+# Delays on auth resolution can lead to a thundering herd problem on reconnects; this option will enable
+# warming of auth caches prior to node completing startup. See CASSANDRA-16958
+# auth_cache_warming_enabled: false
+
+# If enabled, dynamic data masking allows to attach CQL masking functions to the columns of a table.
+# Users without the UNMASK permission will see an obscured version of the values of the columns with an attached mask.
+# If dynamic data masking is disabled it won't be allowed to create new column masks, although it will still be possible
+# to drop any previously existing masks. Also, any existing mask will be ignored at query time, so all users will see
+# the clear values of the masked columns.
+# Defaults to false to disable dynamic data masking.
+# dynamic_data_masking_enabled: false
+
+#########################
+# EXPERIMENTAL FEATURES #
+#########################
+
+# Enables materialized view creation on this node.
+# Materialized views are considered experimental and are not recommended for production use.
+materialized_views_enabled: true
+
+# Enables SASI index creation on this node.
+# SASI indexes are considered experimental and are not recommended for production use.
+sasi_indexes_enabled: false
+
+# Enables creation of transiently replicated keyspaces on this node.
+# Transient replication is experimental and is not recommended for production use.
+transient_replication_enabled: false
+
+# Enables the used of 'ALTER ... DROP COMPACT STORAGE' statements on this node.
+# 'ALTER ... DROP COMPACT STORAGE' is considered experimental and is not recommended for production use.
+drop_compact_storage_enabled: false
+
+# Whether or not USE <keyspace> is allowed. This is enabled by default to avoid failure on upgrade.
+#use_statements_enabled: true
+
+# When the client triggers a protocol exception or unknown issue (Cassandra bug) we increment
+# a client metric showing this; this logic will exclude specific subnets from updating these
+# metrics
+#client_error_reporting_exclusions:
+#  subnets:
+"/etc/cassandra/cassandra.yaml" 2249L, 111593B                                                                                                                                                         1918,32       85%
+# auth_write_consistency_level: EACH_QUORUM
+
+# Delays on auth resolution can lead to a thundering herd problem on reconnects; this option will enable
+# warming of auth caches prior to node completing startup. See CASSANDRA-16958
+# auth_cache_warming_enabled: false
+
+# If enabled, dynamic data masking allows to attach CQL masking functions to the columns of a table.
+# Users without the UNMASK permission will see an obscured version of the values of the columns with an attached mask.
+# If dynamic data masking is disabled it won't be allowed to create new column masks, although it will still be possible
+# to drop any previously existing masks. Also, any existing mask will be ignored at query time, so all users will see
+# the clear values of the masked columns.
+# Defaults to false to disable dynamic data masking.
+# dynamic_data_masking_enabled: false
+
+#########################
+# EXPERIMENTAL FEATURES #
+#########################
+
+# Enables materialized view creation on this node.
+# Materialized views are considered experimental and are not recommended for production use.
+materialized_views_enabled: true
+
+# Enables SASI index creation on this node.
+# SASI indexes are considered experimental and are not recommended for production use.
+sasi_indexes_enabled: false
+
+# Enables creation of transiently replicated keyspaces on this node.
+# Transient replication is experimental and is not recommended for production use.
+transient_replication_enabled: false
+
+# Enables the used of 'ALTER ... DROP COMPACT STORAGE' statements on this node.
+# 'ALTER ... DROP COMPACT STORAGE' is considered experimental and is not recommended for production use.
+drop_compact_storage_enabled: false
+
+# Whether or not USE <keyspace> is allowed. This is enabled by default to avoid failure on upgrade.
+#use_statements_enabled: true
+
+# When the client triggers a protocol exception or unknown issue (Cassandra bug) we increment
+# a client metric showing this; this logic will exclude specific subnets from updating these
+# metrics
+#client_error_reporting_exclusions:
+#  subnets:
+"/etc/cassandra/cassandra.yaml" 2249L, 111593B                                                                                                                                                         1918,32       85%

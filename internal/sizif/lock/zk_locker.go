@@ -63,8 +63,6 @@ func (s ZkLocker) Lock(ctx context.Context, key *model.ProcessingKey) (svc.LockO
 				return svc.AlreadyLocked, err
 			} else if status[0] == processed[0] {
 				return svc.AlreadyProcessed, nil
-			} else {
-				return svc.AlreadyLocked, nil
 			}
 			return svc.AlreadyLocked, nil
 		} else {
