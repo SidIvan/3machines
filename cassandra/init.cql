@@ -14,9 +14,11 @@ CREATE TABLE IF NOT EXISTS deltas (
     PRIMARY KEY ((symbol, hour), timestamp_ms, type, price)
 );
 
-CREATE MATERIALIZED VIEW deltas_keys_test
-AS SELECT (symbol, hour) from deltas
-PRIMARY KEY ((symbol, hour));
+CREATE TABLE IF NOT EXISTS deltas_keys (
+    symbol ascii,
+    hour bigint,
+    PRIMARY KEY ((symbol, hour))
+);
 
 CREATE TABLE IF NOT EXISTS snapshots (
     symbol ascii,
@@ -29,9 +31,11 @@ CREATE TABLE IF NOT EXISTS snapshots (
     PRIMARY KEY ((symbol, hour), timestamp_ms, type, price)
 );
 
-CREATE MATERIALIZED VIEW snapshots_keys 
-AS SELECT (symbol, hour) from snapshots
-PRIMARY KEY ((symbol, hour));
+CREATE TABLE IF NOT EXISTS snapshots_keys (
+    symbol ascii,
+    hour bigint,
+    PRIMARY KEY ((symbol, hour))
+);
 
 CREATE TABLE IF NOT EXISTS book_ticks (
     symbol ascii,
@@ -45,9 +49,11 @@ CREATE TABLE IF NOT EXISTS book_ticks (
     PRIMARY KEY ((symbol, hour), timestamp_ms, update_id)
 );
 
-CREATE MATERIALIZED VIEW book_ticks_keys 
-AS SELECT (symbol, hour) from book_ticks
-PRIMARY KEY ((symbol, hour));
+CREATE TABLE IF NOT EXISTS book_ticks_keys (
+    symbol ascii,
+    hour bigint,
+    PRIMARY KEY ((symbol, hour))
+);
 
 CREATE TABLE IF NOT EXISTS exchange_info (
     day bigint,

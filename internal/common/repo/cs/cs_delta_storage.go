@@ -14,6 +14,9 @@ import (
 	"go.uber.org/zap"
 )
 
+var sentKeysMut sync.Mutex
+var sentKeys = make(map[model.ProcessingKey]struct{})
+
 type CsDeltaStorage struct {
 	logger              *zap.Logger
 	session             *gocql.Session
@@ -82,20 +85,33 @@ func (s CsDeltaStorage) SendDeltas(ctx context.Context, deltas []model.Delta) er
 
 func (s CsDeltaStorage) sendKeys(ctx context.Context, deltas []model.Delta) error {
 	var err error
-	for i := 0; i < 3; i++ {
-		uniqueKeys := make(map[model.ProcessingKey]struct{})
-		var keysBatch []model.ProcessingKey
-		for _, delta := range deltas {
-			deltaKey := model.ProcessingKey{
-				Symbol: delta.Symbol,
-				HourNo: GetHourNo(delta.Timestamp),
-			}
-			if _, ok := uniqueKeys[deltaKey]; !ok {
-				keysBatch = append(keysBatch, deltaKey)
-				if len(keysBatch) == batchSize {
-					s.sendKeysBatch(ctx, keysBatch)
+	batchKeys := make(map[model.ProcessingKey]struct{})
+	for _, delta := range deltas {
+		deltaKey := model.ProcessingKey{
+			Symbol: delta.Symbol,
+			HourNo: GetHourNo(delta.Timestamp),
+		}
+		batchKeys[deltaKey] = struct{}{}
+	}
+	var newKeys []model.ProcessingKey
+	sentKeysMut.Lock()
+	var wg sync.WaitGroup
+	var numSuccessInserts atomic.Int32
+	numInserts := 0
+	for j := 0; j < 3; j++ {
+		for i := 0; i < len(newKeys); i += batchSize {
+			numInserts++
+			wg.Add(1)
+			go func(keys []model.ProcessingKey) {
+				if s.sendKeysBatch(ctx, keys) == nil {
+					numSuccessInserts.Add(1)
 				}
-			}
+				wg.Done()
+			}(newKeys[i:min(i, len(newKeys))])
+		}
+		wg.Wait()
+		if numSuccessInserts.Load() == int32(numInserts) {
+			return nil
 		}
 	}
 	return err
