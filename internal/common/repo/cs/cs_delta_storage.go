@@ -14,8 +14,8 @@ import (
 	"go.uber.org/zap"
 )
 
-var sentKeysMut sync.Mutex
-var sentKeys = make(map[model.ProcessingKey]struct{})
+var sentDeltaKeysMut sync.Mutex
+var sentDeltaKeys = make(map[model.ProcessingKey]struct{})
 
 type CsDeltaStorage struct {
 	logger              *zap.Logger
@@ -84,6 +84,7 @@ func (s CsDeltaStorage) SendDeltas(ctx context.Context, deltas []model.Delta) er
 }
 
 func (s CsDeltaStorage) sendKeys(ctx context.Context, deltas []model.Delta) error {
+	s.logger.Info("sending keys")
 	var err error
 	batchKeys := make(map[model.ProcessingKey]struct{})
 	for _, delta := range deltas {
@@ -94,7 +95,13 @@ func (s CsDeltaStorage) sendKeys(ctx context.Context, deltas []model.Delta) erro
 		batchKeys[deltaKey] = struct{}{}
 	}
 	var newKeys []model.ProcessingKey
-	sentKeysMut.Lock()
+	sentDeltaKeysMut.Lock()
+	for key, _ := range batchKeys {
+		if _, ok := sentDeltaKeys[key]; !ok {
+			newKeys = append(newKeys, key)
+		}
+	}
+	sentDeltaKeysMut.Unlock()
 	var wg sync.WaitGroup
 	var numSuccessInserts atomic.Int32
 	numInserts := 0
