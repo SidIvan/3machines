@@ -53,15 +53,17 @@ func (s *SizifWorker[T]) lockAndProcessKey(ctx context.Context, key model.Proces
 	} else if lockStatus == AlreadyProcessed {
 		s.logger.Debug(fmt.Sprintf("Key %s already processed, delete it's data", key.String()))
 		s.deleteKeyData(ctx, &key)
-	}
-	for i := 0; i < 3; i++ {
-		err := s.processKey(ctx, key)
-		if err != nil {
-			s.logger.Error(err.Error())
-			sleep(3)
-			continue
+	} else {
+		s.logger.Debug(fmt.Sprintf("Key %s not processed, start processing", key.String()))
+		for i := 0; i < 3; i++ {
+			err := s.processKey(ctx, key)
+			if err != nil {
+				s.logger.Error(err.Error())
+				sleep(3)
+				continue
+			}
+			return
 		}
-		return
 	}
 }
 
@@ -90,7 +92,7 @@ func (s *SizifWorker[T]) processKey(ctx context.Context, key model.ProcessingKey
 	}
 	if len(data) == 0 {
 		s.logger.Info(fmt.Sprintf("no data for key %s, delete it", &key))
-		
+		return s.socratesStorage.DeleteKey(ctx, &key)
 	}
 	transformedData, isDataValid := s.dataTransformator.Transform(data, &key)
 	if !isDataValid {
@@ -99,6 +101,7 @@ func (s *SizifWorker[T]) processKey(ctx context.Context, key model.ProcessingKey
 	for i := 0; i < 3; i++ {
 		err = s.parquetStorage.Save(ctx, transformedData, &key)
 		if err == nil {
+			s.logger.Info(fmt.Sprintf("key %s saved to b2", &key))
 			for j := 0; j < 3; j++ {
 				err = s.keyLocker.MarkProcessed(ctx, &key)
 				if err == nil {
@@ -118,7 +121,13 @@ func (s *SizifWorker[T]) deleteKeyData(ctx context.Context, key *model.Processin
 	for k := 0; k < 3; k++ {
 		err = s.socratesStorage.Delete(ctx, key)
 		if err == nil {
-			return nil
+			for k := 0; k < 3; k++ {
+				err = s.socratesStorage.DeleteKey(ctx, key)
+				if err == nil {
+					return nil
+				}
+				s.logger.Error(err.Error())
+			}
 		}
 		s.logger.Error(err.Error())
 	}

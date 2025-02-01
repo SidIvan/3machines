@@ -20,7 +20,7 @@ type SizifSvc[T any] struct {
 }
 
 func NewSizifSvc[T any](serviceType string, socratesStorage SocratesStorage[T], parquetStorage ParquetStorage[T], dataTransformator DataTransformator[T], keyLocker KeyLocker, numWorkers int) *SizifSvc[T] {
-	taskQueue := make(chan model.ProcessingKey)
+	taskQueue := make(chan model.ProcessingKey, 1024)
 	var workers []*SizifWorker[T]
 	for i := 0; i < numWorkers; i++ {
 		workers = append(workers, NewSizifWorker(serviceType, socratesStorage, parquetStorage, dataTransformator, taskQueue, keyLocker))

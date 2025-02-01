@@ -65,7 +65,7 @@ spec:
             valueFrom:
               fieldRef:
                 apiVersion: v1
-                fieldPath: status.podIP
+                fieldPath: metadata.name
         envFrom:
           - configMapRef:
               name: nestor-config
