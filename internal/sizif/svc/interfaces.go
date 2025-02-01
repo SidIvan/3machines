@@ -30,5 +30,6 @@ const (
 
 type KeyLocker interface {
 	Lock(context.Context, *model.ProcessingKey) (LockOpStatus, error)
+	Unlock(context.Context, *model.ProcessingKey) error
 	MarkProcessed(context.Context, *model.ProcessingKey) error
 }

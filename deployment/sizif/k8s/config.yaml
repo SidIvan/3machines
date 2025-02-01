@@ -4,6 +4,7 @@ metadata:
   name: sizif-config
 data:
   sizif.workers.binance.deltas: "3"
+  sizif.workers.binance.book.ticks: "3"
   zk.servers: "zk-cs.default.svc.cluster.local:2181"
   zk.session.timeout.s: "60"
-  b2.bucket: "ivansidor-test-bucket"
+  b2.bucket: "3machines"

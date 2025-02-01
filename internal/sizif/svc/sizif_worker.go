@@ -90,6 +90,10 @@ func (s *SizifWorker[T]) processKey(ctx context.Context, key model.ProcessingKey
 		}
 		s.logger.Error(err.Error())
 	}
+	if err != nil {
+		s.keyLocker.Unlock(ctx, &key)
+		return err
+	}
 	if len(data) == 0 {
 		s.logger.Info(fmt.Sprintf("no data for key %s, delete it", &key))
 		return s.socratesStorage.DeleteKey(ctx, &key)

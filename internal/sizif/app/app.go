@@ -7,6 +7,7 @@ import (
 	"DeltaReceiver/internal/sizif/conf"
 	"DeltaReceiver/internal/sizif/lock"
 	"DeltaReceiver/internal/sizif/svc"
+	bmodel "DeltaReceiver/pkg/binance/model"
 	"DeltaReceiver/pkg/log"
 	"context"
 	"fmt"
@@ -21,9 +22,10 @@ import (
 )
 
 type App struct {
-	logger   *zap.Logger
-	cfg      *conf.AppConfig
-	deltaSvc *svc.SizifSvc[model.Delta]
+	logger       *zap.Logger
+	cfg          *conf.AppConfig
+	deltasSvc    *svc.SizifSvc[model.Delta]
+	bookTicksSvc *svc.SizifSvc[bmodel.SymbolTick]
 }
 
 func NewApp(cfg *conf.AppConfig) *App {
@@ -35,15 +37,23 @@ func NewApp(cfg *conf.AppConfig) *App {
 	}
 	fmt.Println(string(rawCfg))
 	zkConn, b2Bucket, csSession := initConnections(cfg)
+
 	deltaSocratesStorage := cs.NewCsDeltaStorage(csSession, cfg.SocratesCfg.DeltaTableName, cfg.SocratesCfg.DeltaKeyTableName)
 	deltaParquetStorage := b2pqt.NewB2ParquetStorage[model.Delta](b2Bucket, "binance/deltas")
 	deltaTransformator := svc.NewDeltaTransformator()
 	deltaLocker := lock.NewZkLocker("binance/deltas", zkConn)
 	deltaSvc := svc.NewSizifSvc("binance/deltas", deltaSocratesStorage, deltaParquetStorage, deltaTransformator, deltaLocker, cfg.DeltaWorkers)
+
+	bookTicksSocratesStorage := cs.NewCsBookTicksStorage(csSession, cfg.SocratesCfg.BookTicksTableName, cfg.SocratesCfg.BookTicksKeyTableName)
+	bookTicksParquetStorage := b2pqt.NewB2ParquetStorage[bmodel.SymbolTick](b2Bucket, "binance/book_ticks")
+	bookTicksTransformator := svc.NewBookTicksTransformator()
+	bookTicksLocker := lock.NewZkLocker("binance/book_ticks", zkConn)
+	bookTicksSvc := svc.NewSizifSvc("binance/book_ticks", bookTicksSocratesStorage, bookTicksParquetStorage, bookTicksTransformator, bookTicksLocker, cfg.BookTicksWorker)
 	return &App{
-		logger:   logger,
-		cfg:      cfg,
-		deltaSvc: deltaSvc,
+		logger:       logger,
+		cfg:          cfg,
+		deltasSvc:    deltaSvc,
+		bookTicksSvc: bookTicksSvc,
 	}
 }
 
@@ -71,7 +81,8 @@ func initConnections(cfg *conf.AppConfig) (*zk.Conn, *b2.Bucket, *gocql.Session)
 
 func (s *App) Start() {
 	baseContext := context.Background()
-	go s.deltaSvc.Start(baseContext)
+	go s.deltasSvc.Start(baseContext)
+	go s.bookTicksSvc.Start(baseContext)
 	time.Sleep(3 * time.Second)
 	s.logger.Info("App started")
 }
@@ -79,9 +90,13 @@ func (s *App) Start() {
 func (s *App) Stop(ctx context.Context) {
 	s.logger.Info("Begin of graceful shutdown")
 	var wg sync.WaitGroup
-	wg.Add(1)
+	wg.Add(2)
 	go func() {
-		s.deltaSvc.Shutdown(ctx)
+		s.deltasSvc.Shutdown(ctx)
+		wg.Done()
+	}()
+	go func() {
+		s.bookTicksSvc.Shutdown(ctx)
 		wg.Done()
 	}()
 	s.logger.Info("End of graceful shutdown")

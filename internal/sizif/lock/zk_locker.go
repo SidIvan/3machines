@@ -73,6 +73,18 @@ func (s ZkLocker) Lock(ctx context.Context, key *model.ProcessingKey) (svc.LockO
 	return svc.LockedSuccessfully, nil
 }
 
+func (s ZkLocker) Unlock(ctx context.Context, key *model.ProcessingKey) error {
+	lockPath := s.createZkPath(key)
+	err := s.conn.Delete(lockPath, 0)
+	for i := 0; i < 3; i++ {
+		if err == nil {
+			return nil
+		}
+		s.logger.Error(err.Error())
+	}
+	return err
+}
+
 func (s ZkLocker) MarkProcessed(ctx context.Context, key *model.ProcessingKey) error {
 	lockPath := s.createZkPath(key)
 	_, err := s.conn.Set(lockPath, processed, 0)
