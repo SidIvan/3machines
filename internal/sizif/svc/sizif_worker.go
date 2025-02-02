@@ -114,20 +114,22 @@ func (s *SizifWorker[T]) processKey(ctx context.Context, key model.ProcessingKey
 	if !isDataValid {
 		s.logger.Warn(fmt.Sprintf("Invalid data for key %s", &key))
 	}
-	for i := 0; i < 3; i++ {
-		err = s.parquetStorage.Save(ctx, transformedData, &key)
-		if err == nil {
-			s.logger.Info(fmt.Sprintf("key %s saved to b2", &key))
-			for j := 0; j < 3; j++ {
-				err = s.keyLocker.MarkProcessed(ctx, &key)
-				if err == nil {
-					return s.deleteKeyData(ctx, &key)
+	for _, dataGroup := range transformedData {
+		for i := 0; i < 3; i++ {
+			err = s.parquetStorage.Save(ctx, dataGroup, &key)
+			if err == nil {
+				s.logger.Info(fmt.Sprintf("key %s saved to b2", &key))
+				for j := 0; j < 3; j++ {
+					err = s.keyLocker.MarkProcessed(ctx, &key)
+					if err == nil {
+						return s.deleteKeyData(ctx, &key)
+					}
+					s.logger.Error(err.Error())
 				}
-				s.logger.Error(err.Error())
+				return err
 			}
-			return err
+			s.logger.Error(err.Error())
 		}
-		s.logger.Error(err.Error())
 	}
 	return err
 }

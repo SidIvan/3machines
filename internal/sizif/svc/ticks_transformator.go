@@ -21,10 +21,10 @@ func NewBookTicksTransformator() *BookTicksTransformator {
 	}
 }
 
-func (s BookTicksTransformator) Transform(ticks []bmodel.SymbolTick, key *model.ProcessingKey) ([]bmodel.SymbolTick, bool) {
+func (s BookTicksTransformator) Transform(ticks []bmodel.SymbolTick, key *model.ProcessingKey) ([][]bmodel.SymbolTick, bool) {
 	if len(ticks) == 0 {
 		s.logger.Warn(fmt.Sprintf("empty batch for key %s", key))
-		return ticks, false
+		return nil, false
 	}
 	minAllowedTsMs := key.HourNo * millisInHour
 	maxAllowedTsMs := minAllowedTsMs + millisInHour - 1
@@ -67,5 +67,5 @@ func (s BookTicksTransformator) Transform(ticks []bmodel.SymbolTick, key *model.
 		s.logger.Info(fmt.Sprintf("ticks batch, %s", string(data)))
 		validByDuplicates = false
 	}
-	return ticks, validByDuplicates && validByTimeRange
+	return [][]bmodel.SymbolTick{ticks}, validByDuplicates && validByTimeRange
 }

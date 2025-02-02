@@ -17,7 +17,7 @@ type SocratesStorage[T any] interface {
 }
 
 type DataTransformator[T any] interface {
-	Transform([]T, *model.ProcessingKey) ([]T, bool)
+	Transform([]T, *model.ProcessingKey) ([][]T, bool)
 }
 
 type LockOpStatus int8
