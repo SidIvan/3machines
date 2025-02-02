@@ -91,7 +91,7 @@ func (s CsBookTicksStorage) sendKeys(ctx context.Context, ticks []bmodel.SymbolT
 	}
 	var newKeys []model.ProcessingKey
 	sentTicksKeysMut.Lock()
-	for key, _ := range batchKeys {
+	for key := range batchKeys {
 		if _, ok := sentTicksKeys[key]; !ok {
 			newKeys = append(newKeys, key)
 		}

@@ -96,7 +96,7 @@ func (s CsDeltaStorage) sendKeys(ctx context.Context, deltas []model.Delta) erro
 	}
 	var newKeys []model.ProcessingKey
 	sentDeltaKeysMut.Lock()
-	for key, _ := range batchKeys {
+	for key := range batchKeys {
 		if _, ok := sentDeltaKeys[key]; !ok {
 			newKeys = append(newKeys, key)
 		}

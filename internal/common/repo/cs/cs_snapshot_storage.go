@@ -81,7 +81,7 @@ func (s CsSnapshotStorage) sendKeys(ctx context.Context, deltas []model.DepthSna
 	}
 	var newKeys []model.ProcessingKey
 	sentSnapshotsKeysMut.Lock()
-	for key, _ := range batchKeys {
+	for key := range batchKeys {
 		if _, ok := sentSnapshotsKeys[key]; !ok {
 			newKeys = append(newKeys, key)
 		}
@@ -104,7 +104,7 @@ func (s CsSnapshotStorage) sendKeys(ctx context.Context, deltas []model.DepthSna
 		}
 		wg.Wait()
 		if numSuccessInserts.Load() == int32(numInserts) {
-			s.logger.Info(fmt.Sprintf("successfully insert new keys", len(newKeys)))
+			s.logger.Info(fmt.Sprintf("successfully insert %d new keys", len(newKeys)))
 			return nil
 		}
 	}
