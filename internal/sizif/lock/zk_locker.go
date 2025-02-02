@@ -50,6 +50,9 @@ func (s ZkLocker) Lock(ctx context.Context, key *model.ProcessingKey) (svc.LockO
 				}
 				if !exists {
 					_, err = s.conn.Create(nodePath, []byte{}, zk.FlagPersistent, zk.WorldACL(zk.PermAll))
+					if err == zk.ErrNodeExists {
+						continue
+					}
 					if err != nil {
 						s.logger.Error(err.Error())
 						return svc.AlreadyLocked, err
