@@ -24,11 +24,16 @@ func AppConfigFromEnv(prefix string) *AppConfig {
 	if err != nil {
 		panic(err)
 	}
+	snapshotsWorkers, err := strconv.Atoi(os.Getenv(prefix + ".workers.binance.snapshots"))
+	if err != nil {
+		panic(err)
+	}
 	return &AppConfig{
-		ZkCfg:        ZkConfigFromEnv("zk"),
-		B2Cfg:        B2ConfigFromEnv("b2"),
-		SocratesCfg:  conf.NewCsRepoConfigFromEnv("socrates"),
-		DeltaWorkers: deltaWorkers,
+		ZkCfg:           ZkConfigFromEnv("zk"),
+		B2Cfg:           B2ConfigFromEnv("b2"),
+		SocratesCfg:     conf.NewCsRepoConfigFromEnv("socrates"),
+		DeltaWorkers:    deltaWorkers,
 		BookTicksWorker: bookTicksWorkers,
+		SnapshotsWorker: snapshotsWorkers,
 	}
 }
