@@ -10,10 +10,10 @@ type Delta struct {
 	Timestamp     int64  `json:"timestamp" bson:"timestamp" parquet:"timestampMs"`
 	Price         string `json:"price" bson:"price" parquet:"price"`
 	Count         string `json:"count" bson:"count" parquet:"count"`
-	UpdateId      int64  `json:"updateId" bson:"updateId"`
-	FirstUpdateId int64  `json:"firstUpdateId" bson:"firstUpdateId"`
-	T             bool   `json:"type" bson:"type" parquet:"type"`
-	Symbol        string `json:"symbol" bson:"symbol"`
+	UpdateId      int64  `json:"updateId" bson:"updateId" parquet:"updateId"`
+	FirstUpdateId int64  `json:"firstUpdateId" bson:"firstUpdateId" parquet:"firstUpdateId"`
+	T             bool   `json:"type" bson:"type" parquet:"isBid"`
+	Symbol        string `json:"symbol" bson:"symbol" parquet:"symbol"`
 }
 
 type DeltaWithId struct {

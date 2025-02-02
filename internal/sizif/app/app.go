@@ -26,6 +26,7 @@ type App struct {
 	cfg          *conf.AppConfig
 	deltasSvc    *svc.SizifSvc[model.Delta]
 	bookTicksSvc *svc.SizifSvc[bmodel.SymbolTick]
+	snapshotsSvc *svc.SizifSvc[model.DepthSnapshotPart]
 }
 
 func NewApp(cfg *conf.AppConfig) *App {
@@ -49,11 +50,18 @@ func NewApp(cfg *conf.AppConfig) *App {
 	bookTicksTransformator := svc.NewBookTicksTransformator()
 	bookTicksLocker := lock.NewZkLocker("binance/book_ticks", zkConn)
 	bookTicksSvc := svc.NewSizifSvc("binance/book_ticks", bookTicksSocratesStorage, bookTicksParquetStorage, bookTicksTransformator, bookTicksLocker, cfg.BookTicksWorker)
+
+	snapshotsSocratesStorage := cs.NewCsSnapshotStorage(csSession, cfg.SocratesCfg.SnapshotTableName, cfg.SocratesCfg.SnapshotKeyTableName)
+	snapshotsParquetStorage := b2pqt.NewB2ParquetStorage[model.DepthSnapshotPart](b2Bucket, "binance/snapshots")
+	snapshotsTransformator := svc.NewDepthSnapshotTransformator()
+	snapshotsLocker := lock.NewZkLocker("binance/snapshots", zkConn)
+	snapshotsSvc := svc.NewSizifSvc("binance/snapshots", snapshotsSocratesStorage, snapshotsParquetStorage, snapshotsTransformator, snapshotsLocker, cfg.SnapshotsWorker)
 	return &App{
 		logger:       logger,
 		cfg:          cfg,
 		deltasSvc:    deltaSvc,
 		bookTicksSvc: bookTicksSvc,
+		snapshotsSvc: snapshotsSvc,
 	}
 }
 
@@ -83,6 +91,7 @@ func (s *App) Start() {
 	baseContext := context.Background()
 	go s.deltasSvc.Start(baseContext)
 	go s.bookTicksSvc.Start(baseContext)
+	go s.snapshotsSvc.Start(baseContext)
 	time.Sleep(3 * time.Second)
 	s.logger.Info("App started")
 }
@@ -90,13 +99,17 @@ func (s *App) Start() {
 func (s *App) Stop(ctx context.Context) {
 	s.logger.Info("Begin of graceful shutdown")
 	var wg sync.WaitGroup
-	wg.Add(2)
+	wg.Add(3)
 	go func() {
 		s.deltasSvc.Shutdown(ctx)
 		wg.Done()
 	}()
 	go func() {
 		s.bookTicksSvc.Shutdown(ctx)
+		wg.Done()
+	}()
+	go func() {
+		s.snapshotsSvc.Shutdown(ctx)
 		wg.Done()
 	}()
 	wg.Wait()

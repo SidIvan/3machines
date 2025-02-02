@@ -12,6 +12,7 @@ type AppConfig struct {
 	SocratesCfg     *conf.CsRepoConfig `yaml:"socrates"`
 	DeltaWorkers    int                `yaml:"workers.binance.deltas"`
 	BookTicksWorker int                `yaml:"workers.binance.book.ticks"`
+	SnapshotsWorker int                `yaml:"workers.binance.snapshots"`
 }
 
 func AppConfigFromEnv(prefix string) *AppConfig {

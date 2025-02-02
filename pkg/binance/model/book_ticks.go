@@ -3,13 +3,13 @@ package model
 import "encoding/json"
 
 type SymbolTick struct {
-	UpdateId    int64  `json:"u" bson:"update_id"`
-	Symbol      string `json:"s" bson:"symbol"`
-	BidPrice    string `json:"b" bson:"bid_price"`
-	BidQuantity string `json:"B" bson:"bid_quantity"`
-	AskPrice    string `json:"a" bson:"ask_price"`
-	AskQuantity string `json:"A" bson:"ask_quantity"`
-	Timestamp   int64  `bson:"timestamp_ms"`
+	UpdateId    int64  `json:"u" bson:"update_id" parquet:"updateId"`
+	Symbol      string `json:"s" bson:"symbol" parquet:"symbol"`
+	BidPrice    string `json:"b" bson:"bid_price" parquet:"bidPrice"`
+	BidQuantity string `json:"B" bson:"bid_quantity" parquet:"bidQuantity"`
+	AskPrice    string `json:"a" bson:"ask_price" parquet:"askPrice"`
+	AskQuantity string `json:"A" bson:"ask_quantity" parquet:"askQuantity"`
+	Timestamp   int64  `bson:"timestamp_ms" parquet:"timestampMs"`
 }
 
 func (s *SymbolTick) String() string {

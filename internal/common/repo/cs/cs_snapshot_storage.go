@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"github.com/gocql/gocql"
 	"go.uber.org/zap"
@@ -17,12 +18,16 @@ var sentSnapshotsKeysMut sync.Mutex
 var sentSnapshotsKeys = make(map[model.ProcessingKey]struct{})
 
 type CsSnapshotStorage struct {
-	logger             *zap.Logger
-	session            *gocql.Session
-	tableName          string
-	keysTableName      string
-	insertStatement    string
-	insertKeyStatement string
+	logger              *zap.Logger
+	session             *gocql.Session
+	tableName           string
+	keysTableName       string
+	insertStatement     string
+	insertKeyStatement  string
+	selectStatement     string
+	selectKeysStatement string
+	deleteStatement     string
+	deleteKeyStatement  string
 }
 
 func NewCsSnapshotStorage(session *gocql.Session, tableName string, keysTableName string) *CsSnapshotStorage {
@@ -40,6 +45,10 @@ func NewCsSnapshotStorage(session *gocql.Session, tableName string, keysTableNam
 func (s *CsSnapshotStorage) initStatements() {
 	s.insertStatement = fmt.Sprintf("INSERT INTO %s (symbol, hour, timestamp_ms, type, price, count, last_update_id) VALUES (?, ?, ?, ?, ?, ?, ?)", s.tableName)
 	s.insertKeyStatement = fmt.Sprintf("INSERT INTO %s (symbol, hour) VALUES (?, ?)", s.keysTableName)
+	s.selectStatement = fmt.Sprintf("SELECT symbol, timestamp_ms, type, price, count, last_update_id FROM %s WHERE symbol = ? AND hour = ?", s.tableName)
+	s.selectKeysStatement = fmt.Sprintf("SELECT (symbol, hour) FROM %s", s.keysTableName)
+	s.deleteStatement = fmt.Sprintf("DELETE FROM %s WHERE symbol = ? AND hour = ?", s.tableName)
+	s.deleteKeyStatement = fmt.Sprintf("DELETE FROM %s WHERE symbol = ? AND hour = ?", s.keysTableName)
 }
 
 func (s CsSnapshotStorage) SendSnapshot(ctx context.Context, snapshotParts []model.DepthSnapshotPart) error {
@@ -131,6 +140,57 @@ func (s CsSnapshotStorage) sendSnapshotMicroBatch(ctx context.Context, snapshotP
 		batch.Query(s.insertStatement, snapshotPart.Symbol, GetHourNo(snapshotPart.Timestamp), snapshotPart.Timestamp, snapshotPart.T, snapshotPart.Price, snapshotPart.Count, snapshotPart.LastUpdateId)
 	}
 	err := s.session.ExecuteBatch(batch)
+	if err != nil {
+		s.logger.Error(err.Error())
+	}
+	return err
+}
+
+func (s CsSnapshotStorage) Get(ctx context.Context, key *model.ProcessingKey) ([]model.DepthSnapshotPart, error) {
+	var snapshotPart model.DepthSnapshotPart
+	var snapshotParts []model.DepthSnapshotPart
+	startTime := time.Now()
+	s.logger.Info(fmt.Sprintf("get snapshot parts for %s", key))
+	it := s.session.Query(s.selectStatement, key.Symbol, key.HourNo).WithContext(ctx).Iter()
+	for it.Scan(&snapshotPart.Symbol, &snapshotPart.Timestamp, &snapshotPart.T, &snapshotPart.Price, &snapshotPart.Count, &snapshotPart.LastUpdateId) {
+		snapshotParts = append(snapshotParts, snapshotPart)
+	}
+	err := it.Close()
+	if err != nil {
+		s.logger.Error(err.Error())
+	}
+	s.logger.Info(fmt.Sprintf("get deltas for %s took %d", key, time.Now().UnixMilli()-startTime.UnixMilli()))
+	return snapshotParts, err
+}
+
+func (s CsSnapshotStorage) GetKeys(ctx context.Context) ([]model.ProcessingKey, error) {
+	var key model.ProcessingKey
+	var keys []model.ProcessingKey
+	it := s.session.Query(s.selectKeysStatement).Consistency(gocql.All).WithContext(ctx).Iter()
+	for it.Scan(&key.Symbol, &key.HourNo) {
+		keys = append(keys, key)
+	}
+	err := it.Close()
+	if err != nil {
+		s.logger.Error(err.Error())
+	}
+	return keys, err
+}
+
+func (s CsSnapshotStorage) Delete(ctx context.Context, key *model.ProcessingKey) error {
+	var query = s.session.Query(s.deleteStatement, key.Symbol, key.HourNo).WithContext(ctx)
+	query.SetConsistency(gocql.All)
+	err := query.Exec()
+	if err != nil {
+		s.logger.Error(err.Error())
+	}
+	return err
+}
+
+func (s *CsSnapshotStorage) DeleteKey(ctx context.Context, key *model.ProcessingKey) error {
+	var query = s.session.Query(s.deleteKeyStatement, key.Symbol, key.HourNo).WithContext(ctx)
+	query.SetConsistency(gocql.All)
+	err := query.Exec()
 	if err != nil {
 		s.logger.Error(err.Error())
 	}
