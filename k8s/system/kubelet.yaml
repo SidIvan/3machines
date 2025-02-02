@@ -1,0 +1,18 @@
+evictionSoft:
+  memory.available: "10Mi"
+  nodefs.available: "100Mi"
+  nodefs.inodesFree: "1%"
+  imagefs.available: "100Mi"
+  imagefs.inodesFree: "1%"
+evictionSoftGracePeriod:
+  memory.available: 5m
+  nodefs.available: 5m
+  nodefs.inodesFree: 5m
+  imagefs.available: 5m
+  imagefs.inodesFree: 5m
+evictionHard:
+  memory.available: "10Mi"
+  nodefs.available: "100Mi"
+  nodefs.inodesFree: "1%"
+  imagefs.available: "100Mi"
+  imagefs.inodesFree: "1%"

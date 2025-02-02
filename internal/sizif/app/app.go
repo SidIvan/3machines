@@ -99,5 +99,6 @@ func (s *App) Stop(ctx context.Context) {
 		s.bookTicksSvc.Shutdown(ctx)
 		wg.Done()
 	}()
+	wg.Wait()
 	s.logger.Info("End of graceful shutdown")
 }
