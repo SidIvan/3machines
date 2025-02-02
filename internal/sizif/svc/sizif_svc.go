@@ -12,14 +12,14 @@ import (
 	"go.uber.org/zap"
 )
 
-type SizifSvc[T any] struct {
+type SizifSvc[T WithTimestampMs] struct {
 	logger          *zap.Logger
 	socratesStorage SocratesStorage[T]
 	workers         []*SizifWorker[T]
 	taskQueue       chan<- model.ProcessingKey
 }
 
-func NewSizifSvc[T any](serviceType string, socratesStorage SocratesStorage[T], parquetStorage ParquetStorage[T], dataTransformator DataTransformator[T], keyLocker KeyLocker, numWorkers int) *SizifSvc[T] {
+func NewSizifSvc[T WithTimestampMs](serviceType string, socratesStorage SocratesStorage[T], parquetStorage ParquetStorage[T], dataTransformator DataTransformator[T], keyLocker KeyLocker, numWorkers int) *SizifSvc[T] {
 	taskQueue := make(chan model.ProcessingKey, 1024)
 	var workers []*SizifWorker[T]
 	for i := 0; i < numWorkers; i++ {

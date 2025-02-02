@@ -40,18 +40,20 @@ func (s DepthSnapshotTransformator) Transform(snapshotParts []model.DepthSnapsho
 	tsToSnapshot := make(map[int64][]model.DepthSnapshotPart)
 	for _, snapshotPart := range snapshotParts {
 		if snapshot, ok := tsToSnapshot[snapshotPart.Timestamp]; ok {
-			snapshot = append(snapshot, snapshotPart)
+			tsToSnapshot[snapshotPart.Timestamp] = append(snapshot, snapshotPart)
 		} else {
 			tsToSnapshot[snapshotPart.Timestamp] = []model.DepthSnapshotPart{snapshotPart}
 		}
 	}
 	s.logger.Info(fmt.Sprintf("got %d different snapshots", len(tsToSnapshot)))
 	transformedSnaphots := make([][]model.DepthSnapshotPart, len(tsToSnapshot))
-	for i, snapshot := range tsToSnapshot {
+	k := 0
+	for _, snapshot := range tsToSnapshot {
 		sort.Slice(snapshot, func(i, j int) bool {
 			return (snapshot[i].T && !snapshot[j].T) || snapshot[i].Price < snapshot[j].Price
 		})
-		transformedSnaphots[i] = snapshot
+		transformedSnaphots[k] = snapshot
+		k++
 	}
 	return transformedSnaphots, validByTimeRange
 }

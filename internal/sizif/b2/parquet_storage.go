@@ -33,7 +33,7 @@ func NewB2ParquetStorage[T any](bucket *b2.Bucket, storageName string) *B2Parque
 	}
 }
 
-func (s B2ParquetStorage[T]) Save(ctx context.Context, entries []T, key *model.ProcessingKey) error {
+func (s B2ParquetStorage[T]) Save(ctx context.Context, entries []T, timestampMs int64, key *model.ProcessingKey) error {
 	var buffer bytes.Buffer
 	writer := parquet.NewGenericWriter[T](&buffer, s.parquetWriterConfig)
 	_, err := writer.Write(entries)
@@ -46,7 +46,7 @@ func (s B2ParquetStorage[T]) Save(ctx context.Context, entries []T, key *model.P
 		s.logger.Error(err.Error())
 		return err
 	}
-	objWriter := s.bucket.Object(s.createObjKey(key)).NewWriter(ctx)
+	objWriter := s.bucket.Object(s.createObjKey(key, timestampMs)).NewWriter(ctx)
 	_, err = io.Copy(objWriter, &buffer)
 	if err != nil {
 		s.logger.Error(err.Error())
@@ -60,8 +60,8 @@ func (s B2ParquetStorage[T]) Save(ctx context.Context, entries []T, key *model.P
 	return nil
 }
 
-func (s *B2ParquetStorage[T]) createObjKey(key *model.ProcessingKey) string {
-	processingTime := time.Unix(key.HourNo*60*60, 0).UTC()
+func (s *B2ParquetStorage[T]) createObjKey(key *model.ProcessingKey, timestampMs int64) string {
+	processingTime := time.Unix(timestampMs*60*60, 0).UTC()
 	keyDate := processingTime.Format("2006-01-02")
 	keyTime := processingTime.Format("15-04-05")
 	return fmt.Sprintf("%s/%s/%s/%s.parquet", s.storageName, key.Symbol, keyDate, keyTime)

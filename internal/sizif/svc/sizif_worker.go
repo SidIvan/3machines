@@ -10,7 +10,7 @@ import (
 	"go.uber.org/zap"
 )
 
-type SizifWorker[T any] struct {
+type SizifWorker[T WithTimestampMs] struct {
 	logger            *zap.Logger
 	shutdown          *atomic.Bool
 	done              chan struct{}
@@ -21,7 +21,7 @@ type SizifWorker[T any] struct {
 	keyLocker         KeyLocker
 }
 
-func NewSizifWorker[T any](serviceType string, socratesStorage SocratesStorage[T], parquetStorage ParquetStorage[T], dataTransformator DataTransformator[T], taskQueue <-chan model.ProcessingKey, keyLocker KeyLocker) *SizifWorker[T] {
+func NewSizifWorker[T WithTimestampMs](serviceType string, socratesStorage SocratesStorage[T], parquetStorage ParquetStorage[T], dataTransformator DataTransformator[T], taskQueue <-chan model.ProcessingKey, keyLocker KeyLocker) *SizifWorker[T] {
 	var shutdown atomic.Bool
 	shutdown.Store(false)
 	done := make(chan struct{})
@@ -116,7 +116,7 @@ func (s *SizifWorker[T]) processKey(ctx context.Context, key model.ProcessingKey
 	}
 	for _, dataGroup := range transformedData {
 		for i := 0; i < 3; i++ {
-			err = s.parquetStorage.Save(ctx, dataGroup, &key)
+			err = s.parquetStorage.Save(ctx, dataGroup, dataGroup[0].GetTimestampMs(), &key)
 			if err == nil {
 				s.logger.Info(fmt.Sprintf("key %s saved to b2", &key))
 				for j := 0; j < 3; j++ {

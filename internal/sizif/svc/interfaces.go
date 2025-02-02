@@ -6,7 +6,7 @@ import (
 )
 
 type ParquetStorage[T any] interface {
-	Save(context.Context, []T, *model.ProcessingKey) error
+	Save(context.Context, []T, int64, *model.ProcessingKey) error
 }
 
 type SocratesStorage[T any] interface {
@@ -32,4 +32,8 @@ type KeyLocker interface {
 	Lock(context.Context, *model.ProcessingKey) (LockOpStatus, error)
 	Unlock(context.Context, *model.ProcessingKey) error
 	MarkProcessed(context.Context, *model.ProcessingKey) error
+}
+
+type WithTimestampMs interface {
+	GetTimestampMs() int64
 }

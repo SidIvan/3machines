@@ -46,7 +46,7 @@ CREATE TABLE IF NOT EXISTS book_ticks (
     bid_quantity ascii,
     ask_price ascii,
     ask_quantity ascii,
-    PRIMARY KEY ((symbol, hour), timestamp_ms, update_id)
+    PRIMARY KEY ((symbol, hour), update_id)
 );
 
 CREATE TABLE IF NOT EXISTS book_ticks_keys (

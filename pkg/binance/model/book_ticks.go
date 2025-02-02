@@ -16,3 +16,7 @@ func (s *SymbolTick) String() string {
 	stringVal, _ := json.Marshal(s)
 	return string(stringVal)
 }
+
+func (s SymbolTick) GetTimestampMs() int64 {
+	return s.Timestamp;
+}

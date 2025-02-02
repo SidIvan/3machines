@@ -27,3 +27,7 @@ func (s *DepthSnapshotPart) isBid() bool {
 func (s *DepthSnapshotPart) isAsk() bool {
 	return !s.T
 }
+
+func (s DepthSnapshotPart) GetTimestampMs() int64 {
+	return s.Timestamp
+}
