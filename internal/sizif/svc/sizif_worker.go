@@ -91,8 +91,8 @@ func (s *SizifWorker[T]) processKey(ctx context.Context, key model.ProcessingKey
 		s.logger.Error(err.Error())
 	}
 	if err != nil {
-		s.keyLocker.Unlock(ctx, &key)
-		if err == nil {
+		errUnlock := s.keyLocker.Unlock(ctx, &key)
+		if errUnlock == nil {
 			s.logger.Info(fmt.Sprintf("key unlocked %s", &key))
 		} else {
 			s.logger.Warn(fmt.Sprintf("key not unlocked %s", &key))

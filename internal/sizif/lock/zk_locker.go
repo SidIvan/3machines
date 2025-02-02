@@ -70,14 +70,20 @@ func (s ZkLocker) Lock(ctx context.Context, key *model.ProcessingKey) (svc.LockO
 			return svc.AlreadyLocked, err
 		}
 	}
+	s.logger.Info(fmt.Sprintf("lock node created %s", lockPath))
 	return svc.LockedSuccessfully, nil
 }
 
 func (s ZkLocker) Unlock(ctx context.Context, key *model.ProcessingKey) error {
 	lockPath := s.createZkPath(key)
-	err := s.conn.Delete(lockPath, 0)
+	var err error
 	for i := 0; i < 3; i++ {
+		err := s.conn.Delete(lockPath, 0)
 		if err == nil {
+			return nil
+		}
+		if err == zk.ErrNoNode {
+			s.logger.Warn(fmt.Sprintf("no lock node for path %s", lockPath))
 			return nil
 		}
 		s.logger.Error(err.Error())
