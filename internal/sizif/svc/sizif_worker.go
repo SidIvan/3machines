@@ -39,8 +39,15 @@ func NewSizifWorker[T any](serviceType string, socratesStorage SocratesStorage[T
 
 func (s *SizifWorker[T]) Start(ctx context.Context) {
 	for !s.shutdown.Load() {
+		select {
+		case key := <-s.taskQueue:
+			s.lockAndProcessKey(ctx, key)
+		default:
+			sleep(5)
+		}
 		s.lockAndProcessKey(ctx, <-s.taskQueue)
 	}
+	s.logger.Info("Gracefully shutdown worker")
 	s.done <- struct{}{}
 }
 
