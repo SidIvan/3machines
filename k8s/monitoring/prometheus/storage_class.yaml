@@ -8,7 +8,7 @@ allowedTopologies:
 - matchLabelExpressions:
   - key: app
     values:
-    - dwarf
+    - prometheus
 volumeBindingMode: WaitForFirstConsumer
 parameters:
   type: pd-ssd
