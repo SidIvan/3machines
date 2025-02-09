@@ -6,6 +6,6 @@ metadata:
   name: nestor
 spec:
   ports:
-  - port: 9042
+  - port: 9001
   selector:
     app: nestor
