@@ -57,9 +57,11 @@ func (s *ExchangeInfoSvc) StartReceiveExInfo(ctx context.Context) {
 		if err == nil {
 			s.metrics.UpdateMetrics(exInfo.Symbols)
 			s.metrics.ProcessExInfoMetrics(Receive)
+			s.logger.Info(fmt.Sprintf("got exchange info with hash %d", exInfo.ExInfoHash()))
+		} else {
+			s.logger.Warn("error when getting exchange info, sleep")
+			continue
 		}
-		s.logger.Info(fmt.Sprintf("got exchange info with hash %d", exInfo.ExInfoHash()))
-		cancel()
 		ctxWithTimeout, cancel = context.WithTimeout(context.Background(), 20*time.Second)
 		lastSavedExInfo := s.exInfoStorage.GetLastExchangeInfo(ctxWithTimeout)
 		cancel()

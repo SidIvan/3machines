@@ -16,6 +16,9 @@ spec:
       labels:
         app: nestor
         environment: prod
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9001"
     spec:
       terminationGracePeriodSeconds: 60
       nodeSelector:
