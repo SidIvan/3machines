@@ -34,6 +34,7 @@ spec:
             name: prometheus-server-conf
   volumeClaimTemplates:
   - metadata:
+      namespace: monitoring
       name: prometheus-storage
     spec:
       accessModes: [ "ReadWriteOnce" ]
