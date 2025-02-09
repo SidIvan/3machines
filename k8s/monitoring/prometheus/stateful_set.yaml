@@ -16,16 +16,26 @@ spec:
       containers:
       - name: prometheus
         image: prom/prometheus:v3.1.0
+        args:
+          - "--config.file=/etc/prometheus/prometheus.yaml"
+          - "--storage.tsdb.path=/prometheus/"
         ports:
         - containerPort: 9090
         volumeMounts:
-        - name: prometheus-data
+        - name: prometheus-config-volume
+          mountPath: /etc/prometheus/
+        - name: prometheus-storage
           mountPath: /prometheus
+      volumes:
+        - name: prometheus-config-volume
+          configMap:
+            defaultMode: 420
+            name: prometheus-server-conf
   volumeClaimTemplates:
   - metadata:
-      name: prometheus-data
+      name: prometheus-storage
     spec:
       accessModes: [ "ReadWriteOnce" ]
       resources:
         requests:
-          storage: 10Gi
+          storage: 25Gi

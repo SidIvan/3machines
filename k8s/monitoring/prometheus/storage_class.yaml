@@ -1,0 +1,14 @@
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
+namespace: monitoring
+metadata:
+  name: prometheus-storage
+provisioner: rancher.io/local-path
+allowedTopologies:
+- matchLabelExpressions:
+  - key: app
+    values:
+    - dwarf
+volumeBindingMode: WaitForFirstConsumer
+parameters:
+  type: pd-ssd
