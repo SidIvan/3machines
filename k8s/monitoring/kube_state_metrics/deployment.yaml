@@ -19,8 +19,7 @@ spec:
         app.kubernetes.io/name: kube-state-metrics
         app.kubernetes.io/version: 2.11.0
     spec:
-      nodeSelector:
-        app: dwarf
+      automountServiceAccountToken: true
       containers:
       - image: registry.k8s.io/kube-state-metrics/kube-state-metrics:v2.11.0
         livenessProbe:
@@ -53,3 +52,4 @@ spec:
             type: RuntimeDefault
       nodeSelector:
         kubernetes.io/os: linux
+      serviceAccountName: kube-state-metrics
