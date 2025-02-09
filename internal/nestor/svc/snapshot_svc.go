@@ -2,7 +2,6 @@ package svc
 
 import (
 	"DeltaReceiver/internal/common/model"
-	"DeltaReceiver/internal/common/svc"
 	"DeltaReceiver/internal/nestor/cache"
 	"DeltaReceiver/internal/nestor/conf"
 	"DeltaReceiver/pkg/log"
@@ -23,7 +22,7 @@ type SnapshotSvc struct {
 	snapshotQueue     []string
 	snapshotSchedules map[string]time.Time
 	localRepo         LocalRepo
-	snapshotStorage   svc.SnapshotStorage
+	snapshotStorage   SnapshotStorage
 	metrics           MetricsHolder
 	cfg               *conf.AppConfig
 	shutdown          *atomic.Bool
@@ -31,7 +30,7 @@ type SnapshotSvc struct {
 	exInfoCache       *cache.ExchangeInfoCache
 }
 
-func NewSnapshotSvc(config *conf.AppConfig, binanceClient BinanceClient, localRepo LocalRepo, snapshotStorage svc.SnapshotStorage, metricsHolder MetricsHolder, infoCache *cache.ExchangeInfoCache) *SnapshotSvc {
+func NewSnapshotSvc(config *conf.AppConfig, binanceClient BinanceClient, localRepo LocalRepo, snapshotStorage SnapshotStorage, metricsHolder MetricsHolder, infoCache *cache.ExchangeInfoCache) *SnapshotSvc {
 	var shutdown atomic.Bool
 	shutdown.Store(false)
 	return &SnapshotSvc{

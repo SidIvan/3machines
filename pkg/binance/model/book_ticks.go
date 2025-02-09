@@ -18,5 +18,9 @@ func (s *SymbolTick) String() string {
 }
 
 func (s SymbolTick) GetTimestampMs() int64 {
-	return s.Timestamp;
+	return s.Timestamp
+}
+
+func (s SymbolTick) GetSymbol() string {
+	return s.Symbol
 }

@@ -2,7 +2,6 @@ package svc
 
 import (
 	"DeltaReceiver/internal/common/model"
-	"DeltaReceiver/internal/common/svc"
 	"DeltaReceiver/internal/nestor/conf"
 	"DeltaReceiver/pkg/log"
 	"context"
@@ -18,11 +17,11 @@ const FixerBatchSize = 1000
 type DeltaFixer struct {
 	logger       *zap.Logger
 	cfg          *conf.AppConfig
-	deltaStorage svc.DeltaStorage
+	deltaStorage DeltaStorage
 	localRepo    LocalRepo
 }
 
-func NewDeltaFixer(cfg *conf.AppConfig, deltaStorage svc.DeltaStorage, lRepo LocalRepo) *DeltaFixer {
+func NewDeltaFixer(cfg *conf.AppConfig, deltaStorage DeltaStorage, lRepo LocalRepo) *DeltaFixer {
 	return &DeltaFixer{
 		logger:       log.GetLogger("DeltaFixer"),
 		cfg:          cfg,

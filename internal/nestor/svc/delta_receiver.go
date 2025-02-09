@@ -2,7 +2,6 @@ package svc
 
 import (
 	"DeltaReceiver/internal/common/model"
-	csvc "DeltaReceiver/internal/common/svc"
 	"DeltaReceiver/internal/nestor/cache"
 	"DeltaReceiver/pkg/binance"
 	"DeltaReceiver/pkg/log"
@@ -17,13 +16,13 @@ import (
 	"go.uber.org/zap"
 )
 
-const BatchSize = 1000
+const BatchSize = 10000
 
 type DeltaReceiver struct {
 	logger               *zap.Logger
 	receiver             *binance.DeltaReceiveClient
 	localRepo            LocalRepo
-	deltaStorage         csvc.DeltaStorage
+	deltaStorage         DeltaStorage
 	metrics              MetricsHolder
 	symbols              []string
 	shutdown             *atomic.Bool
@@ -35,7 +34,7 @@ type DeltaReceiver struct {
 func NewDeltaReceiver(
 	cfg *binance.BinanceHttpClientConfig,
 	symbols []string, localRepo LocalRepo,
-	deltaStorage csvc.DeltaStorage,
+	deltaStorage DeltaStorage,
 	metrics MetricsHolder,
 	deltaUpdateIdWatcher *cache.DeltaUpdateIdWatcher,
 	deltaHolesStorage DeltaHolesStorage) *DeltaReceiver {
@@ -145,6 +144,7 @@ func (s *DeltaReceiver) sendBatchToLocalRepo(ctx context.Context, deltas []model
 	for i := 0; i < 3; i++ {
 		if err = s.localRepo.SaveDeltas(ctx, deltas); err == nil {
 			s.metrics.ProcessDeltaMetrics(deltas, Save)
+			s.logger.Info("batch saved to mongo")
 			return nil
 		} else {
 			s.logger.Error(err.Error())

@@ -1,7 +1,6 @@
 package svc
 
 import (
-	csvc "DeltaReceiver/internal/common/svc"
 	"DeltaReceiver/internal/nestor/cache"
 	"DeltaReceiver/internal/nestor/conf"
 	bmodel "DeltaReceiver/pkg/binance/model"
@@ -21,7 +20,7 @@ type ExchangeInfoSvc struct {
 	logger        *zap.Logger
 	binanceClient BinanceClient
 	localRepo     LocalRepo
-	exInfoStorage csvc.ExchangeInfoStorage
+	exInfoStorage ExchangeInfoStorage
 	metrics       MetricsHolder
 	cfg           *conf.AppConfig
 	shutdown      *atomic.Bool
@@ -29,7 +28,7 @@ type ExchangeInfoSvc struct {
 	exInfoCache   *cache.ExchangeInfoCache
 }
 
-func NewExchangeInfoSvc(config *conf.AppConfig, binanceClient BinanceClient, localRepo LocalRepo, exInfoStorage csvc.ExchangeInfoStorage, metrics MetricsHolder, infoCache *cache.ExchangeInfoCache) *ExchangeInfoSvc {
+func NewExchangeInfoSvc(config *conf.AppConfig, binanceClient BinanceClient, localRepo LocalRepo, exInfoStorage ExchangeInfoStorage, metrics MetricsHolder, infoCache *cache.ExchangeInfoCache) *ExchangeInfoSvc {
 	var shutdown atomic.Bool
 	shutdown.Store(false)
 	return &ExchangeInfoSvc{

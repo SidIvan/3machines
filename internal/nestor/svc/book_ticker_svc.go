@@ -1,7 +1,6 @@
 package svc
 
 import (
-	"DeltaReceiver/internal/common/svc"
 	"DeltaReceiver/internal/nestor/cache"
 	"DeltaReceiver/internal/nestor/conf"
 	"DeltaReceiver/pkg/log"
@@ -20,7 +19,7 @@ type BookTickerSvc struct {
 	binanceClient    BinanceClient
 	tickerReceivers  []*TickerReceiver
 	localRepo        LocalRepo
-	bookTicksStorage svc.BookTicksStorage
+	bookTicksStorage BookTicksStorage
 	metrics          MetricsHolder
 	cfg              *conf.AppConfig
 	shutdown         *atomic.Bool
@@ -28,7 +27,7 @@ type BookTickerSvc struct {
 	exInfoCache      *cache.ExchangeInfoCache
 }
 
-func NewBookTickerSvc(config *conf.AppConfig, binanceClient BinanceClient, localRepo LocalRepo, bookTicksStorage svc.BookTicksStorage, metrics MetricsHolder, exInfoCache *cache.ExchangeInfoCache) *BookTickerSvc {
+func NewBookTickerSvc(config *conf.AppConfig, binanceClient BinanceClient, localRepo LocalRepo, bookTicksStorage BookTicksStorage, metrics MetricsHolder, exInfoCache *cache.ExchangeInfoCache) *BookTickerSvc {
 	var shutdown atomic.Bool
 	var dRecWg sync.WaitGroup
 	shutdown.Store(false)

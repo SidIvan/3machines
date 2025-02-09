@@ -14,14 +14,22 @@ import (
 	"go.uber.org/zap"
 )
 
+type KeyTsFormType int
+
+const (
+	FromData = KeyTsFormType(0)
+	FromKey  = KeyTsFormType(1)
+)
+
 type B2ParquetStorage[T any] struct {
 	logger              *zap.Logger
 	bucket              *b2.Bucket
 	storageName         string
 	parquetWriterConfig *parquet.WriterConfig
+	keyTsFormType       KeyTsFormType
 }
 
-func NewB2ParquetStorage[T any](bucket *b2.Bucket, storageName string) *B2ParquetStorage[T] {
+func NewB2ParquetStorage[T any](bucket *b2.Bucket, storageName string, keyTsFormType KeyTsFormType) *B2ParquetStorage[T] {
 	logger := log.GetLogger("B2ParquetStorage_" + storageName)
 	cfg := parquet.DefaultWriterConfig()
 	cfg.Compression = &parquet.Lz4Raw
@@ -30,6 +38,7 @@ func NewB2ParquetStorage[T any](bucket *b2.Bucket, storageName string) *B2Parque
 		bucket:              bucket,
 		storageName:         storageName,
 		parquetWriterConfig: cfg,
+		keyTsFormType:       keyTsFormType,
 	}
 }
 
@@ -46,7 +55,8 @@ func (s B2ParquetStorage[T]) Save(ctx context.Context, entries []T, timestampMs 
 		s.logger.Error(err.Error())
 		return err
 	}
-	objWriter := s.bucket.Object(s.createObjKey(key, timestampMs)).NewWriter(ctx)
+	objKey := s.createObjKey(key, timestampMs)
+	objWriter := s.bucket.Object(objKey).NewWriter(ctx)
 	_, err = io.Copy(objWriter, &buffer)
 	if err != nil {
 		s.logger.Error(err.Error())
@@ -57,11 +67,19 @@ func (s B2ParquetStorage[T]) Save(ctx context.Context, entries []T, timestampMs 
 		s.logger.Error(err.Error())
 		return err
 	}
+	s.logger.Info(fmt.Sprintf("key %s saved", objKey))
 	return nil
 }
 
 func (s *B2ParquetStorage[T]) createObjKey(key *model.ProcessingKey, timestampMs int64) string {
-	processingTime := time.Unix(timestampMs*60*60, 0).UTC()
+	var processingTime time.Time
+	if s.keyTsFormType == FromData {
+		processingTime = time.UnixMilli(timestampMs).UTC()
+	} else if s.keyTsFormType == FromKey {
+		processingTime = time.Unix(key.HourNo*60*60, 0).UTC()
+	} else {
+		panic("invalid key form ts type")
+	}
 	keyDate := processingTime.Format("2006-01-02")
 	keyTime := processingTime.Format("15-04-05")
 	return fmt.Sprintf("%s/%s/%s/%s.parquet", s.storageName, key.Symbol, keyDate, keyTime)

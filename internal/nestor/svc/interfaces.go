@@ -14,6 +14,35 @@ type BinanceClient interface {
 	GetBookTicks(ctx context.Context) ([]bmodel.SymbolTick, error)
 }
 
+type DeltaStorage interface {
+	SendDeltas(context.Context, []model.Delta) error
+	Connect(ctx context.Context) error
+	Reconnect(ctx context.Context) error
+	Disconnect(ctx context.Context)
+}
+
+type SnapshotStorage interface {
+	SendSnapshot(context.Context, []model.DepthSnapshotPart) error
+	Connect(ctx context.Context) error
+	Reconnect(ctx context.Context) error
+	Disconnect(ctx context.Context)
+}
+
+type ExchangeInfoStorage interface {
+	SendExchangeInfo(context.Context, *bmodel.ExchangeInfo) error
+	GetLastExchangeInfo(context.Context) *bmodel.ExchangeInfo
+	Connect(ctx context.Context) error
+	Reconnect(ctx context.Context) error
+	Disconnect(ctx context.Context)
+}
+
+type BookTicksStorage interface {
+	SendBookTicks(context.Context, []bmodel.SymbolTick) error
+	Connect(ctx context.Context) error
+	Reconnect(ctx context.Context) error
+	Disconnect(ctx context.Context)
+}
+
 type LocalRepo interface {
 	SaveDeltas(context.Context, []model.Delta) error
 	SaveSnapshot(context.Context, []model.DepthSnapshotPart) error
@@ -23,17 +52,6 @@ type LocalRepo interface {
 	DeleteDeltas(ctx context.Context, ids []primitive.ObjectID) (int64, error)
 	Connect(ctx context.Context) error
 	Reconnect(ctx context.Context)
-}
-
-type GlobalRepo interface {
-	SendSnapshot(context.Context, []model.DepthSnapshotPart) error
-	Connect(ctx context.Context) error
-	Reconnect(ctx context.Context) error
-	SendFullExchangeInfo(ctx context.Context, exInfo *bmodel.ExchangeInfo) error
-	GetLastFullExchangeInfoHash(ctx context.Context) uint64
-	GetLastFullExchangeInfo(ctx context.Context) *bmodel.ExchangeInfo
-	SendBookTicks(context.Context, []bmodel.SymbolTick) error
-	Disconnect(ctx context.Context)
 }
 
 type TypeOfEvent int

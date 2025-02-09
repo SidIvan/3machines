@@ -1,7 +1,6 @@
 package svc
 
 import (
-	csvc "DeltaReceiver/internal/common/svc"
 	"DeltaReceiver/internal/nestor/cache"
 	"DeltaReceiver/internal/nestor/conf"
 	"DeltaReceiver/pkg/log"
@@ -19,7 +18,7 @@ type DeltaReceiverSvc struct {
 	binanceClient        BinanceClient
 	deltaReceivers       []*DeltaReceiver
 	localRepo            LocalRepo
-	deltaStorage         csvc.DeltaStorage
+	deltaStorage         DeltaStorage
 	metricsHolder        MetricsHolder
 	cfg                  *conf.AppConfig
 	shutdown             *atomic.Bool
@@ -32,7 +31,7 @@ func NewDeltaReceiverSvc(
 	config *conf.AppConfig,
 	binanceClient BinanceClient,
 	localRepo LocalRepo,
-	deltaStorage csvc.DeltaStorage,
+	deltaStorage DeltaStorage,
 	metricsHolder MetricsHolder,
 	exInfoCache *cache.ExchangeInfoCache,
 	deltaUpdateIdWatcher *cache.DeltaUpdateIdWatcher,
@@ -65,7 +64,7 @@ func (s *DeltaReceiverSvc) getAndActivateNewReceivers(ctx context.Context) []*De
 	}
 	s.logger.Info(fmt.Sprintf("start get deltas of %d different symbols", len(symbols)))
 	var newReceivers []*DeltaReceiver
-	numReceivers := 5
+	numReceivers := 10
 	for i := 0; i < numReceivers; i++ {
 		var symbolsForReceiver []string
 		for j := 0; j*numReceivers+i < len(symbols); j++ {

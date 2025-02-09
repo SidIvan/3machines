@@ -10,7 +10,7 @@ import (
 	"go.uber.org/zap"
 )
 
-type SizifWorker[T WithTimestampMs] struct {
+type SizifWorker[T model.WithTimestampMs] struct {
 	logger            *zap.Logger
 	shutdown          *atomic.Bool
 	done              chan struct{}
@@ -21,7 +21,7 @@ type SizifWorker[T WithTimestampMs] struct {
 	keyLocker         KeyLocker
 }
 
-func NewSizifWorker[T WithTimestampMs](serviceType string, socratesStorage SocratesStorage[T], parquetStorage ParquetStorage[T], dataTransformator DataTransformator[T], taskQueue <-chan model.ProcessingKey, keyLocker KeyLocker) *SizifWorker[T] {
+func NewSizifWorker[T model.WithTimestampMs](serviceType string, socratesStorage SocratesStorage[T], parquetStorage ParquetStorage[T], dataTransformator DataTransformator[T], taskQueue <-chan model.ProcessingKey, keyLocker KeyLocker) *SizifWorker[T] {
 	var shutdown atomic.Bool
 	shutdown.Store(false)
 	done := make(chan struct{})
@@ -38,6 +38,7 @@ func NewSizifWorker[T WithTimestampMs](serviceType string, socratesStorage Socra
 }
 
 func (s *SizifWorker[T]) Start(ctx context.Context) {
+	s.logger.Info("Worker started")
 	for !s.shutdown.Load() {
 		select {
 		case key := <-s.taskQueue:

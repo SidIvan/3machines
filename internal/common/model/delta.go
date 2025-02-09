@@ -68,5 +68,9 @@ func (s *Delta) String() string {
 }
 
 func (s Delta) GetTimestampMs() int64 {
-	return s.Timestamp;
+	return s.Timestamp
+}
+
+func (s Delta) GetSymbol() string {
+	return s.Symbol
 }

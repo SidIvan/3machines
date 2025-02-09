@@ -32,7 +32,7 @@ type LockType []byte
 var (
 	locked    LockType      = []byte("1")
 	processed LockType      = []byte("2")
-	ttl       time.Duration = time.Hour * 24 * 7
+	ttl       time.Duration = time.Hour * 24
 )
 
 func (s ZkLocker) Lock(ctx context.Context, key *model.ProcessingKey) (svc.LockOpStatus, error) {

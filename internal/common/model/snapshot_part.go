@@ -31,3 +31,7 @@ func (s *DepthSnapshotPart) isAsk() bool {
 func (s DepthSnapshotPart) GetTimestampMs() int64 {
 	return s.Timestamp
 }
+
+func (s DepthSnapshotPart) GetSymbol() string {
+	return s.Symbol
+}

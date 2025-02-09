@@ -1,7 +1,6 @@
 package svc
 
 import (
-	"DeltaReceiver/internal/common/svc"
 	"DeltaReceiver/pkg/binance"
 	bmodel "DeltaReceiver/pkg/binance/model"
 	"DeltaReceiver/pkg/log"
@@ -20,14 +19,14 @@ type TickerReceiver struct {
 	logger           *zap.Logger
 	receiver         *binance.BookTickerClient
 	localRepo        LocalRepo
-	bookTicksStorage svc.BookTicksStorage
+	bookTicksStorage BookTicksStorage
 	metrics          MetricsHolder
 	symbols          []string
 	shutdown         *atomic.Bool
 	done             chan struct{}
 }
 
-func NewTickerReceiver(cfg *binance.BinanceHttpClientConfig, symbols []string, localRepo LocalRepo, bookTicksStorage svc.BookTicksStorage, metrics MetricsHolder) *TickerReceiver {
+func NewTickerReceiver(cfg *binance.BinanceHttpClientConfig, symbols []string, localRepo LocalRepo, bookTicksStorage BookTicksStorage, metrics MetricsHolder) *TickerReceiver {
 	if len(symbols) == 0 {
 		return nil
 	}

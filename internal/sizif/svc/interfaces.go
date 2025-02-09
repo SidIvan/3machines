@@ -33,7 +33,3 @@ type KeyLocker interface {
 	Unlock(context.Context, *model.ProcessingKey) error
 	MarkProcessed(context.Context, *model.ProcessingKey) error
 }
-
-type WithTimestampMs interface {
-	GetTimestampMs() int64
-}

@@ -3,7 +3,6 @@ package app
 import (
 	cconf "DeltaReceiver/internal/common/conf"
 	"DeltaReceiver/internal/common/repo/cs"
-	csvc "DeltaReceiver/internal/common/svc"
 	"DeltaReceiver/internal/nestor/cache"
 	"DeltaReceiver/internal/nestor/conf"
 	"DeltaReceiver/internal/nestor/metrics"
@@ -30,10 +29,10 @@ type App struct {
 	snapshotSvc         *svc.SnapshotSvc
 	exInfoSvc           *svc.ExchangeInfoSvc
 	bookTickerSvc       *svc.BookTickerSvc
-	deltaStorage        csvc.DeltaStorage
-	snapshotStorage     csvc.SnapshotStorage
-	bookTicksStorage    csvc.BookTicksStorage
-	exchangeInfoStorage csvc.ExchangeInfoStorage
+	deltaStorage        svc.DeltaStorage
+	snapshotStorage     svc.SnapshotStorage
+	bookTicksStorage    svc.BookTicksStorage
+	exchangeInfoStorage svc.ExchangeInfoStorage
 	localRepo           svc.LocalRepo
 	exInfoCache         *cache.ExchangeInfoCache
 	binanceClient       svc.BinanceClient
@@ -59,9 +58,9 @@ func NewApp(cfg *conf.AppConfig) *App {
 	deltaHolesIdWatcher := cache.NewDeltaUpdateIdWatcher()
 	csCfg := cfg.CsCfg
 	csSession := initCs(csCfg)
-	deltaStorage := cs.NewCsDeltaStorage(csSession, csCfg.DeltaTableName, csCfg.DeltaKeyTableName)
-	snapshotStorage := cs.NewCsSnapshotStorage(csSession, csCfg.SnapshotTableName, csCfg.SnapshotKeyTableName)
-	bookTicksStorage := cs.NewCsBookTicksStorage(csSession, csCfg.BookTicksTableName, csCfg.BookTicksKeyTableName)
+	deltaStorage := cs.NewCsDeltaStorageWO(csSession, csCfg.DeltaTableName, csCfg.DeltaKeyTableName)
+	snapshotStorage := cs.NewCsSnapshotStorageWO(csSession, csCfg.SnapshotTableName, csCfg.SnapshotKeyTableName)
+	bookTicksStorage := cs.NewCsBookTicksStorageWO(csSession, csCfg.BookTicksTableName, csCfg.BookTicksKeyTableName)
 	exchangeInfoStorage := cs.NewExchangeInfoStorage(csSession, csCfg.ExchangeInfoTableName)
 	localRepo := repo.NewLocalMongoRepo(cfg.LocalRepoCfg)
 	binanceClient := web.NewBinanceClient(cfg.BinanceHttpConfig, exInfoCache)

@@ -6,31 +6,37 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/gocql/gocql"
 	"go.uber.org/zap"
 )
 
-var sentDeltaKeysMut sync.Mutex
-var sentDeltaKeys = make(map[model.ProcessingKey]struct{})
-
 type CsDeltaStorage struct {
 	logger              *zap.Logger
 	session             *gocql.Session
 	tableName           string
+	dataUploader        *CsDataUploader[model.Delta]
 	keysTableName       string
-	insertStatement     string
-	insertKeyStatement  string
 	selectStatement     string
 	selectKeysStatement string
 	deleteStatement     string
 	deleteKeyStatement  string
 }
 
-func NewCsDeltaStorage(session *gocql.Session, tableName string, keysTableName string) *CsDeltaStorage {
+func NewCsDeltaStorageWO(session *gocql.Session, tableName string, keysTableName string) *CsDeltaStorage {
+	logger := log.GetLogger("CsDeltaStorage")
+	deltaStorage := &CsDeltaStorage{
+		logger:        logger,
+		session:       session,
+		tableName:     tableName,
+		dataUploader:  NewCsDataUploader(logger, session, keysTableName, NewDeltaInsertQueryBuilder(tableName)),
+		keysTableName: keysTableName,
+	}
+	return deltaStorage
+}
+
+func NewCsDeltaStorageRO(session *gocql.Session, tableName string, keysTableName string) *CsDeltaStorage {
 	logger := log.GetLogger("CsDeltaStorage")
 	deltaStorage := &CsDeltaStorage{
 		logger:        logger,
@@ -43,8 +49,6 @@ func NewCsDeltaStorage(session *gocql.Session, tableName string, keysTableName s
 }
 
 func (s *CsDeltaStorage) initStatements() {
-	s.insertStatement = fmt.Sprintf("INSERT INTO %s (symbol, hour, timestamp_ms, type, price, count, first_update_id, update_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", s.tableName)
-	s.insertKeyStatement = fmt.Sprintf("INSERT INTO %s (symbol, hour) VALUES (?, ?)", s.keysTableName)
 	s.selectStatement = fmt.Sprintf("SELECT symbol, timestamp_ms, type, price, count, first_update_id, update_id FROM %s WHERE symbol = ? AND hour = ?", s.tableName)
 	s.selectKeysStatement = fmt.Sprintf("SELECT (symbol, hour) FROM %s", s.keysTableName)
 	s.deleteStatement = fmt.Sprintf("DELETE FROM %s WHERE symbol = ? AND hour = ?", s.tableName)
@@ -57,99 +61,13 @@ func (s CsDeltaStorage) SendDeltas(ctx context.Context, deltas []model.Delta) er
 		now := time.Now()
 		s.logger.Debug(fmt.Sprintf("inserting deltas from %d to %d got %d ms", csInsertStart.UnixMilli(), now.UnixMilli(), now.UnixMilli()-csInsertStart.UnixMilli()))
 	}()
-	var wg sync.WaitGroup
-	var numSuccessInserts atomic.Int32
-	numInserts := 0
-	for i := 0; i < len(deltas); i += batchSize {
-		numInserts++
-		wg.Add(1)
-		go func(batch []model.Delta) error {
-			defer wg.Done()
-			err := s.sendDeltasMicroBatch(ctx, batch)
-			if err != nil {
-				s.logger.Error(err.Error())
-				return err
-			}
-			numSuccessInserts.Add(1)
-			return nil
-		}(deltas[i:min(len(deltas), i+batchSize)])
-	}
-	wg.Wait()
-	if numSuccessInserts.Load() == int32(numInserts) {
-		s.logger.Debug(fmt.Sprintf("batch of %d deltas inserted successfully", len(deltas)))
-		s.sendKeys(ctx, deltas)
-		return nil
-	}
-	return errors.New("batch not saved")
-}
-
-func (s CsDeltaStorage) sendKeys(ctx context.Context, deltas []model.Delta) error {
-	s.logger.Info("sending keys")
-	var err error
-	batchKeys := make(map[model.ProcessingKey]struct{})
-	for _, delta := range deltas {
-		deltaKey := model.ProcessingKey{
-			Symbol: delta.Symbol,
-			HourNo: GetHourNo(delta.Timestamp),
-		}
-		batchKeys[deltaKey] = struct{}{}
-	}
-	var newKeys []model.ProcessingKey
-	sentDeltaKeysMut.Lock()
-	for key := range batchKeys {
-		if _, ok := sentDeltaKeys[key]; !ok {
-			newKeys = append(newKeys, key)
-		}
-	}
-	sentDeltaKeysMut.Unlock()
-	s.logger.Info(fmt.Sprintf("got %d new keys", len(newKeys)))
-	for j := 0; j < 3; j++ {
-		var wg sync.WaitGroup
-		var numSuccessInserts atomic.Int32
-		numInserts := 0
-		for i := 0; i < len(newKeys); i += batchSize {
-			numInserts++
-			wg.Add(1)
-			go func(keys []model.ProcessingKey) {
-				if s.sendKeysBatch(ctx, keys) == nil {
-					numSuccessInserts.Add(1)
-				}
-				wg.Done()
-			}(newKeys[i:min(i+batchSize, len(newKeys))])
-		}
-		wg.Wait()
-		if numSuccessInserts.Load() == int32(numInserts) {
-			s.logger.Info(fmt.Sprintf("successfully insert %d new keys", len(newKeys)))
-			return nil
-		}
-	}
-	return err
-}
-
-func (s CsDeltaStorage) sendKeysBatch(ctx context.Context, keys []model.ProcessingKey) error {
-	batch := s.session.NewBatch(gocql.LoggedBatch).WithContext(ctx)
-	batch.SetConsistency(gocql.LocalQuorum)
-	for _, key := range keys {
-		batch.Query(s.insertKeyStatement, key.Symbol, key.HourNo)
-	}
-	err := s.session.ExecuteBatch(batch)
+	err := s.dataUploader.UploadData(ctx, deltas)
 	if err != nil {
 		s.logger.Error(err.Error())
+		return errors.New("batch not saved")
 	}
-	return err
-}
-
-func (s CsDeltaStorage) sendDeltasMicroBatch(ctx context.Context, deltas []model.Delta) error {
-	batch := s.session.NewBatch(gocql.LoggedBatch).WithContext(ctx)
-	batch.SetConsistency(gocql.LocalQuorum)
-	for _, delta := range deltas {
-		batch.Query(s.insertStatement, delta.Symbol, GetHourNo(delta.Timestamp), delta.Timestamp, delta.T, delta.Price, delta.Count, delta.FirstUpdateId, delta.UpdateId)
-	}
-	err := s.session.ExecuteBatch(batch)
-	if err != nil {
-		s.logger.Error(err.Error())
-	}
-	return err
+	s.logger.Debug(fmt.Sprintf("batch of %d deltas inserted successfully", len(deltas)))
+	return nil
 }
 
 func (s CsDeltaStorage) Get(ctx context.Context, key *model.ProcessingKey) ([]model.Delta, error) {

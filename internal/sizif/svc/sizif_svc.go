@@ -12,14 +12,14 @@ import (
 	"go.uber.org/zap"
 )
 
-type SizifSvc[T WithTimestampMs] struct {
+type SizifSvc[T model.WithTimestampMs] struct {
 	logger          *zap.Logger
 	socratesStorage SocratesStorage[T]
 	workers         []*SizifWorker[T]
 	taskQueue       chan<- model.ProcessingKey
 }
 
-func NewSizifSvc[T WithTimestampMs](serviceType string, socratesStorage SocratesStorage[T], parquetStorage ParquetStorage[T], dataTransformator DataTransformator[T], keyLocker KeyLocker, numWorkers int) *SizifSvc[T] {
+func NewSizifSvc[T model.WithTimestampMs](serviceType string, socratesStorage SocratesStorage[T], parquetStorage ParquetStorage[T], dataTransformator DataTransformator[T], keyLocker KeyLocker, numWorkers int) *SizifSvc[T] {
 	taskQueue := make(chan model.ProcessingKey, 1024)
 	var workers []*SizifWorker[T]
 	for i := 0; i < numWorkers; i++ {
@@ -37,19 +37,23 @@ func (s *SizifSvc[T]) Start(ctx context.Context) {
 	for _, worker := range s.workers {
 		go worker.Start(ctx)
 	}
+	s.logger.Info("Service started")
 	for {
+		newKeys := 0
 		keys, err := s.socratesStorage.GetKeys(ctx)
 		if err != nil {
 			s.logger.Error(err.Error())
 		} else {
-			maxAllowedHourNo := cs.GetHourNo(time.Now().UnixMilli()) - 1
+			maxAllowedHourNo := cs.GetHourNo(time.Now().UnixMilli()) - 3
 			for _, key := range keys {
 				if key.HourNo <= maxAllowedHourNo {
 					s.taskQueue <- key
+					newKeys++
 				}
 			}
 		}
-		sleep(60)
+		s.logger.Info(fmt.Sprintf("scheduled %d new keys", newKeys))
+		sleep(60 * 5)
 	}
 }
 
