@@ -40,6 +40,7 @@ spec:
       name: prometheus-storage
     spec:
       accessModes: [ "ReadWriteOnce" ]
+      storageClassName: prometheus-storage
       resources:
         requests:
           storage: 25Gi
