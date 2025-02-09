@@ -30,3 +30,12 @@ data:
         static_configs:
           - targets:
               - kube-state-metrics.kube-system.svc.cluster.local:8080
+      - job_name: nestor
+        honor_timestamps: true
+        scrape_interval: 15s
+        scrape_timeout: 10s
+        metrics_path: /metrics
+        scheme: http
+        static_configs:
+          - targets:
+              - nestor.default.svc.cluster.local:9001
