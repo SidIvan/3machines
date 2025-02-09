@@ -5,11 +5,17 @@ import (
 	"fmt"
 	"os"
 
+	"time"
+
 	"github.com/parquet-go/parquet-go"
 )
 
 func main() {
-
+	ts := time.Now()
+	fmt.Println(ts)
+	keyDate := ts.Format("2006-01-02")
+	keyTime := ts.Format("15-04-05")
+	fmt.Println(fmt.Sprintf("%s/%s/%s/%s.parquet", "binance/deltas", "BTCUSDT", keyDate, keyTime))
 }
 
 func pqtWrite() {
