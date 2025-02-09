@@ -9,6 +9,7 @@ allowedTopologies:
   - key: app
     values:
     - prometheus
+    - dwarf
 volumeBindingMode: WaitForFirstConsumer
 parameters:
   type: pd-ssd
