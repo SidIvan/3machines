@@ -8,6 +8,7 @@ spec:
   selector:
     matchLabels:
       app: grafana
+  serviceName: grafana
   template:
     metadata:
       name: grafana
