@@ -1,6 +1,7 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
+  namespace: monitoring
   name: prometheus
 spec:
   selector:

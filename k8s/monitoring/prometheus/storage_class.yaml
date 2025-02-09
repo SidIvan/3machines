@@ -1,7 +1,7 @@
 kind: StorageClass
 apiVersion: storage.k8s.io/v1
-namespace: monitoring
 metadata:
+  namespace: monitoring
   name: prometheus-storage
 provisioner: rancher.io/local-path
 allowedTopologies:
