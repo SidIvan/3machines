@@ -4,8 +4,9 @@ metadata:
   name: prometheus-nodeport-service
   namespace: monitoring
   annotations:
-      prometheus.io/scrape: 'true'
-      prometheus.io/port:   '9090'
+      prometheus.io/scrape:   'true'
+      prometheus.io/port:     '9090'
+      prometheus.io/path: '/metrics'
 spec:
   selector: 
     app: prometheus

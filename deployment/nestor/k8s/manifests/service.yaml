@@ -4,6 +4,9 @@ metadata:
   labels:
     app: nestor
   name: nestor
+  annotations:
+      prometheus.io/scrape: 'true'
+      prometheus.io/port:   '9001'
 spec:
   ports:
   - port: 9001
