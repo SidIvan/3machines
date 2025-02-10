@@ -125,9 +125,7 @@ func (s *App) Start() {
 		symbols = append(symbols, symbol.Symbol)
 	}
 	s.metrics.UpdateMetrics(exInfo.Symbols)
-	systemMonitorer := metrics.NewSystemMonitorer(s.metrics)
 	s.runFixers()
-	go systemMonitorer.CronUpdateMetrics()
 	s.logger.Info("App started")
 	go s.deltaRecSvc.ReceiveDeltasPairs(baseContext)
 	go s.snapshotSvc.StartReceiveAndSaveSnapshots(baseContext)
