@@ -23,13 +23,13 @@ func NewCsStorageMetrics(storageName string) *CsStorageMetrics {
 		}),
 		dataBatchInsertLatencySummary: promauto.NewSummary(prometheus.SummaryOpts{
 			Namespace:   NestorMetricsNamespace,
-			Name:        "insert_latency",
+			Name:        "data_batch_insert_latency",
 			ConstLabels: metricsLabels,
 			Objectives:  map[float64]float64{0.5: 0.01, 0.75: 0.01, 0.90: 0.01, 0.95: 0.01, 0.99: 0.01},
 		}),
 		insertQueryLatencySummary: promauto.NewSummary(prometheus.SummaryOpts{
 			Namespace:   NestorMetricsNamespace,
-			Name:        "insert_latency",
+			Name:        "data_insert_latency",
 			ConstLabels: metricsLabels,
 			Objectives:  map[float64]float64{0.5: 0.01, 0.75: 0.01, 0.90: 0.01, 0.95: 0.01, 0.99: 0.01},
 		}),
