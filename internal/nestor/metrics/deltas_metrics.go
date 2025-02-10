@@ -5,6 +5,7 @@ import (
 	"DeltaReceiver/internal/nestor/svc"
 	"DeltaReceiver/pkg/log"
 	"fmt"
+
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"go.uber.org/zap"
@@ -18,6 +19,7 @@ type deltaMetrics struct {
 	ReceivedDeltasTotal prometheus.Counter
 	SentDeltasTotal     prometheus.Counter
 	SavedDeltasTotal    prometheus.Counter
+	RecvDeltaErr        prometheus.Counter
 }
 
 func newDeltaMetrics() *deltaMetrics {
@@ -85,4 +87,14 @@ func (s *deltaMetrics) processMetrics(deltas []model.Delta, metrics map[string]p
 		}
 	}
 	totalMetric.Add(float64(len(deltas)))
+}
+
+func (s *deltaMetrics) IncDeltaRecvErr() {
+	if s.RecvDeltaErr == nil {
+		s.RecvDeltaErr = promauto.NewCounter(prometheus.CounterOpts{
+			Namespace: BinanceDeltasNamespace,
+			Name:      "recieve_deltas_errors",
+		})
+	}
+	s.RecvDeltaErr.Inc()
 }

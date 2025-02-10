@@ -6,8 +6,9 @@ import (
 	"DeltaReceiver/internal/nestor/svc"
 	bmodel "DeltaReceiver/pkg/binance/model"
 	"DeltaReceiver/pkg/log"
-	"go.uber.org/zap"
 	"strings"
+
+	"go.uber.org/zap"
 )
 
 type Metrics struct {
@@ -58,4 +59,12 @@ func (s *Metrics) UpdateMetrics(symbolInfos []bmodel.SymbolInfo) {
 
 func getMetricKey(symbol string) string {
 	return strings.ToUpper(symbol)
+}
+
+func (s *Metrics) IncDeltaRecvErr() {
+	s.deltasM.IncDeltaRecvErr()
+}
+
+func (s *Metrics) IncTicksRecvErr() {
+	s.ticksM.IncTicksRecvErr()
 }

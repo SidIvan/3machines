@@ -64,7 +64,9 @@ const (
 
 type MetricsHolder interface {
 	ProcessDeltaMetrics([]model.Delta, TypeOfEvent)
+	IncDeltaRecvErr()
 	ProcessTickMetrics([]bmodel.SymbolTick, TypeOfEvent)
+	IncTicksRecvErr()
 	ProcessSnapshotMetrics([]model.DepthSnapshotPart, TypeOfEvent)
 	ProcessExInfoMetrics(TypeOfEvent)
 	UpdateMetrics([]bmodel.SymbolInfo)

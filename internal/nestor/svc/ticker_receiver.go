@@ -59,6 +59,7 @@ func (s *TickerReceiver) ReceiveAndSend(ctx context.Context) {
 	for !s.shutdown.Load() {
 		batch, err := s.ReceiveBatch(ctx)
 		if err != nil {
+			s.metrics.IncTicksRecvErr()
 			s.logger.Error(err.Error())
 		} else {
 			s.metrics.ProcessTickMetrics(batch, Receive)
@@ -79,7 +80,7 @@ func (s *TickerReceiver) ReceiveBatch(ctx context.Context) ([]bmodel.SymbolTick,
 		tick, err := s.receiver.ReceiveTicks(ctxWithTimeout)
 		cancel()
 		if err != nil {
-			return nil, fmt.Errorf("%w", err)
+			return ticks, fmt.Errorf("%w", err)
 		}
 		if tick != nil {
 			ticks = append(ticks, *tick)

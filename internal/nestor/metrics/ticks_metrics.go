@@ -5,6 +5,7 @@ import (
 	bmodel "DeltaReceiver/pkg/binance/model"
 	"DeltaReceiver/pkg/log"
 	"fmt"
+
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"go.uber.org/zap"
@@ -18,6 +19,7 @@ type ticksMetrics struct {
 	ReceivedTicksTotal prometheus.Counter
 	SentTicksTotal     prometheus.Counter
 	SavedTicksTotal    prometheus.Counter
+	RecvTicksErr       prometheus.Counter
 }
 
 func newTicksMetrics() *ticksMetrics {
@@ -85,4 +87,14 @@ func (s *ticksMetrics) processMetrics(ticks []bmodel.SymbolTick, metrics map[str
 		}
 	}
 	totalMetric.Add(float64(len(ticks)))
+}
+
+func (s *ticksMetrics) IncTicksRecvErr() {
+	if s.RecvTicksErr == nil {
+		s.RecvTicksErr = promauto.NewCounter(prometheus.CounterOpts{
+			Namespace: BinanceDeltasNamespace,
+			Name:      "recieve_book_ticks_errors",
+		})
+	}
+	s.RecvTicksErr.Inc()
 }
