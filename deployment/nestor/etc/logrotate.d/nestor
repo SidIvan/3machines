@@ -1,0 +1,8 @@
+/app/log/nestor.log {
+    missingok
+    notifempty
+    copytruncate
+    compress
+    delaycompress
+    rotate 14
+}
