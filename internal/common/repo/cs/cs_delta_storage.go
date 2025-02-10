@@ -15,6 +15,7 @@ import (
 type CsDeltaStorage struct {
 	logger              *zap.Logger
 	session             *gocql.Session
+	metrics             CsStorageMetrics
 	tableName           string
 	dataUploader        *CsDataUploader[model.Delta]
 	keysTableName       string
@@ -24,13 +25,14 @@ type CsDeltaStorage struct {
 	deleteKeyStatement  string
 }
 
-func NewCsDeltaStorageWO(session *gocql.Session, tableName string, keysTableName string) *CsDeltaStorage {
+func NewCsDeltaStorageWO(session *gocql.Session, metrics CsStorageMetrics, tableName string, keysTableName string) *CsDeltaStorage {
 	logger := log.GetLogger("CsDeltaStorage")
 	deltaStorage := &CsDeltaStorage{
 		logger:        logger,
 		session:       session,
+		metrics:       metrics,
 		tableName:     tableName,
-		dataUploader:  NewCsDataUploader(logger, session, keysTableName, NewDeltaInsertQueryBuilder(tableName)),
+		dataUploader:  NewCsDataUploader(logger, session, metrics, keysTableName, NewDeltaInsertQueryBuilder(tableName)),
 		keysTableName: keysTableName,
 	}
 	return deltaStorage
@@ -59,10 +61,13 @@ func (s CsDeltaStorage) SendDeltas(ctx context.Context, deltas []model.Delta) er
 	csInsertStart := time.Now()
 	defer func() {
 		now := time.Now()
-		s.logger.Debug(fmt.Sprintf("inserting deltas from %d to %d got %d ms", csInsertStart.UnixMilli(), now.UnixMilli(), now.UnixMilli()-csInsertStart.UnixMilli()))
+		latencyMs := now.UnixMilli() - csInsertStart.UnixMilli()
+		s.logger.Debug(fmt.Sprintf("inserting deltas from %d to %d got %d ms", csInsertStart.UnixMilli(), now.UnixMilli(), latencyMs))
+		s.metrics.UpdInsertDataBatchLatency(latencyMs)
 	}()
 	err := s.dataUploader.UploadData(ctx, deltas)
 	if err != nil {
+		s.metrics.IncErrCount()
 		s.logger.Error(err.Error())
 		return errors.New("batch not saved")
 	}

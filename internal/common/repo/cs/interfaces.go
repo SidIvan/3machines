@@ -13,3 +13,9 @@ type InsertQueryBuilder[T any] interface {
 type InsertKeyQueryBuilder interface {
 	BuildQuery(*gocql.Batch, model.ProcessingKey)
 }
+
+type CsStorageMetrics interface {
+	IncErrCount()
+	UpdInsertDataBatchLatency(int64)
+	UpdInsertQueryLatency(int64)
+}

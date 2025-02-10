@@ -15,6 +15,7 @@ import (
 type CsSnapshotStorage struct {
 	logger              *zap.Logger
 	session             *gocql.Session
+	metrics             CsStorageMetrics
 	tableName           string
 	keysTableName       string
 	dataUploader        *CsDataUploader[model.DepthSnapshotPart]
@@ -24,14 +25,15 @@ type CsSnapshotStorage struct {
 	deleteKeyStatement  string
 }
 
-func NewCsSnapshotStorageWO(session *gocql.Session, tableName string, keysTableName string) *CsSnapshotStorage {
+func NewCsSnapshotStorageWO(session *gocql.Session, metrics CsStorageMetrics, tableName string, keysTableName string) *CsSnapshotStorage {
 	logger := log.GetLogger("CsSnapshotStorage")
 	snapshotStorage := &CsSnapshotStorage{
 		logger:        logger,
 		session:       session,
+		metrics:       metrics,
 		tableName:     tableName,
 		keysTableName: keysTableName,
-		dataUploader:  NewCsDataUploader(logger, session, keysTableName, NewSnapshotInsertQueryBuilder(tableName)),
+		dataUploader:  NewCsDataUploader(logger, session, metrics, keysTableName, NewSnapshotInsertQueryBuilder(tableName)),
 	}
 	snapshotStorage.initStatements()
 	return snapshotStorage
@@ -60,10 +62,13 @@ func (s CsSnapshotStorage) SendSnapshot(ctx context.Context, snapshotParts []mod
 	csInsertStart := time.Now()
 	defer func() {
 		now := time.Now()
-		s.logger.Debug(fmt.Sprintf("inserting snapshot from %d to %d got %d ms", csInsertStart.UnixMilli(), now.UnixMilli(), now.UnixMilli()-csInsertStart.UnixMilli()))
+		latencyMs := now.UnixMilli() - csInsertStart.UnixMilli()
+		s.logger.Debug(fmt.Sprintf("inserting snapshot from %d to %d got %d ms", csInsertStart.UnixMilli(), now.UnixMilli(), latencyMs))
+		s.metrics.UpdInsertDataBatchLatency(latencyMs)
 	}()
 	err := s.dataUploader.UploadData(ctx, snapshotParts)
 	if err != nil {
+		s.metrics.IncErrCount()
 		s.logger.Error(err.Error())
 		return errors.New("batch not saved")
 	}

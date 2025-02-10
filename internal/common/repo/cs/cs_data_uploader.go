@@ -16,6 +16,7 @@ import (
 type CsDataUploader[T model.BinanceDataRow] struct {
 	logger                     *zap.Logger
 	session                    *gocql.Session
+	metrics                    CsStorageMetrics
 	insertQueryBuilder         InsertQueryBuilder[T]
 	insertedKeys               map[model.ProcessingKey]struct{}
 	insertedKeysMut            *sync.Mutex
@@ -25,11 +26,12 @@ type CsDataUploader[T model.BinanceDataRow] struct {
 
 const microBatchSize int = 100
 
-func NewCsDataUploader[T model.BinanceDataRow](logger *zap.Logger, session *gocql.Session, keysTableName string, insertQueryBuilder InsertQueryBuilder[T]) *CsDataUploader[T] {
+func NewCsDataUploader[T model.BinanceDataRow](logger *zap.Logger, session *gocql.Session, metrics CsStorageMetrics, keysTableName string, insertQueryBuilder InsertQueryBuilder[T]) *CsDataUploader[T] {
 	var mut sync.Mutex
 	return &CsDataUploader[T]{
 		logger:                     logger,
 		session:                    session,
+		metrics:                    metrics,
 		insertQueryBuilder:         insertQueryBuilder,
 		insertedKeys:               make(map[model.ProcessingKey]struct{}),
 		insertedKeysMut:            &mut,
@@ -121,7 +123,13 @@ func (s CsDataUploader[T]) upload(ctx context.Context, key model.ProcessingKey, 
 	for _, row := range data {
 		s.insertQueryBuilder.BuildQuery(batch, key, row)
 	}
-	return s.session.ExecuteBatch(batch)
+	startQueryMs := time.Now().UnixMilli()
+	err := s.session.ExecuteBatch(batch)
+	if err != nil {
+		return err
+	}
+	s.metrics.UpdInsertQueryLatency(time.Now().UnixMilli() - startQueryMs)
+	return nil
 }
 
 func (s CsDataUploader[T]) sendNewKeys(ctx context.Context, keys []model.ProcessingKey) error {

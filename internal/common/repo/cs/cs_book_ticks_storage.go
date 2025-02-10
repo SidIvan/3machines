@@ -16,6 +16,7 @@ import (
 type CsBookTicksStorage struct {
 	logger              *zap.Logger
 	session             *gocql.Session
+	metrics             CsStorageMetrics
 	tableName           string
 	keysTableName       string
 	dataUploader        *CsDataUploader[bmodel.SymbolTick]
@@ -25,14 +26,15 @@ type CsBookTicksStorage struct {
 	deleteKeyStatement  string
 }
 
-func NewCsBookTicksStorageWO(session *gocql.Session, tableName string, keysTableName string) *CsBookTicksStorage {
+func NewCsBookTicksStorageWO(session *gocql.Session, metrics CsStorageMetrics, tableName string, keysTableName string) *CsBookTicksStorage {
 	logger := log.GetLogger("CsBookTicksStorage")
 	bookTicksStorage := &CsBookTicksStorage{
 		logger:        logger,
 		session:       session,
+		metrics:       metrics,
 		tableName:     tableName,
 		keysTableName: keysTableName,
-		dataUploader:  NewCsDataUploader(logger, session, keysTableName, (NewBookTicksInsertQueryBuilder(tableName))),
+		dataUploader:  NewCsDataUploader(logger, session, metrics, keysTableName, (NewBookTicksInsertQueryBuilder(tableName))),
 	}
 	bookTicksStorage.initStatements()
 	return bookTicksStorage
@@ -61,10 +63,13 @@ func (s CsBookTicksStorage) SendBookTicks(ctx context.Context, deltas []bmodel.S
 	csInsertStart := time.Now()
 	defer func() {
 		now := time.Now()
-		s.logger.Debug(fmt.Sprintf("inserting book ticks from %d to %d got %d ms", csInsertStart.UnixMilli(), now.UnixMilli(), now.UnixMilli()-csInsertStart.UnixMilli()))
+		latencyMs := now.UnixMilli() - csInsertStart.UnixMilli()
+		s.logger.Debug(fmt.Sprintf("inserting book ticks from %d to %d got %d ms", csInsertStart.UnixMilli(), now.UnixMilli(), latencyMs))
+		s.metrics.UpdInsertDataBatchLatency(latencyMs)
 	}()
 	err := s.dataUploader.UploadData(ctx, deltas)
 	if err != nil {
+		s.metrics.IncErrCount()
 		s.logger.Error(err.Error())
 		return errors.New("batch not saved")
 	}
