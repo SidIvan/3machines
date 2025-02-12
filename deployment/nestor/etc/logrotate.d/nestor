@@ -4,5 +4,5 @@
     copytruncate
     compress
     delaycompress
-    rotate 14
+    rotate 30
 }

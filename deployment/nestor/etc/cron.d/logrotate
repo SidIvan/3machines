@@ -1,1 +1,1 @@
-0 0 * * * root /usr/sbin/logrotate /etc/logrotate.d/nestor
+0 0 * * * root /usr/sbin/logrotate -f /etc/logrotate.d/nestor
