@@ -5,6 +5,7 @@ import (
 	"DeltaReceiver/internal/nestor/svc"
 	"DeltaReceiver/pkg/log"
 	"fmt"
+
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"go.uber.org/zap"
@@ -26,26 +27,24 @@ func newSnapshotMetrics() *snapshotMetrics {
 		ReceivedSnapshots: make(map[string]prometheus.Counter),
 		SentSnapshots:     make(map[string]prometheus.Counter),
 		SavedSnapshots:    make(map[string]prometheus.Counter),
+		ReceivedSnapshotsTotal: promauto.NewCounter(prometheus.CounterOpts{
+			Namespace: BinanceSnapshotsNamespace,
+			Name:      "received_total",
+		}),
+		SentSnapshotsTotal: promauto.NewCounter(prometheus.CounterOpts{
+			Namespace: BinanceSnapshotsNamespace,
+			Name:      "sent_total",
+		}),
+		SavedSnapshotsTotal: promauto.NewCounter(prometheus.CounterOpts{
+			Namespace: BinanceSnapshotsNamespace,
+			Name:      "saved_total",
+		}),
 	}
 }
 
 const BinanceSnapshotsNamespace = "binance_snapshots"
 
 func (s *snapshotMetrics) updateActiveMetrics(symbols []string) {
-	if s.ReceivedSnapshotsTotal == nil {
-		s.ReceivedSnapshotsTotal = promauto.NewCounter(prometheus.CounterOpts{
-			Namespace: BinanceSnapshotsNamespace,
-			Name:      "received_total",
-		})
-		s.SentSnapshotsTotal = promauto.NewCounter(prometheus.CounterOpts{
-			Namespace: BinanceSnapshotsNamespace,
-			Name:      "sent_total",
-		})
-		s.SavedSnapshotsTotal = promauto.NewCounter(prometheus.CounterOpts{
-			Namespace: BinanceSnapshotsNamespace,
-			Name:      "saved_total",
-		})
-	}
 	for _, symbol := range symbols {
 		metricKey := getMetricKey(symbol)
 		if _, ok := s.ReceivedSnapshots[metricKey]; !ok {

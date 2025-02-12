@@ -47,3 +47,4 @@ func (s CsStorageMetrics) UpdInsertDataBatchLatency(latencyMs int64) {
 func (s CsStorageMetrics) UpdInsertQueryLatency(latencyMs int64) {
 	s.insertQueryLatencySummary.Observe(float64(latencyMs))
 }
+

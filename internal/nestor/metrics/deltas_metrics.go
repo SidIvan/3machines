@@ -28,6 +28,10 @@ func newDeltaMetrics() *deltaMetrics {
 		ReceivedDeltas: make(map[string]prometheus.Counter),
 		SentDeltas:     make(map[string]prometheus.Counter),
 		SavedDeltas:    make(map[string]prometheus.Counter),
+		RecvDeltaErr: promauto.NewCounter(prometheus.CounterOpts{
+			Namespace: BinanceDeltasNamespace,
+			Name:      "recieve_deltas_errors",
+		}),
 	}
 }
 
@@ -90,11 +94,5 @@ func (s *deltaMetrics) processMetrics(deltas []model.Delta, metrics map[string]p
 }
 
 func (s *deltaMetrics) IncDeltaRecvErr() {
-	if s.RecvDeltaErr == nil {
-		s.RecvDeltaErr = promauto.NewCounter(prometheus.CounterOpts{
-			Namespace: BinanceDeltasNamespace,
-			Name:      "recieve_deltas_errors",
-		})
-	}
 	s.RecvDeltaErr.Inc()
 }

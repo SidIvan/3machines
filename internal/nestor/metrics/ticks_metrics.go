@@ -28,26 +28,28 @@ func newTicksMetrics() *ticksMetrics {
 		ReceivedTicks: make(map[string]prometheus.Counter),
 		SentTicks:     make(map[string]prometheus.Counter),
 		SavedTicks:    make(map[string]prometheus.Counter),
+		ReceivedTicksTotal: promauto.NewCounter(prometheus.CounterOpts{
+			Namespace: BinanceTicksNamespace,
+			Name:      "received_total",
+		}),
+		SentTicksTotal: promauto.NewCounter(prometheus.CounterOpts{
+			Namespace: BinanceTicksNamespace,
+			Name:      "sent_total",
+		}),
+		SavedTicksTotal: promauto.NewCounter(prometheus.CounterOpts{
+			Namespace: BinanceTicksNamespace,
+			Name:      "saved_total",
+		}),
+		RecvTicksErr: promauto.NewCounter(prometheus.CounterOpts{
+			Namespace: BinanceDeltasNamespace,
+			Name:      "recieve_book_ticks_errors",
+		}),
 	}
 }
 
 const BinanceTicksNamespace = "binance_ticks"
 
 func (s *ticksMetrics) updateActiveMetrics(symbols []string) {
-	if s.ReceivedTicksTotal == nil {
-		s.ReceivedTicksTotal = promauto.NewCounter(prometheus.CounterOpts{
-			Namespace: BinanceTicksNamespace,
-			Name:      "received_total",
-		})
-		s.SentTicksTotal = promauto.NewCounter(prometheus.CounterOpts{
-			Namespace: BinanceTicksNamespace,
-			Name:      "sent_total",
-		})
-		s.SavedTicksTotal = promauto.NewCounter(prometheus.CounterOpts{
-			Namespace: BinanceTicksNamespace,
-			Name:      "saved_total",
-		})
-	}
 	for _, symbol := range symbols {
 		metricKey := getMetricKey(symbol)
 		if _, ok := s.ReceivedTicks[metricKey]; !ok {
@@ -90,11 +92,5 @@ func (s *ticksMetrics) processMetrics(ticks []bmodel.SymbolTick, metrics map[str
 }
 
 func (s *ticksMetrics) IncTicksRecvErr() {
-	if s.RecvTicksErr == nil {
-		s.RecvTicksErr = promauto.NewCounter(prometheus.CounterOpts{
-			Namespace: BinanceDeltasNamespace,
-			Name:      "recieve_book_ticks_errors",
-		})
-	}
 	s.RecvTicksErr.Inc()
 }
