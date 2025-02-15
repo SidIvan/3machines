@@ -35,6 +35,9 @@ spec:
             mountPath: /app/log
           - name: certs
             mountPath: /etc/ssl/certs/ca-certificates.crt
+        ports:
+        - containerPort: 9001
+          name: prometheus
       volumes:
       - name: sizif-logs
         hostPath:
