@@ -6,17 +6,20 @@ import (
 	b2pqt "DeltaReceiver/internal/sizif/b2"
 	"DeltaReceiver/internal/sizif/conf"
 	"DeltaReceiver/internal/sizif/lock"
+	"DeltaReceiver/internal/sizif/metrics"
 	"DeltaReceiver/internal/sizif/svc"
 	bmodel "DeltaReceiver/pkg/binance/model"
 	"DeltaReceiver/pkg/log"
 	"context"
 	"fmt"
+	"net/http"
 	"sync"
 	"time"
 
 	"github.com/Backblaze/blazer/b2"
 	"github.com/go-zookeeper/zk"
 	"github.com/gocql/gocql"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.uber.org/zap"
 	"gopkg.in/yaml.v3"
 )
@@ -43,19 +46,22 @@ func NewApp(cfg *conf.AppConfig) *App {
 	deltaParquetStorage := b2pqt.NewB2ParquetStorage[model.Delta](b2Bucket, "binance/deltas", b2pqt.FromKey)
 	deltaTransformator := svc.NewDeltaTransformator()
 	deltaLocker := lock.NewZkLocker("binance/deltas", zkConn)
-	deltaSvc := svc.NewSizifSvc("binance/deltas", deltaSocratesStorage, deltaParquetStorage, deltaTransformator, deltaLocker, cfg.DeltaWorkers)
+	deltaMetrics := metrics.NewSizifWorkerMetrics("binance/deltas")
+	deltaSvc := svc.NewSizifSvc("binance/deltas", deltaSocratesStorage, deltaParquetStorage, deltaTransformator, deltaLocker, cfg.DeltaWorkers, deltaMetrics)
 
 	bookTicksSocratesStorage := cs.NewCsBookTicksStorageRO(csSession, cfg.SocratesCfg.BookTicksTableName, cfg.SocratesCfg.BookTicksKeyTableName)
 	bookTicksParquetStorage := b2pqt.NewB2ParquetStorage[bmodel.SymbolTick](b2Bucket, "binance/book_ticks", b2pqt.FromKey)
 	bookTicksTransformator := svc.NewBookTicksTransformator()
 	bookTicksLocker := lock.NewZkLocker("binance/book_ticks", zkConn)
-	bookTicksSvc := svc.NewSizifSvc("binance/book_ticks", bookTicksSocratesStorage, bookTicksParquetStorage, bookTicksTransformator, bookTicksLocker, cfg.BookTicksWorker)
+	bookTicksMetrics := metrics.NewSizifWorkerMetrics("binance/book_ticks")
+	bookTicksSvc := svc.NewSizifSvc("binance/book_ticks", bookTicksSocratesStorage, bookTicksParquetStorage, bookTicksTransformator, bookTicksLocker, cfg.BookTicksWorker, bookTicksMetrics)
 
 	snapshotsSocratesStorage := cs.NewCsSnapshotStorageRO(csSession, cfg.SocratesCfg.SnapshotTableName, cfg.SocratesCfg.SnapshotKeyTableName)
 	snapshotsParquetStorage := b2pqt.NewB2ParquetStorage[model.DepthSnapshotPart](b2Bucket, "binance/snapshots", b2pqt.FromData)
 	snapshotsTransformator := svc.NewDepthSnapshotTransformator()
 	snapshotsLocker := lock.NewZkLocker("binance/snapshots", zkConn)
-	snapshotsSvc := svc.NewSizifSvc("binance/snapshots", snapshotsSocratesStorage, snapshotsParquetStorage, snapshotsTransformator, snapshotsLocker, cfg.SnapshotsWorker)
+	snapshotsMetrics := metrics.NewSizifWorkerMetrics("binance/snapshots")
+	snapshotsSvc := svc.NewSizifSvc("binance/snapshots", snapshotsSocratesStorage, snapshotsParquetStorage, snapshotsTransformator, snapshotsLocker, cfg.SnapshotsWorker, snapshotsMetrics)
 	return &App{
 		logger:       logger,
 		cfg:          cfg,
@@ -89,6 +95,13 @@ func initConnections(cfg *conf.AppConfig) (*zk.Conn, *b2.Bucket, *gocql.Session)
 
 func (s *App) Start() {
 	baseContext := context.Background()
+	go func() {
+		http.Handle("/metrics", promhttp.Handler())
+		err := http.ListenAndServe(":9001", nil)
+		if err != nil {
+			panic(err)
+		}
+	}()
 	go s.deltasSvc.Start(baseContext)
 	go s.bookTicksSvc.Start(baseContext)
 	go s.snapshotsSvc.Start(baseContext)

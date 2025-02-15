@@ -33,3 +33,7 @@ type KeyLocker interface {
 	Unlock(context.Context, *model.ProcessingKey) error
 	MarkProcessed(context.Context, *model.ProcessingKey) error
 }
+
+type Metrics interface {
+	IncInvalidDataCounter()
+}

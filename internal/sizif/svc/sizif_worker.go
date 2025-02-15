@@ -17,11 +17,12 @@ type SizifWorker[T model.WithTimestampMs] struct {
 	socratesStorage   SocratesStorage[T]
 	parquetStorage    ParquetStorage[T]
 	dataTransformator DataTransformator[T]
+	metrics           Metrics
 	taskQueue         <-chan model.ProcessingKey
 	keyLocker         KeyLocker
 }
 
-func NewSizifWorker[T model.WithTimestampMs](serviceType string, socratesStorage SocratesStorage[T], parquetStorage ParquetStorage[T], dataTransformator DataTransformator[T], taskQueue <-chan model.ProcessingKey, keyLocker KeyLocker) *SizifWorker[T] {
+func NewSizifWorker[T model.WithTimestampMs](serviceType string, socratesStorage SocratesStorage[T], parquetStorage ParquetStorage[T], dataTransformator DataTransformator[T], taskQueue <-chan model.ProcessingKey, keyLocker KeyLocker, metrics Metrics) *SizifWorker[T] {
 	var shutdown atomic.Bool
 	shutdown.Store(false)
 	done := make(chan struct{})
@@ -34,6 +35,7 @@ func NewSizifWorker[T model.WithTimestampMs](serviceType string, socratesStorage
 		dataTransformator: dataTransformator,
 		taskQueue:         taskQueue,
 		keyLocker:         keyLocker,
+		metrics:           metrics,
 	}
 }
 
@@ -114,6 +116,7 @@ func (s *SizifWorker[T]) processKey(ctx context.Context, key model.ProcessingKey
 	transformedData, isDataValid := s.dataTransformator.Transform(data, &key)
 	if !isDataValid {
 		s.logger.Warn(fmt.Sprintf("Invalid data for key %s", &key))
+		s.metrics.IncInvalidDataCounter()
 	}
 	for _, dataGroup := range transformedData {
 		for i := 0; i < 3; i++ {
