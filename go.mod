@@ -11,7 +11,6 @@ require (
 	github.com/gocql/gocql v1.7.0
 	github.com/gorilla/websocket v1.5.1
 	github.com/parquet-go/parquet-go v0.24.0
-	github.com/pbnjay/memory v0.0.0-20210728143218-7b4eea64cf58
 	github.com/prometheus/client_golang v1.18.0
 	go.mongodb.org/mongo-driver v1.13.1
 	go.uber.org/zap v1.26.0
