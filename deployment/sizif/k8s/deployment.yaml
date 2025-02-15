@@ -13,6 +13,9 @@ spec:
     metadata:
       labels:
         app: sizif
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9001"
     spec:
       nodeSelector:
         app: zk
