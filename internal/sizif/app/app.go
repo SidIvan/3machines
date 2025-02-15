@@ -46,21 +46,21 @@ func NewApp(cfg *conf.AppConfig) *App {
 	deltaParquetStorage := b2pqt.NewB2ParquetStorage[model.Delta](b2Bucket, "binance/deltas", b2pqt.FromKey)
 	deltaTransformator := svc.NewDeltaTransformator()
 	deltaLocker := lock.NewZkLocker("binance/deltas", zkConn)
-	deltaMetrics := metrics.NewSizifWorkerMetrics("binance/deltas")
+	deltaMetrics := metrics.NewSizifWorkerMetrics("binance_deltas")
 	deltaSvc := svc.NewSizifSvc("binance/deltas", deltaSocratesStorage, deltaParquetStorage, deltaTransformator, deltaLocker, cfg.DeltaWorkers, deltaMetrics)
 
 	bookTicksSocratesStorage := cs.NewCsBookTicksStorageRO(csSession, cfg.SocratesCfg.BookTicksTableName, cfg.SocratesCfg.BookTicksKeyTableName)
 	bookTicksParquetStorage := b2pqt.NewB2ParquetStorage[bmodel.SymbolTick](b2Bucket, "binance/book_ticks", b2pqt.FromKey)
 	bookTicksTransformator := svc.NewBookTicksTransformator()
 	bookTicksLocker := lock.NewZkLocker("binance/book_ticks", zkConn)
-	bookTicksMetrics := metrics.NewSizifWorkerMetrics("binance/book_ticks")
+	bookTicksMetrics := metrics.NewSizifWorkerMetrics("binance_book_ticks")
 	bookTicksSvc := svc.NewSizifSvc("binance/book_ticks", bookTicksSocratesStorage, bookTicksParquetStorage, bookTicksTransformator, bookTicksLocker, cfg.BookTicksWorker, bookTicksMetrics)
 
 	snapshotsSocratesStorage := cs.NewCsSnapshotStorageRO(csSession, cfg.SocratesCfg.SnapshotTableName, cfg.SocratesCfg.SnapshotKeyTableName)
 	snapshotsParquetStorage := b2pqt.NewB2ParquetStorage[model.DepthSnapshotPart](b2Bucket, "binance/snapshots", b2pqt.FromData)
 	snapshotsTransformator := svc.NewDepthSnapshotTransformator()
 	snapshotsLocker := lock.NewZkLocker("binance/snapshots", zkConn)
-	snapshotsMetrics := metrics.NewSizifWorkerMetrics("binance/snapshots")
+	snapshotsMetrics := metrics.NewSizifWorkerMetrics("binance_snapshots")
 	snapshotsSvc := svc.NewSizifSvc("binance/snapshots", snapshotsSocratesStorage, snapshotsParquetStorage, snapshotsTransformator, snapshotsLocker, cfg.SnapshotsWorker, snapshotsMetrics)
 	return &App{
 		logger:       logger,
