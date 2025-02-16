@@ -16,7 +16,7 @@ import (
 	"go.uber.org/zap"
 )
 
-const BatchSize = 10000
+const BatchSize = 1000
 
 type DeltaReceiver struct {
 	logger               *zap.Logger
