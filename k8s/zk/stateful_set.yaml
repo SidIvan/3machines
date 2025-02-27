@@ -31,10 +31,10 @@ spec:
         envFrom:
           - configMapRef:
               name: zk-config
-        resources:
-          requests:
-            cpu: "1m"
-            memory: 1.5Gi
+        # resources:
+        #   requests:
+        #     cpu: "1m"
+        #     memory: 1.5Gi
         volumeMounts:
         - name: zk-data
           mountPath: /var/lib/zookeeper
