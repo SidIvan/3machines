@@ -32,7 +32,7 @@ func NewAppConfigFromEnv() *AppConfig {
 	}
 	csConfig := conf.NewCsRepoConfigFromEnv("socrates")
 	dwarfCfg := pconf.NewBaseUriConfigFromEnv("dwarf.uri")
-	useLocalStorage, err := strconv.ParseBool("use.local.storage")
+	useLocalStorage, err := strconv.ParseBool(os.Getenv("use.local.storage"))
 	if err != nil {
 		panic(err)
 	}
