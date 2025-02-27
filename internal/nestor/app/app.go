@@ -2,10 +2,10 @@ package app
 
 import (
 	cconf "DeltaReceiver/internal/common/conf"
+	cm "DeltaReceiver/internal/common/metrics"
 	"DeltaReceiver/internal/common/repo/cs"
 	"DeltaReceiver/internal/nestor/cache"
 	"DeltaReceiver/internal/nestor/conf"
-	cm "DeltaReceiver/internal/common/metrics"
 	"DeltaReceiver/internal/nestor/metrics"
 	"DeltaReceiver/internal/nestor/repo"
 	"DeltaReceiver/internal/nestor/svc"
@@ -104,8 +104,10 @@ func initCs(cfg *cconf.CsRepoConfig) *gocql.Session {
 
 func (s *App) Start() {
 	baseContext := context.Background()
-	if err := s.localRepo.Connect(baseContext); err != nil {
-		s.logger.Error(err.Error())
+	if s.cfg.UseLocalStorage {
+		if err := s.localRepo.Connect(baseContext); err != nil {
+			s.logger.Error(err.Error())
+		}
 	}
 	exInfo, err := s.binanceClient.GetFullExchangeInfo(context.Background())
 	if err != nil {
@@ -122,12 +124,10 @@ func (s *App) Start() {
 	if err = s.exchangeInfoStorage.SendExchangeInfo(baseContext, exInfo); err != nil {
 		s.logger.Error(err.Error())
 	}
-	var symbols []string
-	for _, symbol := range exInfo.Symbols {
-		symbols = append(symbols, symbol.Symbol)
-	}
 	s.metrics.UpdateMetrics(exInfo.Symbols)
-	s.runFixers()
+	if s.cfg.UseLocalStorage {
+		s.runFixers()
+	}
 	s.logger.Info("App started")
 	go s.deltaRecSvc.ReceiveDeltasPairs(baseContext)
 	go s.snapshotSvc.StartReceiveAndSaveSnapshots(baseContext)

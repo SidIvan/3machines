@@ -105,7 +105,7 @@ func (s CsDataUploader[T]) sendPartition(ctx context.Context, key model.Processi
 func (s CsDataUploader[T]) sendMicroBatch(ctx context.Context, key model.ProcessingKey, data []T) error {
 	var err error
 	for range 3 {
-		ctxWithTimeout, cancel := context.WithTimeout(ctx, time.Second*3)
+		ctxWithTimeout, cancel := context.WithTimeout(ctx, time.Second*10)
 		err := s.upload(ctxWithTimeout, key, data)
 		if err == nil {
 			cancel()
@@ -184,7 +184,7 @@ func (s CsDataUploader[T]) sendKeys(ctx context.Context, keys []model.Processing
 }
 
 func (s CsDataUploader[T]) sendKeysMicroBatch(ctx context.Context, keys []model.ProcessingKey) error {
-	ctxWithTimeout, cancel := context.WithTimeout(ctx, time.Second*3)
+	ctxWithTimeout, cancel := context.WithTimeout(ctx, time.Second*10)
 	defer cancel()
 	batch := s.session.NewBatch(gocql.UnloggedBatch).WithContext(ctxWithTimeout)
 	batch.SetConsistency(gocql.LocalQuorum)
