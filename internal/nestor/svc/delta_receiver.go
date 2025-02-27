@@ -16,7 +16,7 @@ import (
 	"go.uber.org/zap"
 )
 
-const BatchSize = 1000
+const BatchSize = 10000
 
 type DeltaReceiver struct {
 	logger               *zap.Logger
@@ -29,6 +29,7 @@ type DeltaReceiver struct {
 	done                 chan struct{}
 	deltaUpdateIdWatcher *cache.DeltaUpdateIdWatcher
 	deltaHolesStorage    DeltaHolesStorage
+	useLocalStorage      bool
 }
 
 func NewDeltaReceiver(
@@ -37,7 +38,8 @@ func NewDeltaReceiver(
 	deltaStorage DeltaStorage,
 	metrics MetricsHolder,
 	deltaUpdateIdWatcher *cache.DeltaUpdateIdWatcher,
-	deltaHolesStorage DeltaHolesStorage) *DeltaReceiver {
+	deltaHolesStorage DeltaHolesStorage,
+	useLocalStorage bool) *DeltaReceiver {
 	if len(symbols) == 0 {
 		return nil
 	}
@@ -54,6 +56,7 @@ func NewDeltaReceiver(
 		done:                 make(chan struct{}),
 		deltaUpdateIdWatcher: deltaUpdateIdWatcher,
 		deltaHolesStorage:    deltaHolesStorage,
+		useLocalStorage:      useLocalStorage,
 	}
 }
 
@@ -140,6 +143,10 @@ func (s *DeltaReceiver) sendBatchToGlobalRepo(ctx context.Context, deltas []mode
 }
 
 func (s *DeltaReceiver) sendBatchToLocalRepo(ctx context.Context, deltas []model.Delta) error {
+	if !s.useLocalStorage {
+		s.logger.Debug("cannot use local storage")
+		return nil
+	} 
 	var err error
 	for i := 0; i < 3; i++ {
 		if err = s.localRepo.SaveDeltas(ctx, deltas); err == nil {

@@ -25,9 +25,10 @@ type BookTickerSvc struct {
 	shutdown         *atomic.Bool
 	dRecWg           *sync.WaitGroup
 	exInfoCache      *cache.ExchangeInfoCache
+	useLocalStorage  bool
 }
 
-func NewBookTickerSvc(config *conf.AppConfig, binanceClient BinanceClient, localRepo LocalRepo, bookTicksStorage BookTicksStorage, metrics MetricsHolder, exInfoCache *cache.ExchangeInfoCache) *BookTickerSvc {
+func NewBookTickerSvc(config *conf.AppConfig, binanceClient BinanceClient, localRepo LocalRepo, bookTicksStorage BookTicksStorage, metrics MetricsHolder, exInfoCache *cache.ExchangeInfoCache, useLocalStorage bool) *BookTickerSvc {
 	var shutdown atomic.Bool
 	var dRecWg sync.WaitGroup
 	shutdown.Store(false)
@@ -41,6 +42,7 @@ func NewBookTickerSvc(config *conf.AppConfig, binanceClient BinanceClient, local
 		shutdown:         &shutdown,
 		dRecWg:           &dRecWg,
 		exInfoCache:      exInfoCache,
+		useLocalStorage:  useLocalStorage,
 	}
 }
 
@@ -56,13 +58,13 @@ func (s *BookTickerSvc) getNewReceivers(ctx context.Context) []*TickerReceiver {
 	}
 	s.logger.Info(fmt.Sprintf("start get ticks of %d different symbols", len(symbols)))
 	var newReceivers []*TickerReceiver
-	numTickerReceivers := 30
+	numTickerReceivers := 7
 	for i := 0; i < numTickerReceivers; i++ {
 		var symbolsForReceiver []string
 		for j := 0; j*numTickerReceivers+i < len(symbols); j++ {
 			symbolsForReceiver = append(symbolsForReceiver, symbols[j*numTickerReceivers+i])
 		}
-		if newReceiver := NewTickerReceiver(s.cfg.BinanceHttpConfig, symbolsForReceiver, s.localRepo, s.bookTicksStorage, s.metrics); newReceiver != nil {
+		if newReceiver := NewTickerReceiver(s.cfg.BinanceHttpConfig, symbolsForReceiver, s.localRepo, s.bookTicksStorage, s.metrics, s.useLocalStorage); newReceiver != nil {
 			newReceivers = append(newReceivers, newReceiver)
 		}
 	}

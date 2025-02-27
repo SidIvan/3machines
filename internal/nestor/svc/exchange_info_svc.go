@@ -17,30 +17,32 @@ import (
 )
 
 type ExchangeInfoSvc struct {
-	logger        *zap.Logger
-	binanceClient BinanceClient
-	localRepo     LocalRepo
-	exInfoStorage ExchangeInfoStorage
-	metrics       MetricsHolder
-	cfg           *conf.AppConfig
-	shutdown      *atomic.Bool
-	done          chan struct{}
-	exInfoCache   *cache.ExchangeInfoCache
+	logger          *zap.Logger
+	binanceClient   BinanceClient
+	localRepo       LocalRepo
+	exInfoStorage   ExchangeInfoStorage
+	metrics         MetricsHolder
+	cfg             *conf.AppConfig
+	shutdown        *atomic.Bool
+	done            chan struct{}
+	exInfoCache     *cache.ExchangeInfoCache
+	useLocalStorage bool
 }
 
-func NewExchangeInfoSvc(config *conf.AppConfig, binanceClient BinanceClient, localRepo LocalRepo, exInfoStorage ExchangeInfoStorage, metrics MetricsHolder, infoCache *cache.ExchangeInfoCache) *ExchangeInfoSvc {
+func NewExchangeInfoSvc(config *conf.AppConfig, binanceClient BinanceClient, localRepo LocalRepo, exInfoStorage ExchangeInfoStorage, metrics MetricsHolder, infoCache *cache.ExchangeInfoCache, useLocalStorage bool) *ExchangeInfoSvc {
 	var shutdown atomic.Bool
 	shutdown.Store(false)
 	return &ExchangeInfoSvc{
-		logger:        log.GetLogger("ExchangeInfoSvc"),
-		binanceClient: binanceClient,
-		metrics:       metrics,
-		localRepo:     localRepo,
-		exInfoStorage: exInfoStorage,
-		cfg:           config,
-		shutdown:      &shutdown,
-		done:          make(chan struct{}),
-		exInfoCache:   infoCache,
+		logger:          log.GetLogger("ExchangeInfoSvc"),
+		binanceClient:   binanceClient,
+		metrics:         metrics,
+		localRepo:       localRepo,
+		exInfoStorage:   exInfoStorage,
+		cfg:             config,
+		shutdown:        &shutdown,
+		done:            make(chan struct{}),
+		exInfoCache:     infoCache,
+		useLocalStorage: useLocalStorage,
 	}
 }
 
@@ -82,8 +84,9 @@ func (s *ExchangeInfoSvc) StartReceiveExInfo(ctx context.Context) {
 
 func (s *ExchangeInfoSvc) SaveExchangeInfo(ctx context.Context, exInfo *bmodel.ExchangeInfo) error {
 	s.logger.Info("sending exchange info")
+	var err error
 	for i := 0; i < 3; i++ {
-		if err := s.exInfoStorage.SendExchangeInfo(ctx, exInfo); err == nil {
+		if err = s.exInfoStorage.SendExchangeInfo(ctx, exInfo); err == nil {
 			s.logger.Info("successfully sent to Ch")
 			s.metrics.ProcessExInfoMetrics(Send)
 			return nil
@@ -91,6 +94,10 @@ func (s *ExchangeInfoSvc) SaveExchangeInfo(ctx context.Context, exInfo *bmodel.E
 			s.logger.Warn("failed send to Ch, retry")
 			//s.globalRepo.Reconnect(ctx)
 		}
+	}
+	if !s.useLocalStorage {
+		s.logger.Debug("cannot use local storage")
+		return err
 	}
 	s.exInfoStorage.Reconnect(ctx)
 	s.logger.Warn("failed send to Ch, try save to mongo")

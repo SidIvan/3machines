@@ -24,9 +24,10 @@ type TickerReceiver struct {
 	symbols          []string
 	shutdown         *atomic.Bool
 	done             chan struct{}
+	useLocalStorage  bool
 }
 
-func NewTickerReceiver(cfg *binance.BinanceHttpClientConfig, symbols []string, localRepo LocalRepo, bookTicksStorage BookTicksStorage, metrics MetricsHolder) *TickerReceiver {
+func NewTickerReceiver(cfg *binance.BinanceHttpClientConfig, symbols []string, localRepo LocalRepo, bookTicksStorage BookTicksStorage, metrics MetricsHolder, useLocalStorage bool) *TickerReceiver {
 	if len(symbols) == 0 {
 		return nil
 	}
@@ -41,6 +42,7 @@ func NewTickerReceiver(cfg *binance.BinanceHttpClientConfig, symbols []string, l
 		metrics:          metrics,
 		shutdown:         &shutdown,
 		done:             make(chan struct{}),
+		useLocalStorage:  useLocalStorage,
 	}
 }
 
@@ -116,6 +118,10 @@ func (s *TickerReceiver) sendBatchToGlobalRepo(ctx context.Context, ticks []bmod
 }
 
 func (s *TickerReceiver) sendBatchToLocalRepo(ctx context.Context, ticks []bmodel.SymbolTick) error {
+	if !s.useLocalStorage {
+		s.logger.Debug("cannot use local storage")
+		return nil
+	}
 	var err error
 	for i := 0; i < 3; i++ {
 		if err := s.localRepo.SaveBookTicker(ctx, ticks); err == nil {

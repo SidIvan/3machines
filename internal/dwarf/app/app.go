@@ -34,7 +34,7 @@ func NewApp(cfg *cfg.AppConfig) *App {
 		logger:   logger,
 		dwarfSvc: dwarfSvc,
 		httpServer: &http.Server{
-			Addr:    fmt.Sprintf(":%d", cfg.NestorListenPort),
+			Addr:    fmt.Sprintf(":%d", cfg.ListenPort),
 			Handler: initApi(dwarfSvc, metrics, logger),
 		},
 		deltaHolesStorage: deltaHolesStorage,

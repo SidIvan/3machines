@@ -25,6 +25,7 @@ type DeltaReceiverSvc struct {
 	exInfoCache          *cache.ExchangeInfoCache
 	deltaUpdateIdWatcher *cache.DeltaUpdateIdWatcher
 	deltaHolesStorage    DeltaHolesStorage
+	useLocalStorage      bool
 }
 
 func NewDeltaReceiverSvc(
@@ -35,7 +36,8 @@ func NewDeltaReceiverSvc(
 	metricsHolder MetricsHolder,
 	exInfoCache *cache.ExchangeInfoCache,
 	deltaUpdateIdWatcher *cache.DeltaUpdateIdWatcher,
-	deltaHolesStorage DeltaHolesStorage) *DeltaReceiverSvc {
+	deltaHolesStorage DeltaHolesStorage,
+	useLocalStorage bool) *DeltaReceiverSvc {
 	var shutdown atomic.Bool
 	shutdown.Store(false)
 	return &DeltaReceiverSvc{
@@ -49,6 +51,7 @@ func NewDeltaReceiverSvc(
 		exInfoCache:          exInfoCache,
 		deltaUpdateIdWatcher: deltaUpdateIdWatcher,
 		deltaHolesStorage:    deltaHolesStorage,
+		useLocalStorage:      useLocalStorage,
 	}
 }
 
@@ -64,13 +67,13 @@ func (s *DeltaReceiverSvc) getAndActivateNewReceivers(ctx context.Context) []*De
 	}
 	s.logger.Info(fmt.Sprintf("start get deltas of %d different symbols", len(symbols)))
 	var newReceivers []*DeltaReceiver
-	numReceivers := 30
+	numReceivers := 7
 	for i := 0; i < numReceivers; i++ {
 		var symbolsForReceiver []string
 		for j := 0; j*numReceivers+i < len(symbols); j++ {
 			symbolsForReceiver = append(symbolsForReceiver, symbols[j*numReceivers+i])
 		}
-		if newReceiver := NewDeltaReceiver(s.cfg.BinanceHttpConfig, symbolsForReceiver, s.localRepo, s.deltaStorage, s.metricsHolder, s.deltaUpdateIdWatcher, s.deltaHolesStorage); newReceiver != nil {
+		if newReceiver := NewDeltaReceiver(s.cfg.BinanceHttpConfig, symbolsForReceiver, s.localRepo, s.deltaStorage, s.metricsHolder, s.deltaUpdateIdWatcher, s.deltaHolesStorage, s.useLocalStorage); newReceiver != nil {
 			newReceivers = append(newReceivers, newReceiver)
 		}
 	}
@@ -92,12 +95,13 @@ func (s *DeltaReceiverSvc) getAndActivateNewReceivers(ctx context.Context) []*De
 
 func (s *DeltaReceiverSvc) gracefullyReconnectReceivers(ctx context.Context) {
 	newReceivers := s.getAndActivateNewReceivers(ctx)
-	for _, receiver := range s.deltaReceivers {
+	oldReceivers := s.deltaReceivers
+	s.deltaReceivers = newReceivers
+	for _, receiver := range oldReceivers {
 		ctxWithTimeout, cancel := context.WithTimeout(ctx, 10*time.Second)
 		receiver.Shutdown(ctxWithTimeout)
 		cancel()
 	}
-	s.deltaReceivers = newReceivers
 }
 
 func (s *DeltaReceiverSvc) ReceiveDeltasPairs(ctx context.Context) {

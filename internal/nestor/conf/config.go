@@ -16,6 +16,7 @@ type AppConfig struct {
 	LocalRepoCfg        *LocalRepoConfig                 `yaml:"local.repo"`
 	DwarfUrl            *pconf.BaseUriConfig             `yaml:"dwarf.url"`
 	CsCfg               *conf.CsRepoConfig               `yaml:"glogal.repo.binace"`
+	UseLocalStorage     bool                             `yaml:"use.local.storage"`
 }
 
 func NewAppConfigFromEnv() *AppConfig {
@@ -31,6 +32,10 @@ func NewAppConfigFromEnv() *AppConfig {
 	}
 	csConfig := conf.NewCsRepoConfigFromEnv("socrates")
 	dwarfCfg := pconf.NewBaseUriConfigFromEnv("dwarf.uri")
+	useLocalStorage, err := strconv.ParseBool("use.local.storage")
+	if err != nil {
+		panic(err)
+	}
 	return &AppConfig{
 		BinanceHttpConfig:   binanceClientConfig,
 		LocalRepoCfg:        localRepoConfig,
@@ -38,6 +43,7 @@ func NewAppConfigFromEnv() *AppConfig {
 		ExchangeInfoUpdPerM: int16(exchangeInfoUpdatePeriodM),
 		DwarfUrl:            dwarfCfg,
 		CsCfg:               csConfig,
+		UseLocalStorage:     useLocalStorage,
 	}
 }
 

@@ -65,10 +65,11 @@ func NewApp(cfg *conf.AppConfig) *App {
 	exchangeInfoStorage := cs.NewExchangeInfoStorage(csSession, csCfg.ExchangeInfoTableName)
 	localRepo := repo.NewLocalMongoRepo(cfg.LocalRepoCfg)
 	binanceClient := web.NewBinanceClient(cfg.BinanceHttpConfig, exInfoCache)
-	deltaRecSvc := svc.NewDeltaReceiverSvc(cfg, binanceClient, localRepo, deltaStorage, metricsHolder, exInfoCache, deltaHolesIdWatcher, deltaHolesStorage)
-	snapshotSvc := svc.NewSnapshotSvc(cfg, binanceClient, localRepo, snapshotStorage, metricsHolder, exInfoCache)
-	exInfoSvc := svc.NewExchangeInfoSvc(cfg, binanceClient, localRepo, exchangeInfoStorage, metricsHolder, exInfoCache)
-	bookTickerSvc := svc.NewBookTickerSvc(cfg, binanceClient, localRepo, bookTicksStorage, metricsHolder, exInfoCache)
+	useLocalStorage := cfg.UseLocalStorage
+	deltaRecSvc := svc.NewDeltaReceiverSvc(cfg, binanceClient, localRepo, deltaStorage, metricsHolder, exInfoCache, deltaHolesIdWatcher, deltaHolesStorage, useLocalStorage)
+	snapshotSvc := svc.NewSnapshotSvc(cfg, binanceClient, localRepo, snapshotStorage, metricsHolder, exInfoCache, useLocalStorage)
+	exInfoSvc := svc.NewExchangeInfoSvc(cfg, binanceClient, localRepo, exchangeInfoStorage, metricsHolder, exInfoCache, useLocalStorage)
+	bookTickerSvc := svc.NewBookTickerSvc(cfg, binanceClient, localRepo, bookTicksStorage, metricsHolder, exInfoCache, useLocalStorage)
 	deltaFixer := svc.NewDeltaFixer(cfg, deltaStorage, localRepo)
 	return &App{
 		logger:              logger,

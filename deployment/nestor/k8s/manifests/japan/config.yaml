@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: nestor-canary-config
+  name: nestor-japan-config
 data:
   binance.client.stream.uri.schema: wss://
   binance.client.stream.uri.host: stream.binance.com
@@ -24,4 +24,4 @@ data:
   dwarf.uri.schema: http://
   dwarf.uri.host: "185.178.44.208"
   dwarf.uri.port: "8080"
-  use.local.storage: "true"
+  use.local.storage: "false"

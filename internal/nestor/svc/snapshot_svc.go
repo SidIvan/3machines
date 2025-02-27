@@ -28,9 +28,10 @@ type SnapshotSvc struct {
 	shutdown          *atomic.Bool
 	done              chan struct{}
 	exInfoCache       *cache.ExchangeInfoCache
+	useLocalStorage   bool
 }
 
-func NewSnapshotSvc(config *conf.AppConfig, binanceClient BinanceClient, localRepo LocalRepo, snapshotStorage SnapshotStorage, metricsHolder MetricsHolder, infoCache *cache.ExchangeInfoCache) *SnapshotSvc {
+func NewSnapshotSvc(config *conf.AppConfig, binanceClient BinanceClient, localRepo LocalRepo, snapshotStorage SnapshotStorage, metricsHolder MetricsHolder, infoCache *cache.ExchangeInfoCache, useLocalStorage bool) *SnapshotSvc {
 	var shutdown atomic.Bool
 	shutdown.Store(false)
 	return &SnapshotSvc{
@@ -44,6 +45,7 @@ func NewSnapshotSvc(config *conf.AppConfig, binanceClient BinanceClient, localRe
 		shutdown:          &shutdown,
 		done:              make(chan struct{}),
 		exInfoCache:       infoCache,
+		useLocalStorage:   useLocalStorage,
 	}
 }
 
@@ -112,6 +114,10 @@ func (s *SnapshotSvc) ReceiveAndSaveSnapshot(ctx context.Context, symbol string)
 	err = s.saveSnapshotToGlobalRepo(ctx, snapshot)
 	if err == nil {
 		return limit, nil
+	}
+	if !s.useLocalStorage {
+		s.logger.Debug("cannot use local storage")
+		return "", err
 	}
 	err = s.saveSnapshotToLocalRepo(ctx, snapshot)
 	if err == nil {
