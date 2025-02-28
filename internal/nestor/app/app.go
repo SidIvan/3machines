@@ -117,6 +117,7 @@ func NewApp(cfg *conf.AppConfig) *App {
 		exInfoSvc:           exInfoSvc,
 		exInfoCache:         exInfoCache,
 		binanceClient:       binanceClient,
+		exchangeInfoStorage: exchangeInfoCsStorage,
 		metrics:             metricsHolder,
 		deltaFixer:          deltaFixer,
 		ticksFixer:          ticksFixer,
@@ -170,7 +171,7 @@ func (s *App) Start() {
 		}
 	}()
 	time.Sleep(2 * time.Second)
-	if err = s.exchangeInfoStorage.SendExchangeInfo(baseContext, exInfo); err != nil {
+	if err = s.exchangeInfoStorage.SendExchangeInfo(baseContext, cmodel.NewExchangeInfo(exInfo)); err != nil {
 		s.logger.Error(err.Error())
 	}
 	s.metrics.UpdateMetrics(exInfo.Symbols)

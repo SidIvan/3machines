@@ -69,7 +69,7 @@ func (s *ExchangeInfoSvc) StartReceiveExInfo(ctx context.Context) {
 			s.logger.Error(err.Error())
 		} else if lastSavedExInfo == nil {
 			s.logger.Error("error while receiving last saved exchange info from clickhouse")
-		} else if !bmodel.EqualsExchangeInfos(lastSavedExInfo, exInfo) {
+		} else if !model.EqualsExchangeInfos(lastSavedExInfo, exInfo) {
 			s.logger.Info("exchange info changed, attempt to send")
 			if err = s.saveExInfo(ctx, []model.ExchangeInfo{*model.NewExchangeInfo(exInfo)}); err != nil {
 				s.logger.Error(err.Error())

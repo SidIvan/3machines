@@ -18,9 +18,15 @@ type FileRepo[T any] struct {
 }
 
 func NewFileRepo[T any](dataType string) *FileRepo[T] {
+	dirPath := fmt.Sprintf("/var/data/%s", dataType)
+	logger := log.GetLogger(fmt.Sprintf("FileRepo[%s]", dataType))
+	err := os.MkdirAll(dirPath, 0755)
+	if err != nil {
+		logger.Error(err.Error())
+	}
 	return &FileRepo[T]{
-		logger:  log.GetLogger(fmt.Sprintf("FileRepo[%s]", dataType)),
-		dirPath: fmt.Sprintf("/var/data/%s", dataType),
+		dirPath: dirPath,
+		logger:  logger,
 	}
 }
 

@@ -38,6 +38,7 @@ func NewWsDataProcessWorker[TRecv, TResp any](
 		logger:              log.GetLogger(fmt.Sprintf("WsDataProcessWorker[%s]", dataType)),
 		dataReceiver:        dataReceiver,
 		dataTrasformator:    dataTrasformator,
+		dataStorages:        dataStorages,
 		batchSize:           batchSize,
 		metrics:             metrics,
 		saveDataWg:          sync.WaitGroup{},
@@ -82,7 +83,8 @@ func (s *WsDataProcessWorker[TRecv, TResp]) RecvAndSaveBatch(ctx context.Context
 	go func(ctx context.Context, batch []TResp) {
 		defer s.saveDataWg.Done()
 		defer s.metrics.IncEndedSaveGoroutines()
-		if err = s.Save(ctx, batch); err != nil {
+		err := s.Save(ctx, batch)
+		if err != nil {
 			s.logger.Error(err.Error())
 		}
 	}(ctx, batch)
@@ -116,6 +118,8 @@ func (s *WsDataProcessWorker[TRecv, TResp]) Save(ctx context.Context, batch []TR
 					s.logger.Warn(fmt.Sprintf("data saved to additional storage with no = %d", i))
 				}
 				return nil
+			} else {
+				s.logger.Error(err.Error())
 			}
 		}
 	}

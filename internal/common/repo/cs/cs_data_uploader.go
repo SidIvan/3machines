@@ -42,7 +42,6 @@ func NewCsDataUploader[T model.BinanceDataRow](logger *zap.Logger, session *gocq
 
 func (s CsDataUploader[T]) UploadData(ctx context.Context, data []T) error {
 	keyToDeltas := SplitDataToBatches(data)
-	s.logger.Debug(fmt.Sprintf("got batch of size %d with %d different keys", len(data), len(keyToDeltas)))
 	var wg sync.WaitGroup
 	var numKeysSuccessfullySentKeys atomic.Int32
 	for key, deltas := range keyToDeltas {
@@ -59,7 +58,6 @@ func (s CsDataUploader[T]) UploadData(ctx context.Context, data []T) error {
 	}
 	wg.Wait()
 	if numKeysSuccessfullySentKeys.Load() == int32(len(keyToDeltas)) {
-		s.logger.Debug(fmt.Sprintf("batch of %d rows inserted successfully", len(data)))
 		var keys []model.ProcessingKey
 		for key := range keyToDeltas {
 			keys = append(keys, key)
@@ -154,10 +152,8 @@ func (s CsDataUploader[T]) sendNewKeys(ctx context.Context, keys []model.Process
 		}
 	}
 	if len(keysToInsert) == 0 {
-		s.logger.Debug("no new keys")
 		return nil
 	}
-	s.logger.Debug(fmt.Sprintf("insert %d new keys", len(keysToInsert)))
 	var err error
 	for range 3 {
 		err = s.sendKeys(ctx, keysToInsert)

@@ -4,6 +4,7 @@ import (
 	bmodel "DeltaReceiver/pkg/binance/model"
 	"DeltaReceiver/pkg/log"
 	"encoding/json"
+	"reflect"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.uber.org/zap"
@@ -47,4 +48,13 @@ func (s ExchangeInfoWithMongoId) ToData() ExchangeInfo {
 		ExInfoHash: s.ExInfoHash,
 		Payload:    s.Payload,
 	}
+}
+
+func EqualsExchangeInfos(info1 *ExchangeInfo, info2 *bmodel.ExchangeInfo) bool {
+	var info11 bmodel.ExchangeInfo
+	_ = json.Unmarshal([]byte(info1.Payload), &info11)
+	return info11.Timezone == info2.Timezone &&
+		reflect.DeepEqual(info11.ExchangeFilters, info2.ExchangeFilters) &&
+		reflect.DeepEqual(info11.RateLimits, info2.RateLimits) &&
+		reflect.DeepEqual(info11.Symbols, info2.Symbols)
 }

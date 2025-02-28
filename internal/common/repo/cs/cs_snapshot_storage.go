@@ -67,7 +67,6 @@ func (s CsSnapshotStorage) SendSnapshot(ctx context.Context, snapshotParts []mod
 	defer func() {
 		now := time.Now()
 		latencyMs := now.UnixMilli() - csInsertStart.UnixMilli()
-		s.logger.Debug(fmt.Sprintf("inserting snapshot from %d to %d got %d ms", csInsertStart.UnixMilli(), now.UnixMilli(), latencyMs))
 		s.metrics.UpdInsertDataBatchLatency(latencyMs)
 	}()
 	err := s.dataUploader.UploadData(ctx, snapshotParts)
@@ -76,15 +75,12 @@ func (s CsSnapshotStorage) SendSnapshot(ctx context.Context, snapshotParts []mod
 		s.logger.Error(err.Error())
 		return errors.New("batch not saved")
 	}
-	s.logger.Debug(fmt.Sprintf("batch of %d deltas inserted successfully", len(snapshotParts)))
 	return nil
 }
 
 func (s CsSnapshotStorage) Get(ctx context.Context, key *model.ProcessingKey) ([]model.DepthSnapshotPart, error) {
 	var snapshotPart model.DepthSnapshotPart
 	var snapshotParts []model.DepthSnapshotPart
-	startTime := time.Now()
-	s.logger.Info(fmt.Sprintf("get snapshot parts for %s", key))
 	it := s.session.Query(s.selectStatement, key.Symbol, key.HourNo).WithContext(ctx).Iter()
 	for it.Scan(&snapshotPart.Symbol, &snapshotPart.Timestamp, &snapshotPart.T, &snapshotPart.Price, &snapshotPart.Count, &snapshotPart.LastUpdateId) {
 		snapshotParts = append(snapshotParts, snapshotPart)
@@ -93,7 +89,6 @@ func (s CsSnapshotStorage) Get(ctx context.Context, key *model.ProcessingKey) ([
 	if err != nil {
 		s.logger.Error(err.Error())
 	}
-	s.logger.Info(fmt.Sprintf("get deltas for %s took %d", key, time.Now().UnixMilli()-startTime.UnixMilli()))
 	return snapshotParts, err
 }
 

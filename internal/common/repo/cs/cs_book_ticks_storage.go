@@ -68,7 +68,6 @@ func (s CsBookTicksStorage) SendBookTicks(ctx context.Context, deltas []bmodel.S
 	defer func() {
 		now := time.Now()
 		latencyMs := now.UnixMilli() - csInsertStart.UnixMilli()
-		s.logger.Debug(fmt.Sprintf("inserting book ticks from %d to %d got %d ms", csInsertStart.UnixMilli(), now.UnixMilli(), latencyMs))
 		s.metrics.UpdInsertDataBatchLatency(latencyMs)
 	}()
 	err := s.dataUploader.UploadData(ctx, deltas)
@@ -77,15 +76,12 @@ func (s CsBookTicksStorage) SendBookTicks(ctx context.Context, deltas []bmodel.S
 		s.logger.Error(err.Error())
 		return errors.New("batch not saved")
 	}
-	s.logger.Debug(fmt.Sprintf("batch of %d deltas inserted successfully", len(deltas)))
 	return nil
 }
 
 func (s CsBookTicksStorage) Get(ctx context.Context, key *model.ProcessingKey) ([]bmodel.SymbolTick, error) {
 	var tick bmodel.SymbolTick
 	var ticks []bmodel.SymbolTick
-	startTime := time.Now()
-	s.logger.Info(fmt.Sprintf("get ticks for %s", key))
 	it := s.session.Query(s.selectStatement, key.Symbol, key.HourNo).WithContext(ctx).Iter()
 	for it.Scan(&tick.Symbol, &tick.Timestamp, &tick.UpdateId, &tick.AskPrice, &tick.AskQuantity, &tick.BidPrice, &tick.BidQuantity) {
 		ticks = append(ticks, tick)
@@ -94,7 +90,6 @@ func (s CsBookTicksStorage) Get(ctx context.Context, key *model.ProcessingKey) (
 	if err != nil {
 		s.logger.Error(err.Error())
 	}
-	s.logger.Info(fmt.Sprintf("get ticks for %s took %d", key, time.Now().UnixMilli()-startTime.UnixMilli()))
 	return ticks, err
 }
 

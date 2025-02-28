@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"hash/fnv"
-	"reflect"
 	"strings"
 	"time"
 )
@@ -92,11 +91,4 @@ func (s *ExchangeInfo) GetSuffixOfLimitHeader() string {
 		}
 	}
 	return ""
-}
-
-func EqualsExchangeInfos(info1 *ExchangeInfo, info2 *ExchangeInfo) bool {
-	return info1.Timezone == info2.Timezone &&
-		reflect.DeepEqual(info1.ExchangeFilters, info2.ExchangeFilters) &&
-		reflect.DeepEqual(info1.RateLimits, info2.RateLimits) &&
-		reflect.DeepEqual(info1.Symbols, info2.Symbols)
 }

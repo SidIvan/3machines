@@ -77,12 +77,17 @@ spec:
         volumeMounts:
           - name: nestor-logs
             mountPath: /app/log
+          - name: file-storage
+            mountPath: /var/data
           - name: certs
             mountPath: /etc/ssl/certs/ca-certificates.crt
       volumes:
       - name: nestor-logs
         hostPath:
           path: /var/log/nestor
+      - name: file-storage
+        hostPath:
+          path: /var/lib/nestor/data
       - name: certs
         hostPath:
           path: /etc/ssl/certs/ca-certificates.crt

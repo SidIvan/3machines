@@ -54,8 +54,8 @@ type DeltaStorage interface {
 }
 
 type ExchangeInfoStorage interface {
-	SendExchangeInfo(context.Context, *bmodel.ExchangeInfo) error
-	GetLastExchangeInfo(context.Context) *bmodel.ExchangeInfo
+	SendExchangeInfo(context.Context, *model.ExchangeInfo) error
+	GetLastExchangeInfo(context.Context) *model.ExchangeInfo
 	Connect(ctx context.Context) error
 	Disconnect(ctx context.Context)
 }

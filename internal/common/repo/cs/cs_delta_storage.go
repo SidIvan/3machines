@@ -66,7 +66,6 @@ func (s CsDeltaStorage) SendDeltas(ctx context.Context, deltas []model.Delta) er
 	defer func() {
 		now := time.Now()
 		latencyMs := now.UnixMilli() - csInsertStart.UnixMilli()
-		s.logger.Debug(fmt.Sprintf("inserting deltas from %d to %d got %d ms", csInsertStart.UnixMilli(), now.UnixMilli(), latencyMs))
 		s.metrics.UpdInsertDataBatchLatency(latencyMs)
 	}()
 	err := s.dataUploader.UploadData(ctx, deltas)
@@ -75,15 +74,12 @@ func (s CsDeltaStorage) SendDeltas(ctx context.Context, deltas []model.Delta) er
 		s.logger.Error(err.Error())
 		return errors.New("batch not saved")
 	}
-	s.logger.Debug(fmt.Sprintf("batch of %d deltas inserted successfully", len(deltas)))
 	return nil
 }
 
 func (s CsDeltaStorage) Get(ctx context.Context, key *model.ProcessingKey) ([]model.Delta, error) {
 	var delta model.Delta
 	var deltas []model.Delta
-	startTime := time.Now()
-	s.logger.Info(fmt.Sprintf("get deltas for %s", key))
 	it := s.session.Query(s.selectStatement, key.Symbol, key.HourNo).WithContext(ctx).Iter()
 	for it.Scan(&delta.Symbol, &delta.Timestamp, &delta.T, &delta.Price, &delta.Count, &delta.FirstUpdateId, &delta.UpdateId) {
 		deltas = append(deltas, delta)
@@ -92,7 +88,6 @@ func (s CsDeltaStorage) Get(ctx context.Context, key *model.ProcessingKey) ([]mo
 	if err != nil {
 		s.logger.Error(err.Error())
 	}
-	s.logger.Info(fmt.Sprintf("get deltas for %s took %d", key, time.Now().UnixMilli()-startTime.UnixMilli()))
 	return deltas, err
 }
 
