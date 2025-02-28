@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: nestor-config
+  name: nestor-canary-config
 data:
   binance.client.stream.uri.schema: wss://
   binance.client.stream.uri.host: stream.binance.com
@@ -11,6 +11,10 @@ data:
   binance.client.http.uri.port: "443"
   binance.reconnect.period.m: "720"
   binance.exchange.info.update.period.m: "5"
+  binance.spot.deltas.num.workers: "5"
+  binance.spot.deltas.batch.size: "5000"
+  binance.spot.book.ticks.num.workers: "5"
+  binance.spot.book.ticks.batch.size: "5000"
   local.repo.database: binance_data
   local.repo.delta.table: deltas
   local.repo.snapshot.table: snapshots
@@ -24,4 +28,3 @@ data:
   dwarf.uri.schema: http://
   dwarf.uri.host: "185.178.44.208"
   dwarf.uri.port: "8080"
-  use.local.storage: "true"

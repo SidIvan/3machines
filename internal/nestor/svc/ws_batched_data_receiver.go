@@ -70,7 +70,6 @@ func (s *WsDataProcessWorker[TRecv, TResp]) Run(ctx context.Context) {
 }
 
 func (s *WsDataProcessWorker[TRecv, TResp]) RecvAndSaveBatch(ctx context.Context) {
-	s.logger.Debug("start recv and send data batch")
 	batch, err := s.Recv(ctx)
 	if err != nil {
 		s.metrics.IncRecvErr()

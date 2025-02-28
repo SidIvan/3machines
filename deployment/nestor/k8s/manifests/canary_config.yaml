@@ -28,4 +28,3 @@ data:
   dwarf.uri.schema: http://
   dwarf.uri.host: "185.178.44.208"
   dwarf.uri.port: "8080"
-  use.local.storage: "true"

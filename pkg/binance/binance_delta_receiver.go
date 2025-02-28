@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"strings"
 	"sync/atomic"
-	"time"
 
 	"github.com/gorilla/websocket"
 	"go.uber.org/zap"
@@ -84,16 +83,6 @@ func (s *DeltaReceiveClient) Recv(ctx context.Context) (model.DeltaMessage, erro
 			return model.DeltaMessage{}, err
 		}
 	}
-	var lastPingTime atomic.Int64
-	s.dialer.SetPingHandler(func(_ string) error {
-		s.logger.Debug("got ping")
-		lastPingTime.Store(time.Now().UnixMilli())
-		return nil
-	})
-	s.dialer.SetPongHandler(func(_ string) error {
-		s.logger.Debug(fmt.Sprintf("got pong, took %d ms since last ping", time.Now().UnixMilli()-lastPingTime.Load()))
-		return nil
-	})
 	for i := 0; ; i++ {
 		_, msg, err := s.dialer.ReadMessage()
 		if err == nil {
