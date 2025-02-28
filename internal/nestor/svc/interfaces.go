@@ -14,17 +14,42 @@ type BinanceClient interface {
 	GetBookTicks(ctx context.Context) ([]bmodel.SymbolTick, error)
 }
 
+type WsDataWorkersProvider[T any] interface {
+	getNewWorkers(context.Context) []*T
+}
+
+type TradingSymbolsWorkerProvider[T any] interface {
+	getNewWorkers(context.Context, []string) *T
+}
+
+type DataReceiver[T any] interface {
+	ConnectWs(context.Context) error
+	Recv(context.Context) (T, error)
+	Shutdown(context.Context)
+}
+
+type DataTransformator[TFrom, TTo any] interface {
+	Transform(TFrom) ([]TTo, error)
+}
+
+type BatchedDataStorage[T any] interface {
+	Save(context.Context, []T) error
+}
+
+type AuxBatchedDataStorage[T any] interface {
+	GetWithDeleteCallback(context.Context) ([]T, error, func() error)
+}
+
+type WsDataPipelineMetrics[T any] interface {
+	IncStartedSaveGoroutines()
+	IncEndedSaveGoroutines()
+	ProcessDataMetrics([]T, TypeOfEvent)
+	IncRecvErr()
+}
+
 type DeltaStorage interface {
 	SendDeltas(context.Context, []model.Delta) error
 	Connect(ctx context.Context) error
-	Reconnect(ctx context.Context) error
-	Disconnect(ctx context.Context)
-}
-
-type SnapshotStorage interface {
-	SendSnapshot(context.Context, []model.DepthSnapshotPart) error
-	Connect(ctx context.Context) error
-	Reconnect(ctx context.Context) error
 	Disconnect(ctx context.Context)
 }
 
@@ -32,14 +57,6 @@ type ExchangeInfoStorage interface {
 	SendExchangeInfo(context.Context, *bmodel.ExchangeInfo) error
 	GetLastExchangeInfo(context.Context) *bmodel.ExchangeInfo
 	Connect(ctx context.Context) error
-	Reconnect(ctx context.Context) error
-	Disconnect(ctx context.Context)
-}
-
-type BookTicksStorage interface {
-	SendBookTicks(context.Context, []bmodel.SymbolTick) error
-	Connect(ctx context.Context) error
-	Reconnect(ctx context.Context) error
 	Disconnect(ctx context.Context)
 }
 
@@ -51,7 +68,6 @@ type LocalRepo interface {
 	GetDeltas(ctx context.Context, numDeltas int64) []model.DeltaWithId
 	DeleteDeltas(ctx context.Context, ids []primitive.ObjectID) (int64, error)
 	Connect(ctx context.Context) error
-	Reconnect(ctx context.Context)
 }
 
 type TypeOfEvent int
@@ -63,10 +79,6 @@ const (
 )
 
 type MetricsHolder interface {
-	ProcessDeltaMetrics([]model.Delta, TypeOfEvent)
-	IncDeltaRecvErr()
-	ProcessTickMetrics([]bmodel.SymbolTick, TypeOfEvent)
-	IncTicksRecvErr()
 	ProcessSnapshotMetrics([]model.DepthSnapshotPart, TypeOfEvent)
 	ProcessExInfoMetrics(TypeOfEvent)
 	UpdateMetrics([]bmodel.SymbolInfo)

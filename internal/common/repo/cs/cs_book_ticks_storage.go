@@ -59,6 +59,10 @@ func (s *CsBookTicksStorage) initStatements() {
 	s.deleteKeyStatement = fmt.Sprintf("DELETE FROM %s WHERE symbol = ? AND hour = ?", s.keysTableName)
 }
 
+func (s CsBookTicksStorage) Save(ctx context.Context, deltas []bmodel.SymbolTick) error {
+	return s.SendBookTicks(ctx, deltas)
+}
+
 func (s CsBookTicksStorage) SendBookTicks(ctx context.Context, deltas []bmodel.SymbolTick) error {
 	csInsertStart := time.Now()
 	defer func() {

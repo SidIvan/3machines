@@ -1,6 +1,7 @@
 package svc
 
 import (
+	"DeltaReceiver/internal/common/model"
 	"DeltaReceiver/internal/nestor/cache"
 	"DeltaReceiver/internal/nestor/conf"
 	bmodel "DeltaReceiver/pkg/binance/model"
@@ -19,8 +20,7 @@ import (
 type ExchangeInfoSvc struct {
 	logger          *zap.Logger
 	binanceClient   BinanceClient
-	localRepo       LocalRepo
-	exInfoStorage   ExchangeInfoStorage
+	dataStorages    []BatchedDataStorage[model.ExchangeInfo]
 	metrics         MetricsHolder
 	cfg             *conf.AppConfig
 	shutdown        *atomic.Bool
@@ -29,20 +29,18 @@ type ExchangeInfoSvc struct {
 	useLocalStorage bool
 }
 
-func NewExchangeInfoSvc(config *conf.AppConfig, binanceClient BinanceClient, localRepo LocalRepo, exInfoStorage ExchangeInfoStorage, metrics MetricsHolder, infoCache *cache.ExchangeInfoCache, useLocalStorage bool) *ExchangeInfoSvc {
+func NewExchangeInfoSvc(config *conf.AppConfig, binanceClient BinanceClient, dataStorages []BatchedDataStorage[model.ExchangeInfo], metrics MetricsHolder, infoCache *cache.ExchangeInfoCache) *ExchangeInfoSvc {
 	var shutdown atomic.Bool
 	shutdown.Store(false)
 	return &ExchangeInfoSvc{
-		logger:          log.GetLogger("ExchangeInfoSvc"),
-		binanceClient:   binanceClient,
-		metrics:         metrics,
-		localRepo:       localRepo,
-		exInfoStorage:   exInfoStorage,
-		cfg:             config,
-		shutdown:        &shutdown,
-		done:            make(chan struct{}),
-		exInfoCache:     infoCache,
-		useLocalStorage: useLocalStorage,
+		logger:        log.GetLogger("ExchangeInfoSvc"),
+		binanceClient: binanceClient,
+		metrics:       metrics,
+		dataStorages:  dataStorages,
+		cfg:           config,
+		shutdown:      &shutdown,
+		done:          make(chan struct{}),
+		exInfoCache:   infoCache,
 	}
 }
 
@@ -65,7 +63,7 @@ func (s *ExchangeInfoSvc) StartReceiveExInfo(ctx context.Context) {
 			continue
 		}
 		ctxWithTimeout, cancel = context.WithTimeout(context.Background(), 20*time.Second)
-		lastSavedExInfo := s.exInfoStorage.GetLastExchangeInfo(ctxWithTimeout)
+		lastSavedExInfo := s.dataStorages[0].(ExchangeInfoStorage).GetLastExchangeInfo(ctxWithTimeout)
 		cancel()
 		if err != nil {
 			s.logger.Error(err.Error())
@@ -73,7 +71,7 @@ func (s *ExchangeInfoSvc) StartReceiveExInfo(ctx context.Context) {
 			s.logger.Error("error while receiving last saved exchange info from clickhouse")
 		} else if !bmodel.EqualsExchangeInfos(lastSavedExInfo, exInfo) {
 			s.logger.Info("exchange info changed, attempt to send")
-			if err = s.SaveExchangeInfo(ctx, exInfo); err != nil {
+			if err = s.saveExInfo(ctx, []model.ExchangeInfo{*model.NewExchangeInfo(exInfo)}); err != nil {
 				s.logger.Error(err.Error())
 			}
 		} else {
@@ -82,36 +80,19 @@ func (s *ExchangeInfoSvc) StartReceiveExInfo(ctx context.Context) {
 	}
 }
 
-func (s *ExchangeInfoSvc) SaveExchangeInfo(ctx context.Context, exInfo *bmodel.ExchangeInfo) error {
-	s.logger.Info("sending exchange info")
-	var err error
-	for i := 0; i < 3; i++ {
-		if err = s.exInfoStorage.SendExchangeInfo(ctx, exInfo); err == nil {
-			s.logger.Info("successfully sent to Ch")
-			s.metrics.ProcessExInfoMetrics(Send)
-			return nil
-		} else {
-			s.logger.Warn("failed send to Ch, retry")
-			//s.globalRepo.Reconnect(ctx)
+func (s *ExchangeInfoSvc) saveExInfo(ctx context.Context, exInfo []model.ExchangeInfo) error {
+	for i, storage := range s.dataStorages {
+		for j := 0; j < 3; j++ {
+			err := storage.Save(ctx, exInfo)
+			if err == nil {
+				if i > 0 {
+					s.logger.Warn(fmt.Sprintf("data saved to additional storage with no = %d", i))
+				}
+				return nil
+			}
 		}
 	}
-	if !s.useLocalStorage {
-		s.logger.Debug("cannot use local storage")
-		return err
-	}
-	s.exInfoStorage.Reconnect(ctx)
-	s.logger.Warn("failed send to Ch, try save to mongo")
-	for i := 0; i < 3; i++ {
-		if err := s.localRepo.SaveExchangeInfo(ctx, exInfo); err == nil {
-			s.metrics.ProcessExInfoMetrics(Save)
-			s.logger.Info("successfully saved to mongo")
-			return nil
-		}
-		s.logger.Warn("failed save to mongo, retry")
-	}
-	s.logger.Warn("failed save to mongo, attempting save to file")
-	// УСЁ ПРОПАЛО
-	return s.saveExchangeInfoToFile(exInfo)
+	return ErrNotSaved
 }
 
 func (s *ExchangeInfoSvc) saveExchangeInfoToFile(ticks *bmodel.ExchangeInfo) error {

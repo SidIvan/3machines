@@ -1,7 +1,7 @@
 package cs
 
 import (
-	"DeltaReceiver/pkg/binance/model"
+	"DeltaReceiver/internal/common/model"
 	"DeltaReceiver/pkg/log"
 	"context"
 	"encoding/json"
@@ -37,16 +37,19 @@ func (s *CsExchangeInfoStorage) initStatements() {
 	s.selectLastExInfoStatemenet = fmt.Sprintf("SELECT ex_info FROM %s WHERE day = ? ORDER BY timestamp_ms DESC LIMIT 1", s.tableName)
 }
 
-func (s CsExchangeInfoStorage) SendExchangeInfo(ctx context.Context, exInfo *model.ExchangeInfo) error {
-	payload, err := json.Marshal(exInfo)
-	if err != nil {
-		s.logger.Error(err.Error())
-		return err
+func (s CsExchangeInfoStorage) Save(ctx context.Context, exInfo []model.ExchangeInfo) error {
+	if len(exInfo) == 0 {
+		s.logger.Warn("no ex info")
+		return nil
 	}
+	return s.SendExchangeInfo(ctx, &exInfo[0])
+}
+
+func (s CsExchangeInfoStorage) SendExchangeInfo(ctx context.Context, exInfo *model.ExchangeInfo) error {
 	curTsMs := exInfo.ServerTime
-	query := s.session.Query(s.insertStatement, getDayNo(curTsMs), curTsMs, exInfo.ExInfoHash(), payload).WithContext(ctx)
+	query := s.session.Query(s.insertStatement, getDayNo(curTsMs), curTsMs, exInfo.ExInfoHash, exInfo.Payload).WithContext(ctx)
 	query.SetConsistency(gocql.LocalQuorum)
-	err = query.Exec()
+	err := query.Exec()
 	if err != nil {
 		s.logger.Error(err.Error())
 	}

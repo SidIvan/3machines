@@ -38,7 +38,7 @@ func (s *DeltaReceiveClient) formWSUri() string {
 	return fmt.Sprintf("%sws/%s@depth@100ms", s.baseUri, strings.Join(s.symbols, "@depth@100ms/"))
 }
 
-func (s *DeltaReceiveClient) Connect(ctx context.Context) error {
+func (s *DeltaReceiveClient) ConnectWs(ctx context.Context) error {
 	d := websocket.Dialer{
 		Proxy: http.ProxyFromEnvironment,
 	}
@@ -66,20 +66,20 @@ func (s *DeltaReceiveClient) Reconnect(ctx context.Context) error {
 	if err := s.dialer.Close(); err != nil {
 		s.logger.Warn(fmt.Errorf("connection was not closed %w", err).Error())
 	}
-	if err := s.Connect(ctx); err != nil {
+	if err := s.ConnectWs(ctx); err != nil {
 		s.logger.Warn(fmt.Errorf("connection was not reset %w", err).Error())
 		return err
 	}
 	return nil
 }
 
-func (s *DeltaReceiveClient) ReceiveDeltaMessage(ctx context.Context) (*model.DeltaMessage, error) {
+func (s *DeltaReceiveClient) Recv(ctx context.Context) (model.DeltaMessage, error) {
 	if isBanned() || s.shutdown.Load() {
-		return nil, nil
+		return model.DeltaMessage{}, nil
 	}
 	if s.dialer == nil {
-		if err := s.Connect(ctx); err != nil {
-			return nil, err
+		if err := s.ConnectWs(ctx); err != nil {
+			return model.DeltaMessage{}, err
 		}
 	}
 	for i := 0; ; i++ {
@@ -89,17 +89,17 @@ func (s *DeltaReceiveClient) ReceiveDeltaMessage(ctx context.Context) (*model.De
 			err = json.Unmarshal(msg, &deltaMsg)
 			if err != nil {
 				s.logger.Error(err.Error())
-				return nil, fmt.Errorf("error while unmarshaling delta message %w", err)
+				return model.DeltaMessage{}, fmt.Errorf("error while unmarshaling delta message %w", err)
 			}
-			return &deltaMsg, nil
+			return deltaMsg, nil
 		}
 		if s.shutdown.Load() {
-			return nil, nil
+			return model.DeltaMessage{}, nil
 		}
 		s.logger.Error(s.formWSUri())
 		s.logger.Warn(fmt.Errorf("error while getting delta message, reconnect %w", err).Error())
 		if err = s.Reconnect(ctx); err != nil && i == 3 {
-			return nil, err
+			return model.DeltaMessage{}, err
 		}
 	}
 }

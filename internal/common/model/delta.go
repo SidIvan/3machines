@@ -24,7 +24,23 @@ type DeltaWithId struct {
 	FirstUpdateId int64              `bson:"firstUpdateId"`
 	T             bool               `bson:"type"`
 	Symbol        string             `bson:"symbol"`
-	MongoId       primitive.ObjectID `bson:"_id"`
+	Id            primitive.ObjectID `bson:"_id"`
+}
+
+func (s DeltaWithId) MongoId() primitive.ObjectID {
+	return s.Id
+}
+
+func (s DeltaWithId) ToData() Delta {
+	return Delta{
+		Timestamp:     s.Timestamp,
+		Price:         s.Price,
+		Count:         s.Count,
+		UpdateId:      s.UpdateId,
+		FirstUpdateId: s.FirstUpdateId,
+		T:             s.T,
+		Symbol:        s.Symbol,
+	}
 }
 
 func (s *DeltaWithId) GetDelta() Delta {

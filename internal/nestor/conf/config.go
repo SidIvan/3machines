@@ -10,13 +10,15 @@ import (
 )
 
 type AppConfig struct {
-	BinanceHttpConfig   *binance.BinanceHttpClientConfig `yaml:"binance.client"`
-	ReconnectPeriodM    int16                            `yaml:"binance.reconnect.period.m"`
-	ExchangeInfoUpdPerM int16                            `yaml:"binance.exchange.info.update.period.m"`
-	LocalRepoCfg        *LocalRepoConfig                 `yaml:"local.repo"`
-	DwarfUrl            *pconf.BaseUriConfig             `yaml:"dwarf.url"`
-	CsCfg               *conf.CsRepoConfig               `yaml:"glogal.repo.binace"`
-	UseLocalStorage     bool                             `yaml:"use.local.storage"`
+	BinanceHttpConfig         *binance.BinanceHttpClientConfig `yaml:"binance.client"`
+	ReconnectPeriodM          int16                            `yaml:"binance.reconnect.period.m"`
+	ExchangeInfoUpdPerM       int16                            `yaml:"binance.exchange.info.update.period.m"`
+	LocalRepoCfg              *LocalRepoConfig                 `yaml:"local.repo"`
+	DwarfUrl                  *pconf.BaseUriConfig             `yaml:"dwarf.url"`
+	CsCfg                     *conf.CsRepoConfig               `yaml:"glogal.repo.binace"`
+	UseLocalStorage           bool                             `yaml:"use.local.storage"`
+	BinanceSpotDeltasPipeline *WsPipelineCfg
+	BinanceSpotBookTicksPipeline *WsPipelineCfg
 }
 
 func NewAppConfigFromEnv() *AppConfig {
@@ -68,4 +70,10 @@ func NewLocalRepoConfigFromEnv(envPrefix string) *LocalRepoConfig {
 		BookTickerColName: bookTickerColName,
 		MongoConfig:       mongoCfg,
 	}
+}
+
+type WsPipelineCfg struct {
+	TimeoutS   int
+	NumWorkers int
+	BatchSize  int
 }

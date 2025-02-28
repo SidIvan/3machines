@@ -39,7 +39,7 @@ func (s *BookTickerClient) formWSUri() string {
 	return fmt.Sprintf("%sws/%s@bookTicker", s.baseUri, strings.Join(s.symbols, "@bookTicker/"))
 }
 
-func (s *BookTickerClient) Connect(ctx context.Context) error {
+func (s *BookTickerClient) ConnectWs(ctx context.Context) error {
 	d := websocket.Dialer{
 		Proxy: http.ProxyFromEnvironment,
 	}
@@ -65,20 +65,20 @@ func (s *BookTickerClient) Reconnect(ctx context.Context) error {
 		return nil
 	}
 	s.dialer.Close()
-	if err := s.Connect(ctx); err != nil {
+	if err := s.ConnectWs(ctx); err != nil {
 		s.logger.Warn(fmt.Errorf("connection was not reset %w", err).Error())
 		return err
 	}
 	return nil
 }
 
-func (s *BookTickerClient) ReceiveTicks(ctx context.Context) (*model.SymbolTick, error) {
+func (s *BookTickerClient) Recv(ctx context.Context) (model.SymbolTick, error) {
 	if isBanned() || s.shutdown.Load() {
-		return nil, nil
+		return model.SymbolTick{}, nil
 	}
 	if s.dialer == nil {
-		if err := s.Connect(ctx); err != nil {
-			return nil, err
+		if err := s.ConnectWs(ctx); err != nil {
+			return model.SymbolTick{}, err
 		}
 	}
 	for i := 0; ; i++ {
@@ -88,21 +88,21 @@ func (s *BookTickerClient) ReceiveTicks(ctx context.Context) (*model.SymbolTick,
 			err = json.Unmarshal(msg, &tick)
 			if err != nil {
 				s.logger.Error(err.Error())
-				return nil, fmt.Errorf("error while unmarshaling tick message %w", err)
+				return model.SymbolTick{}, fmt.Errorf("error while unmarshaling tick message %w", err)
 			}
 			tick.Timestamp = time.Now().UnixMilli()
-			return &tick, nil
+			return tick, nil
 		}
 		if s.shutdown.Load() {
-			return nil, nil
+			return model.SymbolTick{}, nil
 		}
 		s.logger.Warn(err.Error())
 		if s.shutdown.Load() {
-			return nil, nil
+			return model.SymbolTick{}, nil
 		}
 		s.logger.Warn("error while getting tick message, reconnect")
 		if err = s.Reconnect(ctx); err != nil && i == 3 {
-			return nil, err
+			return model.SymbolTick{}, err
 		}
 	}
 }

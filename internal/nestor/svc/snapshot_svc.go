@@ -6,9 +6,7 @@ import (
 	"DeltaReceiver/internal/nestor/conf"
 	"DeltaReceiver/pkg/log"
 	"context"
-	"encoding/json"
 	"fmt"
-	"os"
 	"strconv"
 	"sync/atomic"
 	"time"
@@ -21,31 +19,27 @@ type SnapshotSvc struct {
 	binanceClient     BinanceClient
 	snapshotQueue     []string
 	snapshotSchedules map[string]time.Time
-	localRepo         LocalRepo
-	snapshotStorage   SnapshotStorage
+	dataStorages      []BatchedDataStorage[model.DepthSnapshotPart]
 	metrics           MetricsHolder
 	cfg               *conf.AppConfig
 	shutdown          *atomic.Bool
 	done              chan struct{}
 	exInfoCache       *cache.ExchangeInfoCache
-	useLocalStorage   bool
 }
 
-func NewSnapshotSvc(config *conf.AppConfig, binanceClient BinanceClient, localRepo LocalRepo, snapshotStorage SnapshotStorage, metricsHolder MetricsHolder, infoCache *cache.ExchangeInfoCache, useLocalStorage bool) *SnapshotSvc {
+func NewSnapshotSvc(config *conf.AppConfig, binanceClient BinanceClient, dataStorages []BatchedDataStorage[model.DepthSnapshotPart], metricsHolder MetricsHolder, infoCache *cache.ExchangeInfoCache) *SnapshotSvc {
 	var shutdown atomic.Bool
 	shutdown.Store(false)
 	return &SnapshotSvc{
 		logger:            log.GetLogger("SnapshotSvc"),
 		binanceClient:     binanceClient,
 		metrics:           metricsHolder,
-		localRepo:         localRepo,
-		snapshotStorage:   snapshotStorage,
+		dataStorages:      dataStorages,
 		snapshotSchedules: make(map[string]time.Time),
 		cfg:               config,
 		shutdown:          &shutdown,
 		done:              make(chan struct{}),
 		exInfoCache:       infoCache,
-		useLocalStorage:   useLocalStorage,
 	}
 }
 
@@ -111,59 +105,22 @@ func (s *SnapshotSvc) ReceiveAndSaveSnapshot(ctx context.Context, symbol string)
 		s.logger.Warn("empty snapshot")
 		return limit, nil
 	}
-	err = s.saveSnapshotToGlobalRepo(ctx, snapshot)
-	if err == nil {
-		return limit, nil
-	}
-	if !s.useLocalStorage {
-		s.logger.Debug("cannot use local storage")
-		return "", err
-	}
-	err = s.saveSnapshotToLocalRepo(ctx, snapshot)
-	if err == nil {
-		return limit, nil
-	}
-	// УСЁ ПРОПАЛО
-	return limit, s.saveSnapshotToFile(snapshot)
+	return limit, s.saveSnapshot(ctx, snapshot)
 }
 
-func (s *SnapshotSvc) saveSnapshotToGlobalRepo(ctx context.Context, snapshot []model.DepthSnapshotPart) error {
-	var err error
-	for i := 0; i < 3; i++ {
-		if err := s.snapshotStorage.SendSnapshot(ctx, snapshot); err == nil {
-			s.metrics.ProcessSnapshotMetrics(snapshot, Send)
-			return nil
-		} else {
-			s.logger.Error(err.Error())
+func (s *SnapshotSvc) saveSnapshot(ctx context.Context, snapshot []model.DepthSnapshotPart) error {
+	for i, storage := range s.dataStorages {
+		for j := 0; j < 3; j++ {
+			err := storage.Save(ctx, snapshot)
+			if err == nil {
+				if i > 0 {
+					s.logger.Warn(fmt.Sprintf("data saved to additional storage with no = %d", i))
+				}
+				return nil
+			}
 		}
 	}
-	return err
-}
-
-func (s *SnapshotSvc) saveSnapshotToLocalRepo(ctx context.Context, snapshot []model.DepthSnapshotPart) error {
-	var err error
-	for i := 0; i < 3; i++ {
-		if err := s.localRepo.SaveSnapshot(ctx, snapshot); err == nil {
-			s.metrics.ProcessSnapshotMetrics(snapshot, Save)
-			return nil
-		} else {
-			s.logger.Error(err.Error())
-		}
-	}
-	return err
-}
-
-func (s *SnapshotSvc) saveSnapshotToFile(snapshot []model.DepthSnapshotPart) error {
-	if file, err := os.Create("snapshot" + string(rune(time.Now().UnixMilli()))); err != nil {
-		return err
-	} else if data, err := json.Marshal(snapshot); err != nil {
-		return err
-	} else if _, err := file.Write(data); err != nil {
-		return err
-	} else {
-		file.Close()
-		return nil
-	}
+	return ErrNotSaved
 }
 
 func (s *SnapshotSvc) Shutdown(ctx context.Context) {

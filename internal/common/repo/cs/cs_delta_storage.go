@@ -57,6 +57,10 @@ func (s *CsDeltaStorage) initStatements() {
 	s.deleteKeyStatement = fmt.Sprintf("DELETE FROM %s WHERE symbol = ? AND hour = ?", s.keysTableName)
 }
 
+func (s CsDeltaStorage) Save(ctx context.Context, deltas []model.Delta) error {
+	return s.SendDeltas(ctx, deltas)
+}
+
 func (s CsDeltaStorage) SendDeltas(ctx context.Context, deltas []model.Delta) error {
 	csInsertStart := time.Now()
 	defer func() {

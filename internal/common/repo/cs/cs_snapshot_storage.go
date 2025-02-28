@@ -58,6 +58,10 @@ func (s *CsSnapshotStorage) initStatements() {
 	s.deleteKeyStatement = fmt.Sprintf("DELETE FROM %s WHERE symbol = ? AND hour = ?", s.keysTableName)
 }
 
+func (s CsSnapshotStorage) Save(ctx context.Context, snapshotParts []model.DepthSnapshotPart) error {
+	return s.SendSnapshot(ctx, snapshotParts)
+}
+
 func (s CsSnapshotStorage) SendSnapshot(ctx context.Context, snapshotParts []model.DepthSnapshotPart) error {
 	csInsertStart := time.Now()
 	defer func() {
