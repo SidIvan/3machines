@@ -10,15 +10,14 @@ import (
 )
 
 type AppConfig struct {
-	BinanceHttpConfig         *binance.BinanceHttpClientConfig `yaml:"binance.client"`
-	ReconnectPeriodM          int16                            `yaml:"binance.reconnect.period.m"`
-	ExchangeInfoUpdPerM       int16                            `yaml:"binance.exchange.info.update.period.m"`
-	LocalRepoCfg              *LocalRepoConfig                 `yaml:"local.repo"`
-	DwarfUrl                  *pconf.BaseUriConfig             `yaml:"dwarf.url"`
-	CsCfg                     *conf.CsRepoConfig               `yaml:"glogal.repo.binace"`
-	UseLocalStorage           bool                             `yaml:"use.local.storage"`
-	BinanceSpotDeltasPipeline *WsPipelineCfg
-	BinanceSpotBookTicksPipeline *WsPipelineCfg
+	BinanceHttpConfig            *binance.BinanceHttpClientConfig `yaml:"binance.client"`
+	ReconnectPeriodM             int16                            `yaml:"binance.reconnect.period.m"`
+	ExchangeInfoUpdPerM          int16                            `yaml:"binance.exchange.info.update.period.m"`
+	LocalRepoCfg                 *LocalRepoConfig                 `yaml:"local.repo"`
+	DwarfUrl                     *pconf.BaseUriConfig             `yaml:"dwarf.url"`
+	CsCfg                        *conf.CsRepoConfig               `yaml:"glogal.repo.binace"`
+	BinanceSpotDeltasPipeline    *WsPipelineCfg                   `yaml:"binance.spot.deltas"`
+	BinanceSpotBookTicksPipeline *WsPipelineCfg                   `yaml:"binance.spot.book.ticks"`
 }
 
 func NewAppConfigFromEnv() *AppConfig {
@@ -34,18 +33,17 @@ func NewAppConfigFromEnv() *AppConfig {
 	}
 	csConfig := conf.NewCsRepoConfigFromEnv("socrates")
 	dwarfCfg := pconf.NewBaseUriConfigFromEnv("dwarf.uri")
-	useLocalStorage, err := strconv.ParseBool(os.Getenv("use.local.storage"))
-	if err != nil {
-		panic(err)
-	}
+	spotDeltasCfg := NewWsPipelineCfgFromEnv("binance.spot.deltas")
+	spotTicksCfg := NewWsPipelineCfgFromEnv("binance.spot.book.ticks")
 	return &AppConfig{
-		BinanceHttpConfig:   binanceClientConfig,
-		LocalRepoCfg:        localRepoConfig,
-		ReconnectPeriodM:    int16(reconnectPeriodM),
-		ExchangeInfoUpdPerM: int16(exchangeInfoUpdatePeriodM),
-		DwarfUrl:            dwarfCfg,
-		CsCfg:               csConfig,
-		UseLocalStorage:     useLocalStorage,
+		BinanceHttpConfig:            binanceClientConfig,
+		LocalRepoCfg:                 localRepoConfig,
+		ReconnectPeriodM:             int16(reconnectPeriodM),
+		ExchangeInfoUpdPerM:          int16(exchangeInfoUpdatePeriodM),
+		DwarfUrl:                     dwarfCfg,
+		CsCfg:                        csConfig,
+		BinanceSpotDeltasPipeline:    spotDeltasCfg,
+		BinanceSpotBookTicksPipeline: spotTicksCfg,
 	}
 }
 
@@ -73,7 +71,21 @@ func NewLocalRepoConfigFromEnv(envPrefix string) *LocalRepoConfig {
 }
 
 type WsPipelineCfg struct {
-	TimeoutS   int
-	NumWorkers int
-	BatchSize  int
+	NumWorkers int `yaml:"num.workers"`
+	BatchSize  int `yaml:"batch.size"`
+}
+
+func NewWsPipelineCfgFromEnv(envPrefix string) *WsPipelineCfg {
+	numWorkers, err := strconv.Atoi(os.Getenv(envPrefix + ".num.workers"))
+	if err != nil {
+		panic(err)
+	}
+	batchSize, err := strconv.Atoi(os.Getenv(envPrefix + ".batch.size"))
+	if err != nil {
+		panic(err)
+	}
+	return &WsPipelineCfg{
+		NumWorkers: numWorkers,
+		BatchSize:  batchSize,
+	}
 }

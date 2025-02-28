@@ -11,6 +11,10 @@ data:
   binance.client.http.uri.port: "443"
   binance.reconnect.period.m: "720"
   binance.exchange.info.update.period.m: "5"
+  binance.spot.deltas.num.workers: "5"
+  binance.spot.deltas.batch.size: "5000"
+  binance.spot.book.ticks.num.workers: "5"
+  binance.spot.book.ticks.batch.size: "5000"
   local.repo.database: binance_data
   local.repo.delta.table: deltas
   local.repo.snapshot.table: snapshots
