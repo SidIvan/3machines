@@ -45,7 +45,7 @@ spec:
             mountPath: /mongo_volume
   volumeClaimTemplates:
   - metadata:
-      name: nestor-local-data
+      name: nestor-mongo-data
     spec:
       accessModes: [ "ReadWriteOnce" ]
       storageClassName: nestor-mongo-storage
