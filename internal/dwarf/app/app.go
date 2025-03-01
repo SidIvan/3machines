@@ -15,6 +15,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.uber.org/zap"
+	"gopkg.in/yaml.v3"
 )
 
 type App struct {
@@ -27,6 +28,11 @@ type App struct {
 func NewApp(cfg *cfg.AppConfig) *App {
 	log.InitServiceName("verbose")
 	logger := log.GetLogger("App")
+	rawCfg, err := yaml.Marshal(cfg)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(string(rawCfg))
 	deltaHolesStorage := repo.NewMongoDeltaHoleStorage(cfg.HolesStorageCfg)
 	dwarfSvc := svc.NewDwarfSvc(deltaHolesStorage)
 	metrics := metrics.NewApiMetrics()

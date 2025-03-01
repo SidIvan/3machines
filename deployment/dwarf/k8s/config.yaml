@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dwarf-config
+data:
+  http.api.port: "8080"
+  holes.storage.spot.deltas.table: "spot_deltas"
+  holes.storage.mongo.uri.schema: mongodb://
+  holes.storage.mongo.uri.host: localhost
+  holes.storage.mongo.uri.port: "27017"
+  holes.storage.mongo.num.connection.retries: "3"
+  holes.storage.mongo.timeout.s: "3"

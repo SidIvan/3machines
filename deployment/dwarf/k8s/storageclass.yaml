@@ -1,0 +1,13 @@
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: dwarf-local-storage
+provisioner: rancher.io/local-path
+allowedTopologies:
+- matchLabelExpressions:
+  - key: app
+    values:
+    - dwarf
+volumeBindingMode: WaitForFirstConsumer
+parameters:
+  type: pd-standard

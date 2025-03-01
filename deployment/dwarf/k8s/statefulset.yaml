@@ -1,0 +1,80 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: dwarf
+  labels:
+    app: dwarf
+spec:
+  serviceName: dwarf
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dwarf
+  template:
+    metadata:
+      labels:
+        app: dwarf
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9001"
+    spec:
+      terminationGracePeriodSeconds: 60
+      nodeSelector:
+        app: dwarf
+      containers:
+      - name: dwarf-local-storage
+        image: mongo:6.0.20
+        imagePullPolicy: IfNotPresent
+        ports: 
+        - containerPort: 27017
+          name: mongosh
+        readinessProbe:
+          exec:
+            command:
+            - /bin/sh
+            - -c
+            - echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+          initialDelaySeconds: 30
+          timeoutSeconds: 15
+        volumeMounts:
+          - name: dwarf-local-data
+            mountPath: /mongo_volume
+          
+      - name: dwarf
+        image: sidivan/dwarf:v1.0
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 9001
+          name: prometheus
+        - containerPort: 8080
+          name: http-api
+        env:
+          - name: SERVICE_NAME
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: metadata.name
+        envFrom:
+          - configMapRef:
+              name: dwarf-config
+        volumeMounts:
+          - name: dwarf-logs
+            mountPath: /app/log
+          - name: certs
+            mountPath: /etc/ssl/certs/ca-certificates.crt
+      volumes:
+      - name: dwarf-logs
+        hostPath:
+          path: /var/log/dwarf
+      - name: certs
+        hostPath:
+          path: /etc/ssl/certs/ca-certificates.crt
+  volumeClaimTemplates:
+  - metadata:
+      name: dwarf-local-data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: dwarf-local-storage
+      resources:
+        requests:
+          storage: 10Gi

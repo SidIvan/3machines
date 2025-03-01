@@ -8,23 +8,23 @@ import (
 
 type HolesStorageConfig struct {
 	MongoConfig       *mconf.MongoRepoConfig `yaml:"mongo"`
-	DeltaHolesColName string                 `yaml:"delta.holes.table"`
+	DeltaHolesColName string                 `yaml:"spot.delta.table"`
 }
 
 func NewHolesStorageConfigFromEnv(envPrefix string) *HolesStorageConfig {
 	return &HolesStorageConfig{
-		DeltaHolesColName: os.Getenv("delta.holes.table"),
-		MongoConfig:       mconf.NewMongoRepoConfigFromEnv(envPrefix),
+		DeltaHolesColName: os.Getenv("spot.delta.table"),
+		MongoConfig:       mconf.NewMongoRepoConfigFromEnv(envPrefix + ".mongo"),
 	}
 }
 
 type AppConfig struct {
 	HolesStorageCfg *HolesStorageConfig `yaml:"holes.storage"`
-	ListenPort      int                 `yaml:"in.port"`
+	ListenPort      int                 `yaml:"http.api.port"`
 }
 
 func NewAppConfigFromEnv() *AppConfig {
-	listenInPort, err := strconv.Atoi(os.Getenv("in.port"))
+	listenInPort, err := strconv.Atoi(os.Getenv("http.api.port"))
 	if err != nil {
 		panic(err)
 	}
