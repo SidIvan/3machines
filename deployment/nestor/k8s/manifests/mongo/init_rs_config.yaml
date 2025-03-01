@@ -22,7 +22,7 @@ data:
     done
     echo "connected to local."
 
-    HOST=nestor-mongodb-0.nestor-mongodb:27017
+    HOST=nestor-mongodb-0.nestor-mongodb.svc.cluster.local:27017
 
     until /usr/bin/mongo --host=${HOST} --eval 'printjson(db.serverStatus())'; do
       echo "connecting to remote mongo..."
@@ -30,7 +30,7 @@ data:
     done
     echo "connected to remote."
 
-    if [[ "${HOSTNAME}" != 'mongo-0' ]]; then
+    if [[ "${HOSTNAME}" != 'nestor-mongodb-0.nestor-mongodb.svc.cluster.local' ]]; then
       until /usr/bin/mongo --host=${HOST} --eval="printjson(rs.status())" \
             | grep -v "no replset config has been received"; do
         echo "waiting for replication set initialization"
