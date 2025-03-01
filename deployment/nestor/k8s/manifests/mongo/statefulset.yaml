@@ -27,8 +27,8 @@ spec:
           name: mongosh
         resouces:
           limits:
-            cpu: "750m"
-            memory: 1Gi
+            cpu: "1000m"
+            memory: 2Gi
           requests:
             cpu: "750m"
             memory: 1Gi
