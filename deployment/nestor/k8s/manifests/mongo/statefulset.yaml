@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: nestor-mongodb
+spec:
+  serviceName: nestor-mongodb
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nestor-mongodb
+  template:
+    metadata:
+      labels:
+        app: nestor-mongodb
+    spec:
+      nodeSelector:
+        app: nestor
+      containers:
+      - name: mongodb
+        image: mongo:6.0.20
+        command:
+        - mongod
+        - --replSet
+        - rs0
+        ports:
+        - containerPort: 27017
+          name: mongosh
+        resouces:
+          limits:
+            cpu: "750m"
+            memory: 1Gi
+          requests:
+            cpu: "750m"
+            memory: 1Gi
+        readinessProbe:
+          exec:
+            command:
+            - /bin/sh
+            - -c
+            - echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+          initialDelaySeconds: 30
+          timeoutSeconds: 15
+        volumeMounts:
+          - name: nestor-mongo-data
+            mountPath: /mongo_volume
+  volumeClaimTemplates:
+  - metadata:
+      name: nestor-local-data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: nestor-mongo-storage
+      resources:
+        requests:
+          storage: 30Gi

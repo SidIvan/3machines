@@ -19,37 +19,7 @@ spec:
       annotations:
         prometheus.io/scrape: "true"
         prometheus.io/port: "9001"
-    spec:
-      nodeSelector:
-        app: nestor
-        environment: canary
-      terminationGracePeriodSeconds: 60
-      containers:
-      - name: nestor-local-storage
-        image: mongo:6.0.20
-        imagePullPolicy: IfNotPresent
-        ports: 
-        - containerPort: 27017
-          name: mongosh
-        resources:
-          # limits:
-          #   cpu: "750m"
-          #   memory: 1Gi
-          requests:
-            cpu: "750m"
-            memory: 1Gi
-        readinessProbe:
-          exec:
-            command:
-            - /bin/sh
-            - -c
-            - echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
-          initialDelaySeconds: 30
-          timeoutSeconds: 15
-        volumeMounts:
-          - name: nestor-local-data
-            mountPath: /mongo_volume
-          
+    spec:          
       - name: nestor
         image: sidivan/nestor:v1.0
         imagePullPolicy: Always
@@ -57,9 +27,6 @@ spec:
         - containerPort: 9001
           name: prometheus
         resources:
-          # limits:
-          #   cpu: "1000m"
-          #   memory: 2Gi
           requests:
             cpu: "1000m"
             memory: 2Gi
