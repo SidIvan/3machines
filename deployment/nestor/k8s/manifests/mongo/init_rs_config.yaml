@@ -11,8 +11,8 @@ data:
 
     # Need to wait for the readiness health check to pass so that the
     # mongo names resolve. This is kind of wonky.
-    until ping -c 1 ${HOSTNAME}.nestor-mongodb; do
-      echo "waiting for DNS (${HOSTNAME}.nestor-mongodb)..."
+    until ping -c 1 ${HOSTNAME}; do
+      echo "waiting for DNS (${HOSTNAME})..."
       sleep 2
     done
 
