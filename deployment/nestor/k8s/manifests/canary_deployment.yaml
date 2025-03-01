@@ -20,6 +20,10 @@ spec:
         prometheus.io/scrape: "true"
         prometheus.io/port: "9001"
     spec:          
+      nodeSelector:
+        app: nestor
+        environment: canary
+      containers:
       - name: nestor
         image: sidivan/nestor:v1.0
         imagePullPolicy: Always
