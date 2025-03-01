@@ -17,7 +17,7 @@ spec:
         app: nestor
       containers:
       - name: init-mongo
-        image: mongo:3.4.24
+        image: mongo:6.0.20
         command:
         - bash
         - /config/init.sh
@@ -47,8 +47,8 @@ spec:
             - /bin/sh
             - -c
             - echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
-          initialDelaySeconds: 30
-          timeoutSeconds: 15
+          initialDelaySeconds: 10
+          timeoutSeconds: 10
         volumeMounts:
           - name: nestor-mongo-data
             mountPath: /mongo_volume
