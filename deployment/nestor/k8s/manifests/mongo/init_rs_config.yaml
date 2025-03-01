@@ -16,7 +16,7 @@ data:
       sleep 2
     done
 
-    until /usr/bin/mongo --eval 'printjson(db.serverStatus())'; do
+    until /usr/bin/mongosh --eval 'printjson(db.serverStatus())'; do
       echo "connecting to local mongo..."
       sleep 2
     done
