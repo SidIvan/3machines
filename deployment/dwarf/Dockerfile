@@ -28,4 +28,4 @@ RUN chmod 0644 /etc/cron.d/logrotate
 COPY deployment/dwarf/entrypoint.sh /
 RUN chmod +x /entrypoint.sh
 
-ENTRYPOINT ["./entrypoint.sh"]
+ENTRYPOINT ["/entrypoint.sh"]
