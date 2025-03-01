@@ -13,7 +13,7 @@ type HolesStorageConfig struct {
 
 func NewHolesStorageConfigFromEnv(envPrefix string) *HolesStorageConfig {
 	return &HolesStorageConfig{
-		DeltaHolesColName: os.Getenv("spot.deltas.table"),
+		DeltaHolesColName: os.Getenv(envPrefix + ".spot.deltas.table"),
 		MongoConfig:       mconf.NewMongoRepoConfigFromEnv(envPrefix + ".mongo"),
 	}
 }
