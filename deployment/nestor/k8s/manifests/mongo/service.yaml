@@ -1,12 +1,12 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: nestor-mongo
+  name: nestor-mongodb
   labels:
-    app: nestor-mongo
+    app: nestor-mongodb
 spec:
   ports:
   - port: 27017
     name: mongosh
   selector:
-    app: nestor-mongo
+    app: nestor-mongodb
