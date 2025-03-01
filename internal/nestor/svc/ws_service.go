@@ -55,7 +55,7 @@ func (s *WsSvc[TRecv, TResp]) getAndActivateNewWorkers(ctx context.Context) []*W
 	if s.shutdown.Load() {
 		return nil
 	}
-	newWorkers := s.workersProvider.getNewWorkers(ctx)
+	newWorkers := s.workersProvider.GetNewWorkers(ctx)
 	for _, worker := range newWorkers {
 		for k := 0; k < 3; k++ {
 			if err := worker.Start(ctx); err == nil {

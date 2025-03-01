@@ -15,11 +15,11 @@ type BinanceClient interface {
 }
 
 type WsDataWorkersProvider[T any] interface {
-	getNewWorkers(context.Context) []*T
+	GetNewWorkers(context.Context) []*T
 }
 
 type TradingSymbolsWorkerProvider[T any] interface {
-	getNewWorkers(context.Context, []string) *T
+	GetNewWorkers(context.Context, []string) *T
 }
 
 type DataReceiver[T any] interface {

@@ -4,13 +4,9 @@ import (
 	"DeltaReceiver/internal/common/model"
 	"DeltaReceiver/internal/nestor/cache"
 	"DeltaReceiver/internal/nestor/conf"
-	bmodel "DeltaReceiver/pkg/binance/model"
 	"DeltaReceiver/pkg/log"
 	"context"
-	"encoding/json"
 	"fmt"
-	"os"
-	"strconv"
 	"sync/atomic"
 	"time"
 
@@ -26,7 +22,6 @@ type ExchangeInfoSvc struct {
 	shutdown        *atomic.Bool
 	done            chan struct{}
 	exInfoCache     *cache.ExchangeInfoCache
-	useLocalStorage bool
 }
 
 func NewExchangeInfoSvc(config *conf.AppConfig, binanceClient BinanceClient, dataStorages []BatchedDataStorage[model.ExchangeInfo], metrics MetricsHolder, infoCache *cache.ExchangeInfoCache) *ExchangeInfoSvc {
@@ -65,9 +60,7 @@ func (s *ExchangeInfoSvc) StartReceiveExInfo(ctx context.Context) {
 		ctxWithTimeout, cancel = context.WithTimeout(context.Background(), 20*time.Second)
 		lastSavedExInfo := s.dataStorages[0].(ExchangeInfoStorage).GetLastExchangeInfo(ctxWithTimeout)
 		cancel()
-		if err != nil {
-			s.logger.Error(err.Error())
-		} else if lastSavedExInfo == nil {
+		if lastSavedExInfo == nil {
 			s.logger.Error("error while receiving last saved exchange info from clickhouse")
 		} else if !model.EqualsExchangeInfos(lastSavedExInfo, exInfo) {
 			s.logger.Info("exchange info changed, attempt to send")
@@ -93,21 +86,6 @@ func (s *ExchangeInfoSvc) saveExInfo(ctx context.Context, exInfo []model.Exchang
 		}
 	}
 	return ErrNotSaved
-}
-
-func (s *ExchangeInfoSvc) saveExchangeInfoToFile(ticks *bmodel.ExchangeInfo) error {
-	file, err := os.Create("exchange_info" + strconv.FormatInt(time.Now().UnixMilli(), 10))
-	if err != nil {
-		s.logger.Error(err.Error())
-		return err
-	}
-	data, _ := json.Marshal(ticks)
-	if _, err = file.Write(data); err != nil {
-		s.logger.Error(err.Error())
-		return err
-	}
-	file.Close()
-	return nil
 }
 
 func (s *ExchangeInfoSvc) Shutdown(ctx context.Context) {

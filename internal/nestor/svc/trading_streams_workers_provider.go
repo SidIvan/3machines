@@ -26,7 +26,7 @@ func NewTradingSymbolsWorkersProvider[T any](workersProviderType string, numWork
 	}
 }
 
-func (s *TradingSymbolsWorkersProvider[T]) getNewWorkers(ctx context.Context) []*T {
+func (s *TradingSymbolsWorkersProvider[T]) GetNewWorkers(ctx context.Context) []*T {
 	var symbols []string
 	for _, symbolInfo := range s.exInfoCache.GetVal().Symbols {
 		if symbolInfo.Status == "TRADING" {
@@ -40,7 +40,7 @@ func (s *TradingSymbolsWorkersProvider[T]) getNewWorkers(ctx context.Context) []
 		for j := 0; j*s.numWorkers+i < len(symbols); j++ {
 			symbolsForWorker = append(symbolsForWorker, symbols[j*s.numWorkers+i])
 		}
-		newWorkers[i] = s.workerProvider.getNewWorkers(ctx, symbolsForWorker)
+		newWorkers[i] = s.workerProvider.GetNewWorkers(ctx, symbolsForWorker)
 	}
 	return newWorkers
 }

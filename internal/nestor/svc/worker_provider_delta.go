@@ -34,7 +34,7 @@ func NewDeltaWorkerProvider(
 	}
 }
 
-func (s DeltaWorkerProvider) getNewWorkers(ctx context.Context, symbols []string) *WsDataProcessWorker[bmodel.DeltaMessage, model.Delta] {
+func (s DeltaWorkerProvider) GetNewWorkers(ctx context.Context, symbols []string) *WsDataProcessWorker[bmodel.DeltaMessage, model.Delta] {
 	deltaReceiver := binance.NewDeltaReceiveClient(s.cfg, symbols)
 	return NewWsDataProcessWorker[bmodel.DeltaMessage, model.Delta](s.dataType, deltaReceiver, s.dataTrasformator, s.batchSize, s.dataStorages, s.metrics)
 }

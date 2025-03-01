@@ -12,3 +12,4 @@ COPY cmd/dwarf ./cmd
 COPY pkg ./pkg
 
 RUN go build -o app ./cmd/main.go
+

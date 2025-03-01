@@ -33,7 +33,7 @@ func NewBookTicksWorkerProvider(
 	}
 }
 
-func (s BookTicksWorkerProvider) getNewWorkers(ctx context.Context, symbols []string) *WsDataProcessWorker[bmodel.SymbolTick, bmodel.SymbolTick] {
+func (s BookTicksWorkerProvider) GetNewWorkers(ctx context.Context, symbols []string) *WsDataProcessWorker[bmodel.SymbolTick, bmodel.SymbolTick] {
 	ticksReceiver := binance.NewBookTickerClient(s.cfg, symbols)
 	return NewWsDataProcessWorker[bmodel.SymbolTick, bmodel.SymbolTick](s.dataType, ticksReceiver, s.dataTrasformator, s.batchSize, s.dataStorages, s.metrics)
 }

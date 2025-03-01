@@ -1,0 +1,8 @@
+/app/log/dwarf.log {
+    missingok
+    notifempty
+    copytruncate
+    compress
+    delaycompress
+    rotate 30
+}
