@@ -22,7 +22,7 @@ data:
     done
     echo "connected to local."
 
-    HOST=nestor-mongodb-0.nestor-mongodb.svc.cluster.local:27017
+    HOST=nestor-mongodb-0.nestor-mongodb.default.svc.cluster.local:27017
 
     until /usr/bin/mongosh --host=${HOST} --eval 'printjson(db.serverStatus())'; do
       echo "connecting to remote mongo..."
@@ -30,7 +30,7 @@ data:
     done
     echo "connected to remote."
 
-    if [[ "${HOSTNAME}" != 'nestor-mongodb-0.nestor-mongodb.svc.cluster.local' ]]; then
+    if [[ "${HOSTNAME}" != 'nestor-mongodb-0.nestor-mongodb.default.svc.cluster.local' ]]; then
       until /usr/bin/mongosh --host=${HOST} --eval="printjson(rs.status())" \
             | grep -v "no replset config has been received"; do
         echo "waiting for replication set initialization"
@@ -41,10 +41,10 @@ data:
          --eval="printjson(rs.add('${HOSTNAME}.nestor-mongodb'))"
     fi
 
-    if [[ "${HOSTNAME}" == 'nestor-mongodb-0.nestor-mongodb.svc.cluster.local' ]]; then
+    if [[ "${HOSTNAME}" == 'nestor-mongodb-0.nestor-mongodb.default.svc.cluster.local' ]]; then
       echo "initializing replica set"
       /usr/bin/mongosh --eval="printjson(rs.initiate(\
           {'_id': 'rs0', 'members': [{'_id': 0, \
-           'host': 'nestor-mongodb-0.nestor-mongodb.svc.cluster.local:27017'}]}))"
+           'host': 'nestor-mongodb-0.nestor-mongodb.default.svc.cluster.local:27017'}]}))"
     fi
     echo "initialized"
