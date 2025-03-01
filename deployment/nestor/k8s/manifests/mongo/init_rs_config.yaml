@@ -8,11 +8,11 @@ data:
 
     apt-get update -y
     apt-get install -y iputils-ping
-    
+
     # Need to wait for the readiness health check to pass so that the
     # mongo names resolve. This is kind of wonky.
-    until ping -c 1 ${HOSTNAME}.mongo; do
-      echo "waiting for DNS (${HOSTNAME}.mongo)..."
+    until ping -c 1 ${HOSTNAME}.nestor-mongodb; do
+      echo "waiting for DNS (${HOSTNAME}.nestor-mongodb)..."
       sleep 2
     done
 
@@ -22,7 +22,7 @@ data:
     done
     echo "connected to local."
 
-    HOST=mongodb-0.mongo:27017
+    HOST=nestor-mongodb-0.nestor-mongodb:27017
 
     until /usr/bin/mongo --host=${HOST} --eval 'printjson(db.serverStatus())'; do
       echo "connecting to remote mongo..."
@@ -36,15 +36,15 @@ data:
         echo "waiting for replication set initialization"
         sleep 2
       done
-      echo "adding self to mongo-0"
+      echo "adding self to nestor-mongodb"
       /usr/bin/mongo --host=${HOST} \
-         --eval="printjson(rs.add('${HOSTNAME}.mongo'))"
+         --eval="printjson(rs.add('${HOSTNAME}.nestor-mongodb'))"
     fi
 
-    if [[ "${HOSTNAME}" == 'mongo-0' ]]; then
+    if [[ "${HOSTNAME}" == 'nestor-mongodb-0.nestor-mongodb.svc.cluster.local' ]]; then
       echo "initializing replica set"
       /usr/bin/mongo --eval="printjson(rs.initiate(\
           {'_id': 'rs0', 'members': [{'_id': 0, \
-           'host': 'mongodb-0.mongo:27017'}]}))"
+           'host': 'nestor-mongodb-0.nestor-mongodb.svc.cluster.local:27017'}]}))"
     fi
     echo "initialized"
