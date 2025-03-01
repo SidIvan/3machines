@@ -8,12 +8,12 @@ import (
 
 type HolesStorageConfig struct {
 	MongoConfig       *mconf.MongoRepoConfig `yaml:"mongo"`
-	DeltaHolesColName string                 `yaml:"spot.delta.table"`
+	DeltaHolesColName string                 `yaml:"spot.deltas.table"`
 }
 
 func NewHolesStorageConfigFromEnv(envPrefix string) *HolesStorageConfig {
 	return &HolesStorageConfig{
-		DeltaHolesColName: os.Getenv("spot.delta.table"),
+		DeltaHolesColName: os.Getenv("spot.deltas.table"),
 		MongoConfig:       mconf.NewMongoRepoConfigFromEnv(envPrefix + ".mongo"),
 	}
 }

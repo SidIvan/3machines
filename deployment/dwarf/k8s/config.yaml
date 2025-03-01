@@ -4,7 +4,8 @@ metadata:
   name: dwarf-config
 data:
   http.api.port: "8080"
-  holes.storage.spot.deltas.table: "spot_deltas"
+  holes.storage.spot.deltas.table: spot_deltas
+  holes.storage.mongo.database: binance
   holes.storage.mongo.uri.schema: mongodb://
   holes.storage.mongo.uri.host: localhost
   holes.storage.mongo.uri.port: "27017"
