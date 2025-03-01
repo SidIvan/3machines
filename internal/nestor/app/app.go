@@ -144,7 +144,7 @@ func initCs(cfg *cconf.CsRepoConfig) *gocql.Session {
 func initMongo(cfg *conf.LocalRepoConfig) *mongo.Client {
 	ctx := context.TODO()
 	ctxWithTimeout, cancel := context.WithTimeout(ctx, time.Duration(cfg.MongoConfig.TimeoutS)*time.Second)
-	client, err := mongo.Connect(ctxWithTimeout, options.Client().ApplyURI(cfg.MongoConfig.URI.GetBaseUri()))
+	client, err := mongo.Connect(ctxWithTimeout, options.Client().ApplyURI(cfg.MongoConfig.URI.GetBaseUri()).SetDirect(true))
 	cancel()
 	if err != nil {
 		panic(err)

@@ -16,6 +16,14 @@ spec:
       nodeSelector:
         app: nestor
       containers:
+      - name: init-mongo
+        image: mongo:3.4.24
+        command:
+        - bash
+        - /config/init.sh
+        volumeMounts:
+        - name: config
+          mountPath: /config
       - name: mongodb
         image: mongo:6.0.20
         command:
@@ -44,6 +52,10 @@ spec:
         volumeMounts:
           - name: nestor-mongo-data
             mountPath: /mongo_volume
+      volumes:
+      - name: config
+        configMap:
+          name: "mongo-init"
   volumeClaimTemplates:
   - metadata:
       name: nestor-mongo-data
