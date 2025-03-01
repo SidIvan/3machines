@@ -7,8 +7,8 @@ type DeltaHole struct {
 	TimestampMs   int64  `json:"timestamp_ms" bson:"timestamp_ms"`
 }
 
-func NewDeltaHole(symbol string, firstUpdateId, lastUpdateId, timestampMs int64) *DeltaHole {
-	return &DeltaHole{
+func NewDeltaHole(symbol string, firstUpdateId, lastUpdateId, timestampMs int64) DeltaHole {
+	return DeltaHole{
 		Symbol:        symbol,
 		FirstUpdateId: firstUpdateId,
 		LastUpdateId:  lastUpdateId,

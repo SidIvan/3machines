@@ -2,20 +2,25 @@ package svc
 
 import (
 	"DeltaReceiver/internal/common/model"
+	"DeltaReceiver/internal/common/web"
 	"DeltaReceiver/pkg/log"
+	"context"
 	"fmt"
 	"sort"
+	"time"
 
 	"go.uber.org/zap"
 )
 
 type DeltaTransformator struct {
-	logger *zap.Logger
+	logger      *zap.Logger
+	dwarfClient *web.DwarfHttpClient
 }
 
-func NewDeltaTransformator() *DeltaTransformator {
+func NewDeltaTransformator(dwarfClient *web.DwarfHttpClient) *DeltaTransformator {
 	return &DeltaTransformator{
-		logger: log.GetLogger("DeltaTransformator"),
+		logger:      log.GetLogger("DeltaTransformator"),
+		dwarfClient: dwarfClient,
 	}
 }
 
@@ -46,6 +51,9 @@ func (s DeltaTransformator) Transform(deltas []model.Delta, key *model.Processin
 	lastUpdateId := deltas[0].UpdateId
 	for i := 1; i < len(deltas); i++ {
 		if deltas[i].FirstUpdateId-lastUpdateId > 1 {
+			ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+			s.dwarfClient.SaveDeltaHole(ctx, model.NewDeltaHole(deltas[i].Symbol, lastUpdateId, deltas[i].FirstUpdateId, deltas[i].Timestamp))
+			cancel()
 			deltaHoles++
 		}
 		lastUpdateId = deltas[i].UpdateId

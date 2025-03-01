@@ -28,7 +28,7 @@ func (s *DeltaUpdateIdWatcher) GetHolesAndUpdate(batch []model.Delta) []model.De
 		var ok bool
 		if lastUpdId, ok = s.val[symbol]; ok {
 			if delta.FirstUpdateId-lastUpdId > 1 {
-				holes = append(holes, *model.NewDeltaHole(
+				holes = append(holes, model.NewDeltaHole(
 					symbol,
 					lastUpdId+1,
 					delta.FirstUpdateId,

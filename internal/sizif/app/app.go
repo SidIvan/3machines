@@ -3,6 +3,7 @@ package app
 import (
 	"DeltaReceiver/internal/common/model"
 	"DeltaReceiver/internal/common/repo/cs"
+	"DeltaReceiver/internal/common/web"
 	b2pqt "DeltaReceiver/internal/sizif/b2"
 	"DeltaReceiver/internal/sizif/conf"
 	"DeltaReceiver/internal/sizif/lock"
@@ -40,11 +41,12 @@ func NewApp(cfg *conf.AppConfig) *App {
 		panic(err)
 	}
 	fmt.Println(string(rawCfg))
+	dwarfClient := web.NewDwarfHttpClient(cfg.DwarfURIConfig)
 	zkConn, b2Bucket, csSession := initConnections(cfg)
 
 	deltaSocratesStorage := cs.NewCsDeltaStorageRO(csSession, cfg.SocratesCfg.DeltaTableName, cfg.SocratesCfg.DeltaKeyTableName)
 	deltaParquetStorage := b2pqt.NewB2ParquetStorage[model.Delta](b2Bucket, "binance/deltas", b2pqt.FromKey)
-	deltaTransformator := svc.NewDeltaTransformator()
+	deltaTransformator := svc.NewDeltaTransformator(dwarfClient)
 	deltaLocker := lock.NewZkLocker("binance/deltas", zkConn)
 	deltaMetrics := metrics.NewSizifWorkerMetrics("binance_deltas")
 	deltaSvc := svc.NewSizifSvc("binance/deltas", deltaSocratesStorage, deltaParquetStorage, deltaTransformator, deltaLocker, cfg.DeltaWorkers, deltaMetrics)

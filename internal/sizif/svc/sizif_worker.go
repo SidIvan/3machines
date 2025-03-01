@@ -22,7 +22,15 @@ type SizifWorker[T model.WithTimestampMs] struct {
 	keyLocker         KeyLocker
 }
 
-func NewSizifWorker[T model.WithTimestampMs](serviceType string, socratesStorage SocratesStorage[T], parquetStorage ParquetStorage[T], dataTransformator DataTransformator[T], taskQueue <-chan model.ProcessingKey, keyLocker KeyLocker, metrics Metrics) *SizifWorker[T] {
+func NewSizifWorker[T model.WithTimestampMs](
+	serviceType string,
+	socratesStorage SocratesStorage[T],
+	parquetStorage ParquetStorage[T],
+	dataTransformator DataTransformator[T],
+	taskQueue <-chan model.ProcessingKey,
+	keyLocker KeyLocker,
+	metrics Metrics,
+) *SizifWorker[T] {
 	var shutdown atomic.Bool
 	shutdown.Store(false)
 	done := make(chan struct{})

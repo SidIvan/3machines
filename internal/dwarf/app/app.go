@@ -78,18 +78,18 @@ func (s *App) Stop(ctx context.Context) {
 }
 
 func initApi(dwarfSvc *svc.DwarfSvc, metrics svc.Metrics, logger *zap.Logger) http.Handler {
-	nestorRouter := api.NewNestorRouter(dwarfSvc)
+	holesRouter := api.NewHolesRouter(dwarfSvc)
 	r := mux.NewRouter()
 	r.
 		HandleFunc("/delta/hole", func(w http.ResponseWriter, r *http.Request) {
 			serviceName := r.Header.Get(api.ServiceNameHeaderName)
 			metrics.IncNumCallsCreateDeltaHole(serviceName)
-			nestorRouter.SaveDeltasHoleHandler(w, r)
+			holesRouter.SaveDeltasHoleHandler(w, r)
 		}).
 		Methods(http.MethodPost)
 	r.
 		HandleFunc("/delta/hole", func(w http.ResponseWriter, r *http.Request) {
-			nestorRouter.GetDeltaHolesHandler(w, r)
+			holesRouter.GetDeltaHolesHandler(w, r)
 		}).
 		Methods(http.MethodGet)
 	r.Use(log.CreateMiddleware(logger))

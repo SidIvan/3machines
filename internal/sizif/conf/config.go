@@ -2,17 +2,19 @@ package conf
 
 import (
 	"DeltaReceiver/internal/common/conf"
+	cconf "DeltaReceiver/pkg/conf"
 	"os"
 	"strconv"
 )
 
 type AppConfig struct {
-	ZkCfg           *ZkConfig          `yaml:"zk"`
-	B2Cfg           *B2Config          `yaml:"b2"`
-	SocratesCfg     *conf.CsRepoConfig `yaml:"socrates"`
-	DeltaWorkers    int                `yaml:"workers.binance.deltas"`
-	BookTicksWorker int                `yaml:"workers.binance.book.ticks"`
-	SnapshotsWorker int                `yaml:"workers.binance.snapshots"`
+	ZkCfg           *ZkConfig            `yaml:"zk"`
+	B2Cfg           *B2Config            `yaml:"b2"`
+	DwarfURIConfig  *cconf.BaseUriConfig `yaml:"dwarf"`
+	SocratesCfg     *conf.CsRepoConfig   `yaml:"socrates"`
+	DeltaWorkers    int                  `yaml:"workers.binance.deltas"`
+	BookTicksWorker int                  `yaml:"workers.binance.book.ticks"`
+	SnapshotsWorker int                  `yaml:"workers.binance.snapshots"`
 }
 
 func AppConfigFromEnv(prefix string) *AppConfig {
@@ -32,6 +34,7 @@ func AppConfigFromEnv(prefix string) *AppConfig {
 		ZkCfg:           ZkConfigFromEnv("zk"),
 		B2Cfg:           B2ConfigFromEnv("b2"),
 		SocratesCfg:     conf.NewCsRepoConfigFromEnv("socrates"),
+		DwarfURIConfig:  cconf.NewBaseUriConfigFromEnv("dwarf"),
 		DeltaWorkers:    deltaWorkers,
 		BookTicksWorker: bookTicksWorkers,
 		SnapshotsWorker: snapshotsWorkers,

@@ -11,6 +11,7 @@ import (
 	"DeltaReceiver/internal/nestor/model"
 	"DeltaReceiver/internal/nestor/repo"
 	"DeltaReceiver/internal/nestor/svc"
+	cweb "DeltaReceiver/internal/common/web"
 	"DeltaReceiver/internal/nestor/web"
 	"DeltaReceiver/pkg/binance"
 	bmodel "DeltaReceiver/pkg/binance/model"
@@ -60,7 +61,7 @@ func NewApp(cfg *conf.AppConfig) *App {
 	logger := log.GetLogger("App")
 	metricsHolder := metrics.NewMetrics()
 	exInfoCache := cache.NewExchangeInfoCache()
-	deltaHolesStorage := repo.NewDwarfHttpClient(cfg.DwarfUrl)
+	deltaHolesStorage := cweb.NewDwarfHttpClient(cfg.DwarfUrl)
 	deltaHolesIdWatcher := cache.NewDeltaUpdateIdWatcher()
 	csCfg := cfg.CsCfg
 	csSession := initCs(csCfg)

@@ -1,4 +1,4 @@
-package repo
+package web
 
 import (
 	"DeltaReceiver/internal/common/model"

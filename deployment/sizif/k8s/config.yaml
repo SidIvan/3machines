@@ -9,3 +9,6 @@ data:
   zk.servers: "zk-cs.default.svc.cluster.local:2181"
   zk.session.timeout.s: "60"
   b2.bucket: "3machines"
+  dwarf.uri.schema: http://
+  dwarf.uri.host: "185.178.44.208"
+  dwarf.uri.port: "8080"

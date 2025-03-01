@@ -13,21 +13,21 @@ import (
 	"go.uber.org/zap"
 )
 
-type NestorRouter struct {
+type HolesRouter struct {
 	logger   *zap.Logger
 	dwarfSvc *svc.DwarfSvc
 }
 
-func NewNestorRouter(dwarfSvc *svc.DwarfSvc) *NestorRouter {
-	return &NestorRouter{
-		logger:   log.GetLogger("NestorRouter"),
+func NewHolesRouter(dwarfSvc *svc.DwarfSvc) *HolesRouter {
+	return &HolesRouter{
+		logger:   log.GetLogger("HolesRouter"),
 		dwarfSvc: dwarfSvc,
 	}
 }
 
 const ServiceNameHeaderName = "serviceName"
 
-func (s *NestorRouter) SaveDeltasHoleHandler(w http.ResponseWriter, r *http.Request) {
+func (s *HolesRouter) SaveDeltasHoleHandler(w http.ResponseWriter, r *http.Request) {
 	serviceName := r.Header.Get(ServiceNameHeaderName)
 	s.logger.Debug("service name is " + serviceName)
 	body, err := io.ReadAll(r.Body)
@@ -51,7 +51,7 @@ func (s *NestorRouter) SaveDeltasHoleHandler(w http.ResponseWriter, r *http.Requ
 	}
 }
 
-func (s *NestorRouter) GetDeltaHolesHandler(w http.ResponseWriter, r *http.Request) {
+func (s *HolesRouter) GetDeltaHolesHandler(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
 	defer r.Body.Close()
 	if err != nil {
