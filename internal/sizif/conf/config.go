@@ -10,7 +10,7 @@ import (
 type AppConfig struct {
 	ZkCfg           *ZkConfig            `yaml:"zk"`
 	B2Cfg           *B2Config            `yaml:"b2"`
-	DwarfURIConfig  *cconf.BaseUriConfig `yaml:"dwarf"`
+	DwarfURIConfig  *cconf.BaseUriConfig `yaml:"dwarf.uri"`
 	SocratesCfg     *conf.CsRepoConfig   `yaml:"socrates"`
 	DeltaWorkers    int                  `yaml:"workers.binance.deltas"`
 	BookTicksWorker int                  `yaml:"workers.binance.book.ticks"`
@@ -34,7 +34,7 @@ func AppConfigFromEnv(prefix string) *AppConfig {
 		ZkCfg:           ZkConfigFromEnv("zk"),
 		B2Cfg:           B2ConfigFromEnv("b2"),
 		SocratesCfg:     conf.NewCsRepoConfigFromEnv("socrates"),
-		DwarfURIConfig:  cconf.NewBaseUriConfigFromEnv("dwarf"),
+		DwarfURIConfig:  cconf.NewBaseUriConfigFromEnv("dwarf.uri"),
 		DeltaWorkers:    deltaWorkers,
 		BookTicksWorker: bookTicksWorkers,
 		SnapshotsWorker: snapshotsWorkers,
