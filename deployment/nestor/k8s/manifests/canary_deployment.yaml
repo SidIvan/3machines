@@ -5,7 +5,6 @@ metadata:
   labels:
     app: nestor
 spec:
-  serviceName: nestor
   replicas: 1
   selector:
     matchLabels:
