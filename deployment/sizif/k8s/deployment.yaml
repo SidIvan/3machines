@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: sizif-deployment
+  name: sizif
   labels:
     app: sizif
 spec:
@@ -41,7 +41,7 @@ spec:
       volumes:
       - name: sizif-logs
         hostPath:
-          path: /var/log/sizif/$(POD_NAME) 
+          path: /var/log/sizif
       - name: certs
         hostPath:
           path: /etc/ssl/certs/ca-certificates.crt
