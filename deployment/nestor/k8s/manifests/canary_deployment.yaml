@@ -1,5 +1,5 @@
 apiVersion: apps/v1
-kind: StatefulSet
+kind: Deployment
 metadata:
   name: nestor-canary
   labels:
@@ -58,12 +58,3 @@ spec:
       - name: certs
         hostPath:
           path: /etc/ssl/certs/ca-certificates.crt
-  volumeClaimTemplates:
-  - metadata:
-      name: nestor-local-data
-    spec:
-      accessModes: [ "ReadWriteOnce" ]
-      storageClassName: nestor-local-storage-storage
-      resources:
-        requests:
-          storage: 30Gi
