@@ -74,21 +74,15 @@ func (s CsDataUploader[T]) UploadData(ctx context.Context, data []T) error {
 
 func (s CsDataUploader[T]) sendPartition(ctx context.Context, key model.ProcessingKey, data []T) error {
 	var wg sync.WaitGroup
-	numInserts := 0
 	var errorFlag atomic.Bool
 	errorFlag.Store(false)
 	for i := 0; i < len(data) || errorFlag.Load(); i += microBatchSize {
-		if numInserts == 10 {
-			wg.Wait()
-			numInserts = 0
-		}
-		numInserts++
 		wg.Add(1)
 		go func(batch []T) {
 			defer wg.Done()
-			err := s.sendMicroBatch(ctx, key, batch)
-			if err != nil {
-				s.logger.Error(err.Error())
+			errs := s.sendMicroBatch(ctx, key, batch)
+			if len(errs) != 0 {
+				s.logger.Error(fmt.Errorf("got %d errors when inserting micro batches, example: %w", len(errs), errs[0]).Error())
 				errorFlag.Store(true)
 			}
 		}(data[i:min(len(data), i+microBatchSize)])
@@ -100,19 +94,19 @@ func (s CsDataUploader[T]) sendPartition(ctx context.Context, key model.Processi
 	return nil
 }
 
-func (s CsDataUploader[T]) sendMicroBatch(ctx context.Context, key model.ProcessingKey, data []T) error {
-	var err error
+func (s CsDataUploader[T]) sendMicroBatch(ctx context.Context, key model.ProcessingKey, data []T) []error {
+	var errs []error
 	for range 3 {
-		ctxWithTimeout, cancel := context.WithTimeout(ctx, time.Second*10)
+		ctxWithTimeout, cancel := context.WithTimeout(ctx, time.Second*3)
 		err := s.upload(ctxWithTimeout, key, data)
 		if err == nil {
 			cancel()
 			return nil
 		}
-		s.logger.Error(err.Error())
+		errs = append(errs, err)
 		cancel()
 	}
-	return err
+	return errs
 }
 
 func (s CsDataUploader[T]) upload(ctx context.Context, key model.ProcessingKey, data []T) error {
