@@ -24,7 +24,7 @@ data:
   local.repo.uri.host: nestor-mongodb.default.svc.cluster.local
   local.repo.uri.port: "27017"
   local.repo.num.connection.retries: "3"
-  local.repo.timeout.s: "3"
+  local.repo.timeout.s: "8"
   dwarf.uri.schema: http://
   dwarf.uri.host: "185.178.44.208"
   dwarf.uri.port: "8080"
