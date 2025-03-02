@@ -96,7 +96,7 @@ func (s CsDataUploader[T]) sendPartition(ctx context.Context, key model.Processi
 
 func (s CsDataUploader[T]) sendMicroBatch(ctx context.Context, key model.ProcessingKey, data []T) []error {
 	var errs []error
-	for range 3 {
+	for range 2 {
 		ctxWithTimeout, cancel := context.WithTimeout(ctx, time.Second*3)
 		err := s.upload(ctxWithTimeout, key, data)
 		if err == nil {
