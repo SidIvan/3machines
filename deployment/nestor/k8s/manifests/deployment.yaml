@@ -21,7 +21,7 @@ spec:
     spec:          
       nodeSelector:
         app: nestor
-        environment: canary
+        environment: prod
       containers:
       - name: nestor
         image: sidivan/nestor:v1.0
@@ -41,7 +41,7 @@ spec:
                 fieldPath: metadata.name
         envFrom:
           - configMapRef:
-              name: nestor-canary-config
+              name: nestor-config
           - configMapRef:
               name: cassandra-config
         volumeMounts:
