@@ -12,9 +12,7 @@ spec:
     metadata:
       labels:
         app: nestor-mongodb
-    spec:
-      nodeSelector:
-        app: nestor
+    spec:         
       containers:
       - name: mongodb
         image: sidivan/nestor-mongo:v1.0
@@ -53,6 +51,16 @@ spec:
       - name: config
         configMap:
           name: "mongo-init"
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: geo
+                operator: In
+                values:
+                - msk
+                - spb
   volumeClaimTemplates:
   - metadata:
       name: nestor-mongo-data

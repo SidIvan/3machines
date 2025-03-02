@@ -3,42 +3,31 @@
 apt-get update -y
 apt-get install -y iputils-ping
 
-# Need to wait for the readiness health check to pass so that the
-# mongo names resolve. This is kind of wonky.
 until ping -c 1 ${HOSTNAME}; do
-  echo "waiting for DNS (${HOSTNAME})..."
   sleep 2
 done
 
 until /usr/bin/mongosh --eval 'printjson(db.serverStatus())'; do
-  echo "connecting to local mongo..."
   sleep 2
 done
-echo "connected to local."
 
 HOST=nestor-mongodb-0.nestor-mongodb.default.svc.cluster.local:27017
 
 until /usr/bin/mongosh --host=${HOST} --eval 'printjson(db.serverStatus())'; do
-  echo "connecting to remote mongo..."
   sleep 2
 done
-echo "connected to remote."
 
 if [[ "${HOSTNAME}" != 'nestor-mongodb-0' ]]; then
   until /usr/bin/mongosh --host=${HOST} --eval="printjson(rs.status())" \
         | grep -v "no replset config has been received"; do
-    echo "waiting for replication set initialization"
     sleep 2
   done
-  echo "adding self to nestor-mongodb"
   /usr/bin/mongosh --host=${HOST} \
       --eval="printjson(rs.add('${HOSTNAME}.nestor-mongodb'))"
 fi
 
 if [[ "${HOSTNAME}" == 'nestor-mongodb-0' ]]; then
-  echo "initializing replica set"
   /usr/bin/mongosh --eval="printjson(rs.initiate(\
       {'_id': 'rs0', 'members': [{'_id': 0, \
         'host': 'nestor-mongodb-0.nestor-mongodb.default.svc.cluster.local:27017'}]}))"
 fi
-echo "initialized"

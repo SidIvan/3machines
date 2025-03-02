@@ -21,7 +21,7 @@ data:
   local.repo.exchange.info.table: exchange_info
   local.repo.book.ticks.table: book_ticks
   local.repo.uri.schema: mongodb://
-  local.repo.uri.host: localhost
+  local.repo.uri.host: nestor-mongodb.default.svc.cluster.local
   local.repo.uri.port: "27017"
   local.repo.num.connection.retries: "3"
   local.repo.timeout.s: "3"
