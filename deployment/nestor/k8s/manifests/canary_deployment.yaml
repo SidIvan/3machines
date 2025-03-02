@@ -5,7 +5,12 @@ metadata:
   labels:
     app: nestor
 spec:
-  replicas: 1
+  replicas: 1  
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
   selector:
     matchLabels:
       app: nestor
