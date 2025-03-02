@@ -19,6 +19,11 @@ spec:
       - name: mongodb
         image: sidivan/nestor-mongo:v1.0
         imagePullPolicy: Always
+        command:
+        - mongod
+        - --replSet
+        - rs0
+        - --bind_ip_all
         ports:
         - containerPort: 27017
           name: mongosh
