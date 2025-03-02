@@ -16,21 +16,8 @@ spec:
       nodeSelector:
         app: nestor
       containers:
-      - name: init-mongo
-        image: mongo:6.0.20
-        command:
-        - bash
-        - /config/init.sh
-        volumeMounts:
-        - name: config
-          mountPath: /config
       - name: mongodb
-        image: mongo:6.0.20
-        command:
-        - mongod
-        - --replSet
-        - rs0
-        - --bind_ip_all 
+        image: sidivan/nestor-mongo:v1.0
         ports:
         - containerPort: 27017
           name: mongosh
