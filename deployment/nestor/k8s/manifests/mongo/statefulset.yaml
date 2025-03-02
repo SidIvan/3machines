@@ -28,6 +28,10 @@ spec:
           requests:
             cpu: "750m"
             memory: 1Gi
+        lifecycle:
+          postStart:
+            exec:
+              command: ['/bin/sh', '-c', '/init.sh']
         readinessProbe:
           exec:
             command:
