@@ -76,7 +76,7 @@ func (s CsDataUploader[T]) sendPartition(ctx context.Context, key model.Processi
 	var wg sync.WaitGroup
 	var errorFlag atomic.Bool
 	errorFlag.Store(false)
-	for i := 0; i < len(data) || errorFlag.Load(); i += microBatchSize {
+	for i := 0; i < len(data) && !errorFlag.Load(); i += microBatchSize {
 		wg.Add(1)
 		go func(batch []T) {
 			defer wg.Done()

@@ -5,13 +5,13 @@ import (
 	cm "DeltaReceiver/internal/common/metrics"
 	cmodel "DeltaReceiver/internal/common/model"
 	"DeltaReceiver/internal/common/repo/cs"
+	cweb "DeltaReceiver/internal/common/web"
 	"DeltaReceiver/internal/nestor/cache"
 	"DeltaReceiver/internal/nestor/conf"
 	"DeltaReceiver/internal/nestor/metrics"
 	"DeltaReceiver/internal/nestor/model"
 	"DeltaReceiver/internal/nestor/repo"
 	"DeltaReceiver/internal/nestor/svc"
-	cweb "DeltaReceiver/internal/common/web"
 	"DeltaReceiver/internal/nestor/web"
 	"DeltaReceiver/pkg/binance"
 	bmodel "DeltaReceiver/pkg/binance/model"
@@ -46,7 +46,6 @@ type App struct {
 	exInfoFixer         svc.Fixer
 	deltaHolesIdWatcher *cache.DeltaUpdateIdWatcher
 	deltaHolesStorage   svc.DeltaHolesStorage
-	mongoClient         *mongo.Client
 	cfg                 *conf.AppConfig
 }
 
@@ -65,51 +64,44 @@ func NewApp(cfg *conf.AppConfig) *App {
 	deltaHolesIdWatcher := cache.NewDeltaUpdateIdWatcher()
 	csCfg := cfg.CsCfg
 	csSession := initCs(csCfg)
-	mongoClient := initMongo(cfg.LocalRepoCfg)
-	binanceDataMongoDb := mongoClient.Database(cfg.LocalRepoCfg.MongoConfig.DatabaseName)
 	reconnectPeriod := time.Minute * time.Duration(cfg.ReconnectPeriodM)
-	mongoTimeout := int(cfg.LocalRepoCfg.MongoConfig.TimeoutS)
 	binanceClient := web.NewBinanceClient(cfg.BinanceHttpConfig, exInfoCache)
 
 	// binance spot deltas
 	deltaCsStorage := cs.NewCsDeltaStorageWO(csSession, cm.NewCsStorageMetrics(csCfg.DeltaTableName), csCfg.DeltaTableName, csCfg.DeltaKeyTableName)
-	deltaMongoStorage := repo.NewLocalMongoRepo[cmodel.Delta, cmodel.DeltaWithId](mongoTimeout, "deltas_spot", binanceDataMongoDb)
 	deltaFileStorage := repo.NewFileRepo[cmodel.Delta]("deltas_spot")
-	deltaStorages := []svc.BatchedDataStorage[cmodel.Delta]{deltaCsStorage, deltaMongoStorage, deltaFileStorage}
+	deltaStorages := []svc.BatchedDataStorage[cmodel.Delta]{deltaCsStorage, deltaFileStorage}
 	deltasTransformator := model.NewDeltaDataTransformator()
 	deltasMetrics := metrics.NewWsPipelineMetrics[cmodel.Delta]("deltas_spot")
 	deltaWorkerProvider := svc.NewDeltaWorkerProvider(cfg.BinanceHttpConfig, "deltas_spot", deltasTransformator, cfg.BinanceSpotDeltasPipeline.BatchSize, deltaStorages, deltasMetrics)
 	deltaWorkersProvider := svc.NewTradingSymbolsWorkersProvider("deltas_spot", cfg.BinanceSpotDeltasPipeline.NumWorkers, deltaWorkerProvider, exInfoCache)
 	deltaSvc := svc.NewWsSvc("deltas_spot", deltaWorkersProvider, deltaStorages, deltasMetrics, reconnectPeriod, exInfoCache)
-	deltaFixer := svc.NewDataFixer("deltas_spot", deltaCsStorage, []svc.AuxBatchedDataStorage[cmodel.Delta]{deltaMongoStorage, deltaFileStorage})
+	deltaFixer := svc.NewDataFixer("deltas_spot", deltaCsStorage, []svc.AuxBatchedDataStorage[cmodel.Delta]{deltaFileStorage})
 
 	// binance spot book ticks
 	ticksCsStorage := cs.NewCsBookTicksStorageWO(csSession, cm.NewCsStorageMetrics(csCfg.BookTicksTableName), csCfg.BookTicksTableName, csCfg.BookTicksKeyTableName)
-	ticksMongoStorage := repo.NewLocalMongoRepo[bmodel.SymbolTick, cmodel.SymbolTickWithMongoId](mongoTimeout, "book_ticker_spot", binanceDataMongoDb)
 	ticksFileStorage := repo.NewFileRepo[bmodel.SymbolTick]("book_ticker_spot")
-	ticksStorages := []svc.BatchedDataStorage[bmodel.SymbolTick]{ticksCsStorage, ticksMongoStorage, ticksFileStorage}
+	ticksStorages := []svc.BatchedDataStorage[bmodel.SymbolTick]{ticksCsStorage, ticksFileStorage}
 	ticksTransformator := model.NewNoChangeTransformator[bmodel.SymbolTick]()
 	ticksMetrics := metrics.NewWsPipelineMetrics[bmodel.SymbolTick]("book_ticker_spot")
 	ticksWorkerProvider := svc.NewBookTicksWorkerProvider(cfg.BinanceHttpConfig, "book_ticker_spot", ticksTransformator, cfg.BinanceSpotBookTicksPipeline.BatchSize, ticksStorages, ticksMetrics)
 	ticksWorkersProvider := svc.NewTradingSymbolsWorkersProvider("book_ticker_spot", cfg.BinanceSpotDeltasPipeline.NumWorkers, ticksWorkerProvider, exInfoCache)
 	ticksSvc := svc.NewWsSvc("book_ticker_spot", ticksWorkersProvider, ticksStorages, ticksMetrics, reconnectPeriod, exInfoCache)
-	ticksFixer := svc.NewDataFixer("book_ticker_spot", ticksCsStorage, []svc.AuxBatchedDataStorage[bmodel.SymbolTick]{ticksMongoStorage, ticksFileStorage})
+	ticksFixer := svc.NewDataFixer("book_ticker_spot", ticksCsStorage, []svc.AuxBatchedDataStorage[bmodel.SymbolTick]{ticksFileStorage})
 
 	// binance spot depth snapshots
 	snapshotCsStorage := cs.NewCsSnapshotStorageWO(csSession, cm.NewCsStorageMetrics(csCfg.SnapshotTableName), csCfg.SnapshotTableName, csCfg.SnapshotKeyTableName)
-	snapshotMongoStorage := repo.NewLocalMongoRepo[cmodel.DepthSnapshotPart, cmodel.DepthSnapshotPartWithMongoId](mongoTimeout, "snapshots_spot", binanceDataMongoDb)
 	snapshotFileStorage := repo.NewFileRepo[cmodel.DepthSnapshotPart]("snapshots_spot")
-	snapshotStorages := []svc.BatchedDataStorage[cmodel.DepthSnapshotPart]{snapshotCsStorage, snapshotMongoStorage, snapshotFileStorage}
+	snapshotStorages := []svc.BatchedDataStorage[cmodel.DepthSnapshotPart]{snapshotCsStorage, snapshotFileStorage}
 	snapshotSvc := svc.NewSnapshotSvc(cfg, binanceClient, snapshotStorages, metricsHolder, exInfoCache)
-	snapshotFixer := svc.NewDataFixer("snapshot_spot", snapshotCsStorage, []svc.AuxBatchedDataStorage[cmodel.DepthSnapshotPart]{snapshotMongoStorage, snapshotFileStorage})
+	snapshotFixer := svc.NewDataFixer("snapshot_spot", snapshotCsStorage, []svc.AuxBatchedDataStorage[cmodel.DepthSnapshotPart]{snapshotFileStorage})
 
 	// binance spot exchange info
 	exchangeInfoCsStorage := cs.NewExchangeInfoStorage(csSession, csCfg.ExchangeInfoTableName)
-	exchangeInfoMongoStorage := repo.NewLocalMongoRepo[cmodel.ExchangeInfo, cmodel.ExchangeInfoWithMongoId](mongoTimeout, "exchange_info_spot", binanceDataMongoDb)
 	exchangeInfoFileStorage := repo.NewFileRepo[cmodel.ExchangeInfo]("exchange_info_spot")
-	exInfoStorages := []svc.BatchedDataStorage[cmodel.ExchangeInfo]{exchangeInfoCsStorage, exchangeInfoMongoStorage, exchangeInfoFileStorage}
+	exInfoStorages := []svc.BatchedDataStorage[cmodel.ExchangeInfo]{exchangeInfoCsStorage, exchangeInfoFileStorage}
 	exInfoSvc := svc.NewExchangeInfoSvc(cfg, binanceClient, exInfoStorages, metricsHolder, exInfoCache)
-	exInfoFixer := svc.NewDataFixer("exchange_info_spot", exchangeInfoCsStorage, []svc.AuxBatchedDataStorage[cmodel.ExchangeInfo]{exchangeInfoMongoStorage, exchangeInfoFileStorage})
+	exInfoFixer := svc.NewDataFixer("exchange_info_spot", exchangeInfoCsStorage, []svc.AuxBatchedDataStorage[cmodel.ExchangeInfo]{exchangeInfoFileStorage})
 	return &App{
 		logger:              logger,
 		deltaSvc:            deltaSvc,
@@ -126,8 +118,8 @@ func NewApp(cfg *conf.AppConfig) *App {
 		exInfoFixer:         exInfoFixer,
 		deltaHolesIdWatcher: deltaHolesIdWatcher,
 		deltaHolesStorage:   deltaHolesStorage,
-		mongoClient:         mongoClient,
-		cfg:                 cfg,
+		// mongoClient:         mongoClient,
+		cfg: cfg,
 	}
 }
 
@@ -206,7 +198,7 @@ func (s *App) Stop(ctx context.Context) {
 	}()
 	wg.Wait()
 	time.Sleep(30 * time.Second)
-	s.mongoClient.Disconnect(context.Background())
+	// s.mongoClient.Disconnect(context.Background())
 	s.logger.Info("End of graceful shutdown")
 }
 
