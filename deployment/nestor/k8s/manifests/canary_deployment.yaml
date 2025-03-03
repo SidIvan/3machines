@@ -29,7 +29,7 @@ spec:
         environment: canary
       containers:
       - name: nestor
-        image: sidivan/nestor:v1.0
+        image: sidivan/nestor:v2.0
         imagePullPolicy: Always
         ports:
         - containerPort: 9001
