@@ -3,7 +3,6 @@ package svc
 import (
 	"DeltaReceiver/internal/common/model"
 	"DeltaReceiver/internal/nestor/cache"
-	"DeltaReceiver/internal/nestor/conf"
 	"DeltaReceiver/pkg/log"
 	"context"
 	"fmt"
@@ -20,23 +19,19 @@ type SnapshotSvc struct {
 	snapshotQueue     []string
 	snapshotSchedules map[string]time.Time
 	dataStorages      []BatchedDataStorage[model.DepthSnapshotPart]
-	metrics           MetricsHolder
-	cfg               *conf.AppConfig
 	shutdown          *atomic.Bool
 	done              chan struct{}
 	exInfoCache       *cache.ExchangeInfoCache
 }
 
-func NewSnapshotSvc(config *conf.AppConfig, binanceClient BinanceClient, dataStorages []BatchedDataStorage[model.DepthSnapshotPart], metricsHolder MetricsHolder, infoCache *cache.ExchangeInfoCache) *SnapshotSvc {
+func NewSnapshotSvc(binanceClient BinanceClient, dataStorages []BatchedDataStorage[model.DepthSnapshotPart], infoCache *cache.ExchangeInfoCache) *SnapshotSvc {
 	var shutdown atomic.Bool
 	shutdown.Store(false)
 	return &SnapshotSvc{
 		logger:            log.GetLogger("SnapshotSvc"),
 		binanceClient:     binanceClient,
-		metrics:           metricsHolder,
 		dataStorages:      dataStorages,
 		snapshotSchedules: make(map[string]time.Time),
-		cfg:               config,
 		shutdown:          &shutdown,
 		done:              make(chan struct{}),
 		exInfoCache:       infoCache,
@@ -100,7 +95,6 @@ func (s *SnapshotSvc) ReceiveAndSaveSnapshot(ctx context.Context, symbol string)
 	if err != nil {
 		return limit, err
 	}
-	s.metrics.ProcessSnapshotMetrics(snapshot, Receive)
 	if len(snapshot) == 0 {
 		s.logger.Warn("empty snapshot")
 		return limit, nil

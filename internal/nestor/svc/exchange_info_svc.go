@@ -3,7 +3,6 @@ package svc
 import (
 	"DeltaReceiver/internal/common/model"
 	"DeltaReceiver/internal/nestor/cache"
-	"DeltaReceiver/internal/nestor/conf"
 	"DeltaReceiver/pkg/log"
 	"context"
 	"fmt"
@@ -17,25 +16,23 @@ type ExchangeInfoSvc struct {
 	logger          *zap.Logger
 	binanceClient   BinanceClient
 	dataStorages    []BatchedDataStorage[model.ExchangeInfo]
-	metrics         MetricsHolder
-	cfg             *conf.AppConfig
+	exInfoUpdPeriod time.Duration
 	shutdown        *atomic.Bool
 	done            chan struct{}
 	exInfoCache     *cache.ExchangeInfoCache
 }
 
-func NewExchangeInfoSvc(config *conf.AppConfig, binanceClient BinanceClient, dataStorages []BatchedDataStorage[model.ExchangeInfo], metrics MetricsHolder, infoCache *cache.ExchangeInfoCache) *ExchangeInfoSvc {
+func NewExchangeInfoSvc(exInfoUpdPeriod time.Duration, binanceClient BinanceClient, dataStorages []BatchedDataStorage[model.ExchangeInfo], infoCache *cache.ExchangeInfoCache) *ExchangeInfoSvc {
 	var shutdown atomic.Bool
 	shutdown.Store(false)
 	return &ExchangeInfoSvc{
-		logger:        log.GetLogger("ExchangeInfoSvc"),
-		binanceClient: binanceClient,
-		metrics:       metrics,
-		dataStorages:  dataStorages,
-		cfg:           config,
-		shutdown:      &shutdown,
-		done:          make(chan struct{}),
-		exInfoCache:   infoCache,
+		logger:          log.GetLogger("ExchangeInfoSvc"),
+		binanceClient:   binanceClient,
+		dataStorages:    dataStorages,
+		exInfoUpdPeriod: exInfoUpdPeriod,
+		shutdown:        &shutdown,
+		done:            make(chan struct{}),
+		exInfoCache:     infoCache,
 	}
 }
 
@@ -45,13 +42,11 @@ func (s *ExchangeInfoSvc) StartReceiveExInfo(ctx context.Context) {
 			s.done <- struct{}{}
 			return
 		}
-		time.Sleep(time.Duration(s.cfg.ExchangeInfoUpdPerM) * time.Minute)
+		time.Sleep(s.exInfoUpdPeriod)
 		ctxWithTimeout, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 		exInfo, err := s.binanceClient.GetFullExchangeInfo(ctxWithTimeout)
 		cancel()
 		if err == nil {
-			s.metrics.UpdateMetrics(exInfo.Symbols)
-			s.metrics.ProcessExInfoMetrics(Receive)
 			s.logger.Info(fmt.Sprintf("got exchange info with hash %d", exInfo.ExInfoHash()))
 		} else {
 			s.logger.Warn("error when getting exchange info, sleep")

@@ -3,28 +3,66 @@ kind: ConfigMap
 metadata:
   name: nestor-canary-config
 data:
-  binance.client.stream.uri.schema: wss://
-  binance.client.stream.uri.host: stream.binance.com
-  binance.client.stream.uri.port: "9443"
-  binance.client.http.uri.schema: https://
-  binance.client.http.uri.host: api.binance.com
-  binance.client.http.uri.port: "443"
   binance.reconnect.period.m: "720"
-  binance.exchange.info.update.period.m: "5"
+
+  binance.spot.data.type: Spot
+  binance.spot.client.http.uri.schema: https://
+  binance.spot.client.http.uri.host: api.binance.com
+  binance.spot.client.http.uri.port: "443"
+  binance.spot.client.stream.uri.schema: wss://
+  binance.spot.client.stream.uri.host: stream.binance.com
+  binance.spot.client.stream.uri.port: "9443"
   binance.spot.deltas.num.workers: "5"
   binance.spot.deltas.batch.size: "5000"
   binance.spot.book.ticks.num.workers: "5"
   binance.spot.book.ticks.batch.size: "5000"
-  local.repo.database: binance_data
-  local.repo.delta.table: deltas
-  local.repo.snapshot.table: snapshots
-  local.repo.exchange.info.table: exchange_info
-  local.repo.book.ticks.table: book_ticks
-  local.repo.uri.schema: mongodb://
-  local.repo.uri.host: nestor-mongodb.default.svc.cluster.local
-  local.repo.uri.port: "27017"
-  local.repo.num.connection.retries: "3"
-  local.repo.timeout.s: "3"
-  dwarf.uri.schema: http://
-  dwarf.uri.host: "185.178.44.208"
-  dwarf.uri.port: "8080"
+  binance.spot.exchange.info.update.period.m: "5"
+
+  binance.usd.data.type: FuturesUSD
+  binance.usd.client.http.uri.schema: https://
+  binance.usd.client.http.uri.host: fapi.binance.com
+  binance.usd.client.http.uri.port: "443"
+  binance.usd.client.stream.uri.schema: wss://
+  binance.usd.client.stream.uri.host: ws-fapi.binance.com
+  binance.usd.client.stream.uri.port: "9443"
+  binance.usd.deltas.num.workers: "1"
+  binance.usd.deltas.batch.size: "5000"
+  binance.usd.book.ticks.num.workers: "1"
+  binance.usd.book.ticks.batch.size: "5000"
+  binance.usd.exchange.info.update.period.m: "5"
+
+  binance.coin.data.type: FuturesCoin
+  binance.coin.client.http.uri.schema: https://
+  binance.coin.client.http.uri.host: dapi.binance.com
+  binance.coin.client.http.uri.port: "443"
+  binance.coin.client.stream.uri.schema: wss://
+  binance.coin.client.stream.uri.host: ws-dapi.binance.com
+  binance.coin.client.stream.uri.port: "9443"
+  binance.coin.deltas.num.workers: "1"
+  binance.coin.deltas.batch.size: "5000"
+  binance.coin.book.ticks.num.workers: "1"
+  binance.coin.book.ticks.batch.size: "5000"
+  binance.coin.exchange.info.update.period.m: "5"
+
+
+  mongo.config.timeout.s: "3"
+  mongo.config.database.name: binance_data
+  mongo.config.num.connection.retries: "3"
+  mongo.config.uri.schema: mongodb://
+  mongo.config.uri.host: nestor-mongodb.default.svc.cluster.local
+  mongo.config.uri.port: "27017"
+
+  mongo.binance.spot.delta.table: spot_deltas
+  mongo.binance.spot.snapshot.table: spot_snapshot
+  mongo.binance.spot.exchange.info.table: spot_exchange_info
+  mongo.binance.spot.book.ticks.table: spot_book_ticks
+
+  mongo.binance.usd.delta.table: usd_deltas
+  mongo.binance.usd.snapshot.table: usd_snapshot
+  mongo.binance.usd.exchange.info.table: usd_exchange_info
+  mongo.binance.usd.book.ticks.table: usd_book_ticks
+
+  mongo.binance.coin.delta.table: coin_deltas
+  mongo.binance.coin.snapshot.table: coin_snapshot
+  mongo.binance.coin.exchange.info.table: coin_exchange_info
+  mongo.binance.coin.book.ticks.table: coin_book_ticks

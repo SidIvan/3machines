@@ -3,40 +3,26 @@ package conf
 import (
 	"DeltaReceiver/internal/common/conf"
 	cconf "DeltaReceiver/pkg/conf"
-	"os"
-	"strconv"
 )
 
 type AppConfig struct {
-	ZkCfg           *ZkConfig            `yaml:"zk"`
-	B2Cfg           *B2Config            `yaml:"b2"`
-	DwarfURIConfig  *cconf.BaseUriConfig `yaml:"dwarf.uri"`
-	SocratesCfg     *conf.CsRepoConfig   `yaml:"socrates"`
-	DeltaWorkers    int                  `yaml:"workers.binance.deltas"`
-	BookTicksWorker int                  `yaml:"workers.binance.book.ticks"`
-	SnapshotsWorker int                  `yaml:"workers.binance.snapshots"`
+	ZkCfg          *ZkConfig            `yaml:"zk"`
+	B2Cfg          *B2Config            `yaml:"b2"`
+	DwarfURIConfig *cconf.BaseUriConfig `yaml:"dwarf.uri"`
+	SocratesCfg    *conf.CsRepoConfig   `yaml:"socrates"`
+	BinanceSpotCfg *BinanceMarketCfg    `yaml:"binance.spot"`
+	BinanceUSDCfg  *BinanceMarketCfg    `yaml:"binance.usd"`
+	BinanceCoinCfg *BinanceMarketCfg    `yaml:"binance.coin"`
 }
 
 func AppConfigFromEnv(prefix string) *AppConfig {
-	deltaWorkers, err := strconv.Atoi(os.Getenv(prefix + ".workers.binance.deltas"))
-	if err != nil {
-		panic(err)
-	}
-	bookTicksWorkers, err := strconv.Atoi(os.Getenv(prefix + ".workers.binance.book.ticks"))
-	if err != nil {
-		panic(err)
-	}
-	snapshotsWorkers, err := strconv.Atoi(os.Getenv(prefix + ".workers.binance.snapshots"))
-	if err != nil {
-		panic(err)
-	}
 	return &AppConfig{
-		ZkCfg:           ZkConfigFromEnv("zk"),
-		B2Cfg:           B2ConfigFromEnv("b2"),
-		SocratesCfg:     conf.NewCsRepoConfigFromEnv("socrates"),
-		DwarfURIConfig:  cconf.NewBaseUriConfigFromEnv("dwarf.uri"),
-		DeltaWorkers:    deltaWorkers,
-		BookTicksWorker: bookTicksWorkers,
-		SnapshotsWorker: snapshotsWorkers,
+		ZkCfg:          ZkConfigFromEnv("zk"),
+		B2Cfg:          B2ConfigFromEnv("b2"),
+		SocratesCfg:    conf.NewCsRepoConfigFromEnv("socrates"),
+		DwarfURIConfig: cconf.NewBaseUriConfigFromEnv("dwarf.uri"),
+		BinanceSpotCfg: NewBinanceMarketCfg("binance.spot"),
+		BinanceUSDCfg:  NewBinanceMarketCfg("binance.usd"),
+		BinanceCoinCfg: NewBinanceMarketCfg("binance.coin"),
 	}
 }

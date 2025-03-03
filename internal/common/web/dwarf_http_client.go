@@ -58,7 +58,7 @@ func (s *DwarfHttpClient) createRequest(hole model.DeltaHole) (*http.Request, er
 	if err != nil {
 		return nil, err
 	}
-	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%sdelta/hole", s.url), bytes.NewBuffer(body))
+	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/delta/hole", s.url), bytes.NewBuffer(body))
 	if err != nil {
 		return nil, err
 	}

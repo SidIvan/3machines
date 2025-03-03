@@ -1,14 +1,8 @@
 package app
 
 import (
-	"DeltaReceiver/internal/common/model"
-	"DeltaReceiver/internal/common/repo/cs"
 	"DeltaReceiver/internal/common/web"
-	b2pqt "DeltaReceiver/internal/sizif/b2"
 	"DeltaReceiver/internal/sizif/conf"
-	"DeltaReceiver/internal/sizif/lock"
-	"DeltaReceiver/internal/sizif/metrics"
-	"DeltaReceiver/internal/sizif/svc"
 	bmodel "DeltaReceiver/pkg/binance/model"
 	"DeltaReceiver/pkg/log"
 	"context"
@@ -26,11 +20,11 @@ import (
 )
 
 type App struct {
-	logger       *zap.Logger
-	cfg          *conf.AppConfig
-	deltasSvc    *svc.SizifSvc[model.Delta]
-	bookTicksSvc *svc.SizifSvc[bmodel.SymbolTick]
-	snapshotsSvc *svc.SizifSvc[model.DepthSnapshotPart]
+	logger         *zap.Logger
+	cfg            *conf.AppConfig
+	binanceSpotCtx *BinanceMarketCtx
+	binanceUSDCtx  *BinanceMarketCtx
+	binanceCoinCtx *BinanceMarketCtx
 }
 
 func NewApp(cfg *conf.AppConfig) *App {
@@ -44,32 +38,16 @@ func NewApp(cfg *conf.AppConfig) *App {
 	dwarfClient := web.NewDwarfHttpClient(cfg.DwarfURIConfig)
 	zkConn, b2Bucket, csSession := initConnections(cfg)
 
-	deltaSocratesStorage := cs.NewCsDeltaStorageRO(csSession, cfg.SocratesCfg.DeltaTableName, cfg.SocratesCfg.DeltaKeyTableName)
-	deltaParquetStorage := b2pqt.NewB2ParquetStorage[model.Delta](b2Bucket, "binance/deltas", b2pqt.FromKey)
-	deltaTransformator := svc.NewDeltaTransformator(dwarfClient)
-	deltaLocker := lock.NewZkLocker("binance/deltas", zkConn)
-	deltaMetrics := metrics.NewSizifWorkerMetrics("binance_deltas")
-	deltaSvc := svc.NewSizifSvc("binance/deltas", deltaSocratesStorage, deltaParquetStorage, deltaTransformator, deltaLocker, cfg.DeltaWorkers, deltaMetrics)
+	binanceSpotCtx := NewBinanceMarketCtx(bmodel.Spot, cfg.BinanceSpotCfg, cfg.SocratesCfg.BinanceSpotCfg, zkConn, b2Bucket, csSession, dwarfClient)
+	binanceUSDCtx := NewBinanceMarketCtx(bmodel.FuturesUSD, cfg.BinanceUSDCfg, cfg.SocratesCfg.BinanceUSDCfg, zkConn, b2Bucket, csSession, dwarfClient)
+	binanceCoinCtx := NewBinanceMarketCtx(bmodel.FuturesCoin, cfg.BinanceCoinCfg, cfg.SocratesCfg.BinanceCoinCfg, zkConn, b2Bucket, csSession, dwarfClient)
 
-	bookTicksSocratesStorage := cs.NewCsBookTicksStorageRO(csSession, cfg.SocratesCfg.BookTicksTableName, cfg.SocratesCfg.BookTicksKeyTableName)
-	bookTicksParquetStorage := b2pqt.NewB2ParquetStorage[bmodel.SymbolTick](b2Bucket, "binance/book_ticks", b2pqt.FromKey)
-	bookTicksTransformator := svc.NewBookTicksTransformator()
-	bookTicksLocker := lock.NewZkLocker("binance/book_ticks", zkConn)
-	bookTicksMetrics := metrics.NewSizifWorkerMetrics("binance_book_ticks")
-	bookTicksSvc := svc.NewSizifSvc("binance/book_ticks", bookTicksSocratesStorage, bookTicksParquetStorage, bookTicksTransformator, bookTicksLocker, cfg.BookTicksWorker, bookTicksMetrics)
-
-	snapshotsSocratesStorage := cs.NewCsSnapshotStorageRO(csSession, cfg.SocratesCfg.SnapshotTableName, cfg.SocratesCfg.SnapshotKeyTableName)
-	snapshotsParquetStorage := b2pqt.NewB2ParquetStorage[model.DepthSnapshotPart](b2Bucket, "binance/snapshots", b2pqt.FromData)
-	snapshotsTransformator := svc.NewDepthSnapshotTransformator()
-	snapshotsLocker := lock.NewZkLocker("binance/snapshots", zkConn)
-	snapshotsMetrics := metrics.NewSizifWorkerMetrics("binance_snapshots")
-	snapshotsSvc := svc.NewSizifSvc("binance/snapshots", snapshotsSocratesStorage, snapshotsParquetStorage, snapshotsTransformator, snapshotsLocker, cfg.SnapshotsWorker, snapshotsMetrics)
 	return &App{
-		logger:       logger,
-		cfg:          cfg,
-		deltasSvc:    deltaSvc,
-		bookTicksSvc: bookTicksSvc,
-		snapshotsSvc: snapshotsSvc,
+		logger:         logger,
+		cfg:            cfg,
+		binanceSpotCtx: binanceSpotCtx,
+		binanceUSDCtx:  binanceUSDCtx,
+		binanceCoinCtx: binanceCoinCtx,
 	}
 }
 
@@ -104,9 +82,9 @@ func (s *App) Start() {
 			panic(err)
 		}
 	}()
-	go s.deltasSvc.Start(baseContext)
-	go s.bookTicksSvc.Start(baseContext)
-	go s.snapshotsSvc.Start(baseContext)
+	go s.binanceSpotCtx.Start(baseContext)
+	go s.binanceUSDCtx.Start(baseContext)
+	go s.binanceCoinCtx.Start(baseContext)
 	time.Sleep(3 * time.Second)
 	s.logger.Info("App started")
 }
@@ -116,15 +94,15 @@ func (s *App) Stop(ctx context.Context) {
 	var wg sync.WaitGroup
 	wg.Add(3)
 	go func() {
-		s.deltasSvc.Shutdown(ctx)
+		s.binanceSpotCtx.Shutdown(ctx)
 		wg.Done()
 	}()
 	go func() {
-		s.bookTicksSvc.Shutdown(ctx)
+		s.binanceUSDCtx.Shutdown(ctx)
 		wg.Done()
 	}()
 	go func() {
-		s.snapshotsSvc.Shutdown(ctx)
+		s.binanceCoinCtx.Shutdown(ctx)
 		wg.Done()
 	}()
 	wg.Wait()

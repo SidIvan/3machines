@@ -29,7 +29,7 @@ func (cfg *BaseUriConfig) GetEndpoint() string {
 }
 
 func (cfg *BaseUriConfig) GetBaseUri() string {
-	return fmt.Sprintf("%s%s:%d/", cfg.Schema, cfg.Host, cfg.Port)
+	return fmt.Sprintf("%s%s:%d", cfg.Schema, cfg.Host, cfg.Port)
 }
 
 func (cfg *BaseUriConfig) GetAddress() string {

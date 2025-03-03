@@ -5,10 +5,27 @@ metadata:
 data:
   socrates.hosts: "cassandra-0.cassandra.default.svc.cluster.local,cassandra-1.cassandra.default.svc.cluster.local,cassandra-2.cassandra.default.svc.cluster.local,cassandra-3.cassandra.default.svc.cluster.local"
   socrates.binace.keyspace: binance_data
-  socrates.binace.delta.table: deltas
-  socrates.binace.delta.key.table: deltas_keys
-  socrates.binace.snapshot.table: snapshots
-  socrates.binace.snapshot.key.table: snapshots_keys
-  socrates.binace.book.ticks.table: book_ticks
-  socrates.binace.book.ticks.key.table: book_ticks_keys
-  socrates.binace.exchange.info.table: exchange_info
+
+  socrates.binace.spot.delta.table: deltas
+  socrates.binace.spot.delta.key.table: deltas_keys
+  socrates.binace.spot.snapshot.table: snapshots
+  socrates.binace.spot.snapshot.key.table: snapshots_keys
+  socrates.binace.spot.book.ticks.table: book_ticks
+  socrates.binace.spot.book.ticks.key.table: book_ticks_keys
+  socrates.binace.spot.exchange.info.table: exchange_info
+
+  socrates.binace.usd.delta.table: usd_deltas
+  socrates.binace.usd.delta.key.table: usd_deltas_keys
+  socrates.binace.usd.snapshot.table: usd_snapshots
+  socrates.binace.usd.snapshot.key.table: usd_snapshots_keys
+  socrates.binace.usd.book.ticks.table: usd_book_ticks
+  socrates.binace.usd.book.ticks.key.table: usd_book_ticks_keys
+  socrates.binace.usd.exchange.info.table: usd_exchange_info
+
+  socrates.binace.coin.delta.table: coin_deltas
+  socrates.binace.coin.delta.key.table: coin_deltas_keys
+  socrates.binace.coin.snapshot.table: coin_snapshots
+  socrates.binace.coin.snapshot.key.table: coin_snapshots_keys
+  socrates.binace.coin.book.ticks.table: coin_book_ticks
+  socrates.binace.coin.book.ticks.key.table: coin_book_ticks_keys
+  socrates.binace.coin.exchange.info.table: coin_exchange_info

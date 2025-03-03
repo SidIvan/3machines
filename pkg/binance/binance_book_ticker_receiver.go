@@ -36,7 +36,7 @@ func NewBookTickerClient(cfg *BinanceHttpClientConfig, symbols []string) *BookTi
 }
 
 func (s *BookTickerClient) formWSUri() string {
-	return fmt.Sprintf("%sws/%s@bookTicker", s.baseUri, strings.Join(s.symbols, "@bookTicker/"))
+	return fmt.Sprintf("%s/ws/%s@bookTicker", s.baseUri, strings.Join(s.symbols, "@bookTicker/"))
 }
 
 func (s *BookTickerClient) ConnectWs(ctx context.Context) error {

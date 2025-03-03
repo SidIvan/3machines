@@ -1,15 +1,16 @@
 package web
 
 import (
-	"DeltaReceiver/internal/nestor/cache"
 	"DeltaReceiver/internal/common/model"
+	"DeltaReceiver/internal/nestor/cache"
 	"DeltaReceiver/pkg/binance"
 	bmodel "DeltaReceiver/pkg/binance/model"
 	"DeltaReceiver/pkg/log"
 	"context"
 	"fmt"
-	"go.uber.org/zap"
 	"time"
+
+	"go.uber.org/zap"
 )
 
 type BinanceClient struct {
@@ -18,10 +19,10 @@ type BinanceClient struct {
 	exInfoCache *cache.ExchangeInfoCache
 }
 
-func NewBinanceClient(cfg *binance.BinanceHttpClientConfig, exInfoCache *cache.ExchangeInfoCache) *BinanceClient {
+func NewBinanceClient(dataType bmodel.DataType, cfg *binance.BinanceHttpClientConfig, exInfoCache *cache.ExchangeInfoCache) *BinanceClient {
 	return &BinanceClient{
-		logger:      log.GetLogger("BinanceClient"),
-		client:      binance.NewBinanceHttpClient(cfg),
+		logger:      log.GetLogger(fmt.Sprintf("BinanceClient[%s]", dataType)),
+		client:      binance.NewBinanceHttpClient(dataType, cfg),
 		exInfoCache: exInfoCache,
 	}
 }
@@ -50,13 +51,4 @@ func (s BinanceClient) GetFullExchangeInfo(ctx context.Context) (*bmodel.Exchang
 		s.exInfoCache.SetVal(exInfo)
 	}
 	return exInfo, err
-}
-
-func (s BinanceClient) GetBookTicks(ctx context.Context) ([]bmodel.SymbolTick, error) {
-	s.logger.Info("get full book ticker")
-	ticks, err := s.client.GetBookTicker(ctx)
-	if err == nil {
-		s.logger.Info("successfully got book ticker")
-	}
-	return ticks, err
 }

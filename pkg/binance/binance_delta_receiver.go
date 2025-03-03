@@ -35,7 +35,7 @@ func NewDeltaReceiveClient(cfg *BinanceHttpClientConfig, symbols []string) *Delt
 }
 
 func (s *DeltaReceiveClient) formWSUri() string {
-	return fmt.Sprintf("%sws/%s@depth@100ms", s.baseUri, strings.Join(s.symbols, "@depth@100ms/"))
+	return fmt.Sprintf("%s/ws/%s@depth@100ms", s.baseUri, strings.Join(s.symbols, "@depth@100ms/"))
 }
 
 func (s *DeltaReceiveClient) ConnectWs(ctx context.Context) error {

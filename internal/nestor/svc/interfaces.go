@@ -11,7 +11,6 @@ import (
 type BinanceClient interface {
 	GetFullSnapshot(ctx context.Context, symbol string, depth int) ([]model.DepthSnapshotPart, string, error)
 	GetFullExchangeInfo(context.Context) (*bmodel.ExchangeInfo, error)
-	GetBookTicks(ctx context.Context) ([]bmodel.SymbolTick, error)
 }
 
 type WsDataWorkersProvider[T any] interface {

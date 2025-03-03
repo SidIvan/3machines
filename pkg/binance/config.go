@@ -1,6 +1,8 @@
 package binance
 
-import "DeltaReceiver/pkg/conf"
+import (
+	"DeltaReceiver/pkg/conf"
+)
 
 type BinanceHttpClientConfig struct {
 	StreamBaseUriConfig *conf.BaseUriConfig `yaml:"stream.uri"`
