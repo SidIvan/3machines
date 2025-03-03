@@ -29,3 +29,12 @@ data:
   socrates.binance.coin.book.ticks.table: coin_book_ticks
   socrates.binance.coin.book.ticks.key.table: coin_book_ticks_keys
   socrates.binance.coin.exchange.info.table: coin_exchange_info
+
+
+  socrates.binace.delta.table: deltas
+  socrates.binace.delta.key.table: deltas_keys
+  socrates.binace.snapshot.table: snapshots
+  socrates.binace.snapshot.key.table: snapshots_keys
+  socrates.binace.book.ticks.table: book_ticks
+  socrates.binace.book.ticks.key.table: book_ticks_keys
+  socrates.binace.exchange.info.table: exchange_info
