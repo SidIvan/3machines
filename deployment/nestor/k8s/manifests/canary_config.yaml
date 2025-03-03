@@ -25,7 +25,7 @@ data:
   binance.usd.client.http.uri.host: fapi.binance.com
   binance.usd.client.http.uri.port: "443"
   binance.usd.client.stream.uri.schema: wss://
-  binance.usd.client.stream.uri.host: ws-fapi.binance.com
+  binance.usd.client.stream.uri.host: fstream.binance.com
   binance.usd.client.stream.uri.port: "443"
   binance.usd.client.use.all.tickers.stream: "true"
   binance.usd.deltas.num.workers: "1"
@@ -40,7 +40,7 @@ data:
   binance.coin.client.http.uri.host: dapi.binance.com
   binance.coin.client.http.uri.port: "443"
   binance.coin.client.stream.uri.schema: wss://
-  binance.coin.client.stream.uri.host: ws-dapi.binance.com
+  binance.coin.client.stream.uri.host: dstream.binance.com
   binance.coin.client.stream.uri.port: "443"
   binance.coin.client.use.all.tickers.stream: "true"
   binance.coin.deltas.num.workers: "1"
