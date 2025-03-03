@@ -58,6 +58,8 @@ func (s *CsDeltaStorage) initStatements() {
 }
 
 func (s CsDeltaStorage) Save(ctx context.Context, deltas []model.Delta) error {
+	s.logger.Debug("SAVE MOCK")
+	return nil
 	return s.SendDeltas(ctx, deltas)
 }
 

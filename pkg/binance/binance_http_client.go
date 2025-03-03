@@ -35,6 +35,7 @@ func (s BinanceHttpClient) GetFullExchangeInfo(ctx context.Context) (*model.Exch
 		return nil, RequestRejectedErr
 	}
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, s.exInfoQ, http.NoBody)
+	s.logger.Debug("start get exchange info " + s.exInfoQ)
 	if err != nil {
 		s.logger.Error(err.Error())
 		return nil, err
@@ -65,6 +66,7 @@ func (s BinanceHttpClient) GetFullExchangeInfo(ctx context.Context) (*model.Exch
 	if err != nil {
 		s.logger.Warn(err.Error())
 	}
+	s.logger.Debug(fmt.Sprintf("got ex info with %d symbols", len(exInfo.Symbols)))
 	return &exInfo, nil
 }
 
@@ -74,7 +76,9 @@ func (s BinanceHttpClient) GetFullSnapshot(ctx context.Context, symbol string, d
 	}
 	ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
 	defer cancel()
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("%s?symbol=%s&limit=%d", s.depthSnapshotQ, symbol, depthLimit), http.NoBody)
+	reqURL := fmt.Sprintf("%s?symbol=%s&limit=%d", s.depthSnapshotQ, symbol, depthLimit)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, reqURL, http.NoBody)
+	s.logger.Debug("start get full snapshot " + reqURL)
 	if err != nil {
 		s.logger.Error(err.Error())
 		return nil, "", err

@@ -48,6 +48,7 @@ func (s *BookTickerClient) ConnectWs(ctx context.Context) error {
 	d := websocket.Dialer{
 		Proxy: http.ProxyFromEnvironment,
 	}
+	dialUri := s.formWSUri()
 	dialer, resp, err := d.Dial(s.formWSUri(), nil)
 	if resp.StatusCode == http.StatusTeapot {
 		return banBinanceRequests(resp, TeapotErr)
@@ -59,6 +60,7 @@ func (s *BookTickerClient) ConnectWs(ctx context.Context) error {
 		s.logger.Error(err.Error())
 		return err
 	}
+	s.logger.Debug("start dial with uri " + dialUri)
 	s.dialer = dialer
 	return nil
 }

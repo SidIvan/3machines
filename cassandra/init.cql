@@ -1,6 +1,6 @@
-CREATE KEYSPACE IF NOT EXISTS binance_data WITH REPLICATION = {'class':'NetworkTopologyStrategy','SOCRATES':'2'};
+CREATE KEYSPACE IF NOT EXISTS dev WITH REPLICATION = {'class':'NetworkTopologyStrategy','SOCRATES':'2'};
 
-USE binance_data;
+USE dev;
 
 CREATE TABLE IF NOT EXISTS deltas (
     symbol ascii,

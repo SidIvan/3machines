@@ -18,6 +18,7 @@ data:
   binance.spot.book.ticks.num.workers: "5"
   binance.spot.book.ticks.batch.size: "5000"
   binance.spot.exchange.info.update.period.m: "5"
+  binance.spot.snapshots.depth: "5000"
 
   binance.usd.data.type: usd
   binance.usd.client.http.uri.schema: https://
@@ -32,6 +33,7 @@ data:
   binance.usd.book.ticks.num.workers: "1"
   binance.usd.book.ticks.batch.size: "5000"
   binance.usd.exchange.info.update.period.m: "5"
+  binance.usd.snapshots.depth: "1000"
 
   binance.coin.data.type: coin
   binance.coin.client.http.uri.schema: https://
@@ -46,6 +48,7 @@ data:
   binance.coin.book.ticks.num.workers: "1"
   binance.coin.book.ticks.batch.size: "5000"
   binance.coin.exchange.info.update.period.m: "5"
+  binance.coin.snapshots.depth: "1000"
 
 
   mongo.config.timeout.s: "3"

@@ -82,8 +82,8 @@ func NewBinanceMarketCtx(
 	snapshotCsStorage := cs.NewCsSnapshotStorageWO(csSession, cm.NewCsStorageMetrics(marketCsRepoCfg.SnapshotTableName, marketType), marketCsRepoCfg.SnapshotTableName, marketCsRepoCfg.SnapshotKeyTableName)
 	snapshotFileStorage := repo.NewFileRepo[cmodel.DepthSnapshotPart](loggerParam)
 	snapshotStorages := []svc.BatchedDataStorage[cmodel.DepthSnapshotPart]{snapshotCsStorage, snapshotFileStorage}
-	snapshotSvc := svc.NewSnapshotSvc(binanceClient, snapshotStorages, exInfoCache)
-	snapshotFixer := svc.NewDataFixer("snapshot_spot", snapshotCsStorage, []svc.AuxBatchedDataStorage[cmodel.DepthSnapshotPart]{snapshotFileStorage})
+	snapshotSvc := svc.NewSnapshotSvc(loggerParam, marketCfg.SnapshotsDepth, binanceClient, snapshotStorages, exInfoCache)
+	snapshotFixer := svc.NewDataFixer(loggerParam, snapshotCsStorage, []svc.AuxBatchedDataStorage[cmodel.DepthSnapshotPart]{snapshotFileStorage})
 
 	// binance spot exchange info
 	loggerParam = string("exchange_info_" + marketType)

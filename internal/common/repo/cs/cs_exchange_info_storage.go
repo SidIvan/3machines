@@ -38,6 +38,8 @@ func (s *CsExchangeInfoStorage) initStatements() {
 }
 
 func (s CsExchangeInfoStorage) Save(ctx context.Context, exInfo []model.ExchangeInfo) error {
+	s.logger.Debug("SAVE MOCK")
+	return nil
 	if len(exInfo) == 0 {
 		s.logger.Warn("no ex info")
 		return nil

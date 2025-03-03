@@ -22,19 +22,21 @@ type SnapshotSvc struct {
 	shutdown          *atomic.Bool
 	done              chan struct{}
 	exInfoCache       *cache.ExchangeInfoCache
+	snapshotDepth     int
 }
 
-func NewSnapshotSvc(binanceClient BinanceClient, dataStorages []BatchedDataStorage[model.DepthSnapshotPart], infoCache *cache.ExchangeInfoCache) *SnapshotSvc {
+func NewSnapshotSvc(dataType string, snapshotDepth int, binanceClient BinanceClient, dataStorages []BatchedDataStorage[model.DepthSnapshotPart], infoCache *cache.ExchangeInfoCache) *SnapshotSvc {
 	var shutdown atomic.Bool
 	shutdown.Store(false)
 	return &SnapshotSvc{
-		logger:            log.GetLogger("SnapshotSvc"),
+		logger:            log.GetLogger(fmt.Sprintf("SnapshotSvc[%s]", dataType)),
 		binanceClient:     binanceClient,
 		dataStorages:      dataStorages,
 		snapshotSchedules: make(map[string]time.Time),
 		shutdown:          &shutdown,
 		done:              make(chan struct{}),
 		exInfoCache:       infoCache,
+		snapshotDepth:     snapshotDepth,
 	}
 }
 
@@ -80,7 +82,7 @@ func (s *SnapshotSvc) StartReceiveAndSaveSnapshots(ctx context.Context) {
 }
 
 func (s *SnapshotSvc) ReceiveAndSaveSnapshot(ctx context.Context, symbol string) (string, error) {
-	snapshot, limit, err := s.binanceClient.GetFullSnapshot(ctx, symbol, 5000)
+	snapshot, limit, err := s.binanceClient.GetFullSnapshot(ctx, symbol, s.snapshotDepth)
 	defer func(err error) {
 		if err != nil {
 			s.logger.Error(fmt.Errorf("error while getting snapshot %s because of %w", symbol, err).Error())

@@ -12,10 +12,15 @@ type BinanceMarketCfg struct {
 	DeltasPipelineCfg    *WsPipelineCfg                   `yaml:"deltas"`
 	BookTicksPipelineCfg *WsPipelineCfg                   `yaml:"book.ticks"`
 	ExchangeInfoUpdPerM  int                              `yaml:"exchange.info.update.period.m"`
+	SnapshotsDepth       int                              `yaml:"snapshots.depth"`
 }
 
 func NewBinanceMarketCfgFromEnv(envPrefix string) *BinanceMarketCfg {
 	exchangeInfoUpdatePeriodM, err := strconv.Atoi(os.Getenv(envPrefix + ".exchange.info.update.period.m"))
+	if err != nil {
+		panic(err)
+	}
+	snapshotsDepth, err := strconv.Atoi(os.Getenv(envPrefix + ".snapshots.depth"))
 	if err != nil {
 		panic(err)
 	}
@@ -25,5 +30,6 @@ func NewBinanceMarketCfgFromEnv(envPrefix string) *BinanceMarketCfg {
 		BookTicksPipelineCfg: NewWsPipelineCfgFromEnv(envPrefix + ".book.ticks"),
 		ExchangeInfoUpdPerM:  exchangeInfoUpdatePeriodM,
 		DataType:             os.Getenv(envPrefix + ".data.type"),
+		SnapshotsDepth:       snapshotsDepth,
 	}
 }

@@ -42,7 +42,8 @@ func (s *DeltaReceiveClient) ConnectWs(ctx context.Context) error {
 	d := websocket.Dialer{
 		Proxy: http.ProxyFromEnvironment,
 	}
-	dialer, resp, err := d.Dial(s.formWSUri(), nil)
+	dialUri := s.formWSUri()
+	dialer, resp, err := d.Dial(dialUri, nil)
 	if resp.StatusCode == http.StatusTeapot {
 		return banBinanceRequests(resp, TeapotErr)
 	}
@@ -53,7 +54,7 @@ func (s *DeltaReceiveClient) ConnectWs(ctx context.Context) error {
 		s.logger.Error(err.Error())
 		return err
 	}
-
+	s.logger.Debug("start dial with uri " + dialUri)
 	s.dialer = dialer
 	return nil
 }
