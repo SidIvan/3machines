@@ -16,27 +16,32 @@ import (
 )
 
 type BookTickerClient struct {
-	logger   *zap.Logger
-	baseUri  string
-	symbols  []string
-	shutdown *atomic.Bool
-	dialer   *websocket.Conn
+	logger              *zap.Logger
+	wsBaseUri           string
+	useAllTickersStream bool
+	symbols             []string
+	shutdown            *atomic.Bool
+	dialer              *websocket.Conn
 }
 
 func NewBookTickerClient(cfg *BinanceHttpClientConfig, symbols []string) *BookTickerClient {
 	var shutdown atomic.Bool
 	shutdown.Store(false)
 	client := BookTickerClient{
-		logger:   log.GetLogger("DeltaReceiveClient"),
-		baseUri:  cfg.StreamBaseUriConfig.GetBaseUri(),
-		symbols:  symbols,
-		shutdown: &shutdown,
+		logger:              log.GetLogger("DeltaReceiveClient"),
+		wsBaseUri:           cfg.StreamBaseUriConfig.GetBaseUri() + "/ws",
+		useAllTickersStream: cfg.UseAllTickersStream,
+		symbols:             symbols,
+		shutdown:            &shutdown,
 	}
 	return &client
 }
 
 func (s *BookTickerClient) formWSUri() string {
-	return fmt.Sprintf("%s/ws/%s@bookTicker", s.baseUri, strings.Join(s.symbols, "@bookTicker/"))
+	if s.useAllTickersStream {
+		return fmt.Sprintf("%s/!bookTicker")
+	}
+	return fmt.Sprintf("%s/%s@bookTicker", s.wsBaseUri, strings.Join(s.symbols, "@bookTicker/"))
 }
 
 func (s *BookTickerClient) ConnectWs(ctx context.Context) error {

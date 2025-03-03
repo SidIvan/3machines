@@ -20,7 +20,6 @@ import (
 	"time"
 
 	"github.com/gocql/gocql"
-	"go.mongodb.org/mongo-driver/mongo"
 	"go.uber.org/zap"
 )
 
@@ -42,10 +41,7 @@ type BinanceMarketCtx struct {
 func NewBinanceMarketCtx(
 	marketCfg *conf.BinanceMarketCfg,
 	marketCsRepoCfg *cconf.BinanceMarketCsRepoCfg,
-	marketMongoRepoCfg *conf.BinanceMarketMongoRepoCfg,
 	csSession *gocql.Session,
-	binanceDataMongoDb *mongo.Database,
-	mongoTimeoutS int,
 	binanceReconnectPeriod time.Duration,
 ) *BinanceMarketCtx {
 	marketType := bmodel.DataType(marketCfg.DataType)
@@ -55,46 +51,42 @@ func NewBinanceMarketCtx(
 	// deltas
 	loggerParam := string("deltas_" + marketType)
 	deltaCsStorage := cs.NewCsDeltaStorageWO(csSession, cm.NewCsStorageMetrics(marketCsRepoCfg.DeltaTableName), marketCsRepoCfg.DeltaTableName, marketCsRepoCfg.DeltaKeyTableName)
-	deltaMongoStorage := repo.NewLocalMongoRepo[cmodel.Delta, cmodel.DeltaWithId](mongoTimeoutS, loggerParam, binanceDataMongoDb)
 	deltaFileStorage := repo.NewFileRepo[cmodel.Delta](loggerParam)
-	deltaStorages := []svc.BatchedDataStorage[cmodel.Delta]{deltaCsStorage, deltaMongoStorage, deltaFileStorage}
+	deltaStorages := []svc.BatchedDataStorage[cmodel.Delta]{deltaCsStorage, deltaFileStorage}
 	deltasTransformator := model.NewDeltaDataTransformator()
 	deltasMetrics := metrics.NewWsPipelineMetrics[cmodel.Delta](loggerParam)
-	deltaWorkerProvider := svc.NewDeltaWorkerProvider(marketCfg.BinanceHttpCfg, loggerParam, deltasTransformator, marketCfg.DeltasPipelineCfg.BatchSize, deltaStorages, deltasMetrics)
+	deltaWorkerProvider := svc.NewDeltaWorkerProvider(marketCfg.BinanceHttpCfg, loggerParam, marketType, deltasTransformator, marketCfg.DeltasPipelineCfg.BatchSize, deltaStorages, deltasMetrics)
 	deltaWorkersProvider := svc.NewTradingSymbolsWorkersProvider(loggerParam, marketCfg.DeltasPipelineCfg.NumWorkers, deltaWorkerProvider, exInfoCache)
 	deltaSvc := svc.NewWsSvc(loggerParam, deltaWorkersProvider, deltaStorages, deltasMetrics, binanceReconnectPeriod, exInfoCache)
-	deltaFixer := svc.NewDataFixer(loggerParam, deltaCsStorage, []svc.AuxBatchedDataStorage[cmodel.Delta]{deltaMongoStorage, deltaFileStorage})
+	deltaFixer := svc.NewDataFixer(loggerParam, deltaCsStorage, []svc.AuxBatchedDataStorage[cmodel.Delta]{deltaFileStorage})
 
 	// book ticks
 	loggerParam = string("book_ticks_" + marketType)
 	ticksCsStorage := cs.NewCsBookTicksStorageWO(csSession, cm.NewCsStorageMetrics(marketCsRepoCfg.BookTicksTableName), marketCsRepoCfg.BookTicksTableName, marketCsRepoCfg.BookTicksKeyTableName)
-	ticksMongoStorage := repo.NewLocalMongoRepo[bmodel.SymbolTick, cmodel.SymbolTickWithMongoId](mongoTimeoutS, loggerParam, binanceDataMongoDb)
 	ticksFileStorage := repo.NewFileRepo[bmodel.SymbolTick](loggerParam)
-	ticksStorages := []svc.BatchedDataStorage[bmodel.SymbolTick]{ticksCsStorage, ticksMongoStorage, ticksFileStorage}
+	ticksStorages := []svc.BatchedDataStorage[bmodel.SymbolTick]{ticksCsStorage, ticksFileStorage}
 	ticksTransformator := model.NewNoChangeTransformator[bmodel.SymbolTick]()
 	ticksMetrics := metrics.NewWsPipelineMetrics[bmodel.SymbolTick](loggerParam)
-	ticksWorkerProvider := svc.NewBookTicksWorkerProvider(marketCfg.BinanceHttpCfg, loggerParam, ticksTransformator, marketCfg.BookTicksPipelineCfg.BatchSize, ticksStorages, ticksMetrics)
+	ticksWorkerProvider := svc.NewBookTicksWorkerProvider(marketCfg.BinanceHttpCfg, loggerParam, marketType, ticksTransformator, marketCfg.BookTicksPipelineCfg.BatchSize, ticksStorages, ticksMetrics)
 	ticksWorkersProvider := svc.NewTradingSymbolsWorkersProvider(loggerParam, marketCfg.BookTicksPipelineCfg.NumWorkers, ticksWorkerProvider, exInfoCache)
 	ticksSvc := svc.NewWsSvc(loggerParam, ticksWorkersProvider, ticksStorages, ticksMetrics, binanceReconnectPeriod, exInfoCache)
-	ticksFixer := svc.NewDataFixer(loggerParam, ticksCsStorage, []svc.AuxBatchedDataStorage[bmodel.SymbolTick]{ticksMongoStorage, ticksFileStorage})
+	ticksFixer := svc.NewDataFixer(loggerParam, ticksCsStorage, []svc.AuxBatchedDataStorage[bmodel.SymbolTick]{ticksFileStorage})
 
 	// depth snapshots
 	loggerParam = string("snapshots_" + marketType)
 	snapshotCsStorage := cs.NewCsSnapshotStorageWO(csSession, cm.NewCsStorageMetrics(marketCsRepoCfg.SnapshotTableName), marketCsRepoCfg.SnapshotTableName, marketCsRepoCfg.SnapshotKeyTableName)
-	snapshotMongoStorage := repo.NewLocalMongoRepo[cmodel.DepthSnapshotPart, cmodel.DepthSnapshotPartWithMongoId](mongoTimeoutS, loggerParam, binanceDataMongoDb)
 	snapshotFileStorage := repo.NewFileRepo[cmodel.DepthSnapshotPart](loggerParam)
-	snapshotStorages := []svc.BatchedDataStorage[cmodel.DepthSnapshotPart]{snapshotCsStorage, snapshotMongoStorage, snapshotFileStorage}
+	snapshotStorages := []svc.BatchedDataStorage[cmodel.DepthSnapshotPart]{snapshotCsStorage, snapshotFileStorage}
 	snapshotSvc := svc.NewSnapshotSvc(binanceClient, snapshotStorages, exInfoCache)
-	snapshotFixer := svc.NewDataFixer("snapshot_spot", snapshotCsStorage, []svc.AuxBatchedDataStorage[cmodel.DepthSnapshotPart]{snapshotMongoStorage, snapshotFileStorage})
+	snapshotFixer := svc.NewDataFixer("snapshot_spot", snapshotCsStorage, []svc.AuxBatchedDataStorage[cmodel.DepthSnapshotPart]{snapshotFileStorage})
 
 	// binance spot exchange info
 	loggerParam = string("exchange_info_" + marketType)
 	exchangeInfoCsStorage := cs.NewExchangeInfoStorage(csSession, marketCsRepoCfg.ExchangeInfoTableName)
-	exchangeInfoMongoStorage := repo.NewLocalMongoRepo[cmodel.ExchangeInfo, cmodel.ExchangeInfoWithMongoId](mongoTimeoutS, loggerParam, binanceDataMongoDb)
 	exchangeInfoFileStorage := repo.NewFileRepo[cmodel.ExchangeInfo](loggerParam)
-	exInfoStorages := []svc.BatchedDataStorage[cmodel.ExchangeInfo]{exchangeInfoCsStorage, exchangeInfoMongoStorage, exchangeInfoFileStorage}
+	exInfoStorages := []svc.BatchedDataStorage[cmodel.ExchangeInfo]{exchangeInfoCsStorage, exchangeInfoFileStorage}
 	exInfoSvc := svc.NewExchangeInfoSvc(time.Duration(marketCfg.ExchangeInfoUpdPerM)*time.Minute, binanceClient, exInfoStorages, exInfoCache)
-	exInfoFixer := svc.NewDataFixer(loggerParam, exchangeInfoCsStorage, []svc.AuxBatchedDataStorage[cmodel.ExchangeInfo]{exchangeInfoMongoStorage, exchangeInfoFileStorage})
+	exInfoFixer := svc.NewDataFixer(loggerParam, exchangeInfoCsStorage, []svc.AuxBatchedDataStorage[cmodel.ExchangeInfo]{exchangeInfoFileStorage})
 
 	return &BinanceMarketCtx{
 		logger:              log.GetLogger(fmt.Sprintf("BinanceMarketCtx[%s]", marketType)),

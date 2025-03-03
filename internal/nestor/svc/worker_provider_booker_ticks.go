@@ -9,6 +9,7 @@ import (
 type BookTicksWorkerProvider struct {
 	cfg              *binance.BinanceHttpClientConfig
 	dataType         string
+	marketType       bmodel.DataType
 	dataTrasformator DataTransformator[bmodel.SymbolTick, bmodel.SymbolTick]
 	batchSize        int
 	dataStorages     []BatchedDataStorage[bmodel.SymbolTick]
@@ -18,6 +19,7 @@ type BookTicksWorkerProvider struct {
 func NewBookTicksWorkerProvider(
 	cfg *binance.BinanceHttpClientConfig,
 	dataType string,
+	marketType bmodel.DataType,
 	dataTrasformator DataTransformator[bmodel.SymbolTick, bmodel.SymbolTick],
 	batchSize int,
 	dataStorages []BatchedDataStorage[bmodel.SymbolTick],
@@ -26,6 +28,7 @@ func NewBookTicksWorkerProvider(
 	return &BookTicksWorkerProvider{
 		cfg:              cfg,
 		dataType:         dataType,
+		marketType:       marketType,
 		dataTrasformator: dataTrasformator,
 		batchSize:        batchSize,
 		dataStorages:     dataStorages,
@@ -35,5 +38,5 @@ func NewBookTicksWorkerProvider(
 
 func (s BookTicksWorkerProvider) GetNewWorkers(ctx context.Context, symbols []string) *WsDataProcessWorker[bmodel.SymbolTick, bmodel.SymbolTick] {
 	ticksReceiver := binance.NewBookTickerClient(s.cfg, symbols)
-	return NewWsDataProcessWorker[bmodel.SymbolTick, bmodel.SymbolTick](s.dataType, ticksReceiver, s.dataTrasformator, s.batchSize, s.dataStorages, s.metrics)
+	return NewWsDataProcessWorker(s.dataType, ticksReceiver, s.dataTrasformator, s.batchSize, s.dataStorages, s.metrics)
 }

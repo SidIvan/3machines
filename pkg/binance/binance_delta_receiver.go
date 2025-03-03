@@ -15,27 +15,27 @@ import (
 )
 
 type DeltaReceiveClient struct {
-	logger   *zap.Logger
-	baseUri  string
-	symbols  []string
-	shutdown *atomic.Bool
-	dialer   *websocket.Conn
+	logger    *zap.Logger
+	wsBaseUri string
+	symbols   []string
+	shutdown  *atomic.Bool
+	dialer    *websocket.Conn
 }
 
 func NewDeltaReceiveClient(cfg *BinanceHttpClientConfig, symbols []string) *DeltaReceiveClient {
 	var shutdown atomic.Bool
 	shutdown.Store(false)
 	client := DeltaReceiveClient{
-		logger:   log.GetLogger("DeltaReceiveClient"),
-		baseUri:  cfg.StreamBaseUriConfig.GetBaseUri(),
-		symbols:  symbols,
-		shutdown: &shutdown,
+		logger:    log.GetLogger("DeltaReceiveClient"),
+		wsBaseUri: cfg.StreamBaseUriConfig.GetBaseUri() + "/ws",
+		symbols:   symbols,
+		shutdown:  &shutdown,
 	}
 	return &client
 }
 
 func (s *DeltaReceiveClient) formWSUri() string {
-	return fmt.Sprintf("%s/ws/%s@depth@100ms", s.baseUri, strings.Join(s.symbols, "@depth@100ms/"))
+	return fmt.Sprintf("%s/%s@depth@100ms", s.wsBaseUri, strings.Join(s.symbols, "@depth@100ms/"))
 }
 
 func (s *DeltaReceiveClient) ConnectWs(ctx context.Context) error {

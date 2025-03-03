@@ -22,7 +22,6 @@ type App struct {
 	binanceSpotCtx *BinanceMarketCtx
 	binanceUSDCtx  *BinanceMarketCtx
 	binanceCoinCtx *BinanceMarketCtx
-	mongoClient    *mongo.Client
 	cfg            *conf.AppConfig
 }
 
@@ -37,21 +36,16 @@ func NewApp(cfg *conf.AppConfig) *App {
 	logger := log.GetLogger("App")
 	csCfg := cfg.CsCfg
 	csSession := initCs(csCfg)
-	mongoCfg := cfg.MongoRepoCfg
-	mongoClient := initMongo(mongoCfg)
-	binanceDataMongoDb := mongoClient.Database(cfg.MongoRepoCfg.MongoConfig.DatabaseName)
 	binanceReconnectPeriod := time.Minute * time.Duration(cfg.ReconnectPeriodM)
-	mongoTimeoutS := int(cfg.MongoRepoCfg.MongoConfig.TimeoutS)
 
-	binanceSpotCtx := NewBinanceMarketCtx(cfg.BinanceSpotCfg, csCfg.BinanceSpotCfg, mongoCfg.BinanceSpotCfg, csSession, binanceDataMongoDb, mongoTimeoutS, binanceReconnectPeriod)
-	binanceUSDCtx := NewBinanceMarketCtx(cfg.BinanceUSDCfg, csCfg.BinanceUSDCfg, mongoCfg.BinanceUSDCfg, csSession, binanceDataMongoDb, mongoTimeoutS, binanceReconnectPeriod)
-	binanceCoinCtx := NewBinanceMarketCtx(cfg.BinanceCoinCfg, csCfg.BinanceCoinCfg, mongoCfg.BinanceCoinCfg, csSession, binanceDataMongoDb, mongoTimeoutS, binanceReconnectPeriod)
+	binanceSpotCtx := NewBinanceMarketCtx(cfg.BinanceSpotCfg, csCfg.BinanceSpotCfg, csSession, binanceReconnectPeriod)
+	binanceUSDCtx := NewBinanceMarketCtx(cfg.BinanceUSDCfg, csCfg.BinanceUSDCfg, csSession, binanceReconnectPeriod)
+	binanceCoinCtx := NewBinanceMarketCtx(cfg.BinanceCoinCfg, csCfg.BinanceCoinCfg, csSession, binanceReconnectPeriod)
 	return &App{
 		logger:         logger,
 		binanceSpotCtx: binanceSpotCtx,
 		binanceUSDCtx:  binanceUSDCtx,
 		binanceCoinCtx: binanceCoinCtx,
-		mongoClient:    mongoClient,
 		cfg:            cfg,
 	}
 }
@@ -64,23 +58,6 @@ func initCs(cfg *cconf.CsRepoConfig) *gocql.Session {
 		panic(err)
 	}
 	return session
-}
-
-func initMongo(cfg *conf.MongoRepoConfig) *mongo.Client {
-	ctx := context.TODO()
-	ctxWithTimeout, cancel := context.WithTimeout(ctx, time.Duration(cfg.MongoConfig.TimeoutS)*time.Second)
-	client, err := mongo.Connect(ctxWithTimeout, options.Client().ApplyURI(cfg.MongoConfig.URI.GetBaseUri()).SetDirect(true))
-	cancel()
-	if err != nil {
-		panic(err)
-	}
-	ctx, cancel = context.WithTimeout(context.Background(), time.Duration(cfg.MongoConfig.TimeoutS)*time.Second)
-	defer cancel()
-	err = client.Ping(ctx, nil)
-	if err != nil {
-		panic(err)
-	}
-	return client
 }
 
 func (s *App) Start() {
@@ -117,6 +94,5 @@ func (s *App) Stop(ctx context.Context) {
 	}()
 	wg.Wait()
 	time.Sleep(30 * time.Second)
-	s.mongoClient.Disconnect(ctx)
 	s.logger.Info("End of graceful shutdown")
 }

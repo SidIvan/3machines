@@ -10,6 +10,7 @@ import (
 type DeltaWorkerProvider struct {
 	cfg              *binance.BinanceHttpClientConfig
 	dataType         string
+	marketType       bmodel.DataType
 	dataTrasformator DataTransformator[bmodel.DeltaMessage, model.Delta]
 	batchSize        int
 	dataStorages     []BatchedDataStorage[model.Delta]
@@ -19,6 +20,7 @@ type DeltaWorkerProvider struct {
 func NewDeltaWorkerProvider(
 	cfg *binance.BinanceHttpClientConfig,
 	dataType string,
+	marketType bmodel.DataType,
 	dataTrasformator DataTransformator[bmodel.DeltaMessage, model.Delta],
 	batchSize int,
 	dataStorages []BatchedDataStorage[model.Delta],
@@ -27,6 +29,7 @@ func NewDeltaWorkerProvider(
 	return &DeltaWorkerProvider{
 		cfg:              cfg,
 		dataType:         dataType,
+		marketType:       marketType,
 		dataTrasformator: dataTrasformator,
 		batchSize:        batchSize,
 		dataStorages:     dataStorages,

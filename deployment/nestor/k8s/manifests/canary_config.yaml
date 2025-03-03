@@ -11,7 +11,8 @@ data:
   binance.spot.client.http.uri.port: "443"
   binance.spot.client.stream.uri.schema: wss://
   binance.spot.client.stream.uri.host: stream.binance.com
-  binance.spot.client.stream.uri.port: "9443"
+  binance.spot.client.stream.uri.port: "443"
+  binance.spot.client.use.all.tickers.stream: "true"
   binance.spot.deltas.num.workers: "5"
   binance.spot.deltas.batch.size: "5000"
   binance.spot.book.ticks.num.workers: "5"
@@ -24,7 +25,8 @@ data:
   binance.usd.client.http.uri.port: "443"
   binance.usd.client.stream.uri.schema: wss://
   binance.usd.client.stream.uri.host: ws-fapi.binance.com
-  binance.usd.client.stream.uri.port: "9443"
+  binance.usd.client.stream.uri.port: "443"
+  binance.usd.client.use.all.tickers.stream: "true"
   binance.usd.deltas.num.workers: "1"
   binance.usd.deltas.batch.size: "5000"
   binance.usd.book.ticks.num.workers: "1"
@@ -37,7 +39,8 @@ data:
   binance.coin.client.http.uri.port: "443"
   binance.coin.client.stream.uri.schema: wss://
   binance.coin.client.stream.uri.host: ws-dapi.binance.com
-  binance.coin.client.stream.uri.port: "9443"
+  binance.coin.client.stream.uri.port: "443"
+  binance.coin.client.use.all.tickers.stream: "true"
   binance.coin.deltas.num.workers: "1"
   binance.coin.deltas.batch.size: "5000"
   binance.coin.book.ticks.num.workers: "1"
