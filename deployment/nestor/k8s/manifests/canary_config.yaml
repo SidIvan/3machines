@@ -5,7 +5,7 @@ metadata:
 data:
   binance.reconnect.period.m: "720"
 
-  binance.spot.data.type: Spot
+  binance.spot.data.type: spot
   binance.spot.client.http.uri.schema: https://
   binance.spot.client.http.uri.host: api.binance.com
   binance.spot.client.http.uri.port: "443"
@@ -19,7 +19,7 @@ data:
   binance.spot.book.ticks.batch.size: "5000"
   binance.spot.exchange.info.update.period.m: "5"
 
-  binance.usd.data.type: FuturesUSD
+  binance.usd.data.type: usd
   binance.usd.client.http.uri.schema: https://
   binance.usd.client.http.uri.host: fapi.binance.com
   binance.usd.client.http.uri.port: "443"
@@ -33,7 +33,7 @@ data:
   binance.usd.book.ticks.batch.size: "5000"
   binance.usd.exchange.info.update.period.m: "5"
 
-  binance.coin.data.type: FuturesCoin
+  binance.coin.data.type: coin
   binance.coin.client.http.uri.schema: https://
   binance.coin.client.http.uri.host: dapi.binance.com
   binance.coin.client.http.uri.port: "443"
