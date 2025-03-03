@@ -1,6 +1,8 @@
 package metrics
 
 import (
+	bmodel "DeltaReceiver/pkg/binance/model"
+
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 )
@@ -13,8 +15,8 @@ type CsStorageMetrics struct {
 	insertQueryLatencySummary     prometheus.Summary
 }
 
-func NewCsStorageMetrics(storageName string) *CsStorageMetrics {
-	metricsLabels := map[string]string{"table_name": storageName}
+func NewCsStorageMetrics(storageName string, marketType bmodel.DataType) *CsStorageMetrics {
+	metricsLabels := map[string]string{"table_name": storageName, "market_type": string(marketType)}
 	return &CsStorageMetrics{
 		errorCounter: promauto.NewCounter(prometheus.CounterOpts{
 			Namespace:   NestorMetricsNamespace,
@@ -47,4 +49,3 @@ func (s CsStorageMetrics) UpdInsertDataBatchLatency(latencyMs int64) {
 func (s CsStorageMetrics) UpdInsertQueryLatency(latencyMs int64) {
 	s.insertQueryLatencySummary.Observe(float64(latencyMs))
 }
-
