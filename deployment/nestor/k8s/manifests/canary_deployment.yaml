@@ -48,7 +48,7 @@ spec:
           - configMapRef:
               name: nestor-canary-config
           - configMapRef:
-              name: cassandra-config
+              name: cassandra-dev-config
         volumeMounts:
           - name: nestor-logs
             mountPath: /app/log
