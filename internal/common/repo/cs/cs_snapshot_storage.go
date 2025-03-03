@@ -25,8 +25,8 @@ type CsSnapshotStorage struct {
 	deleteKeyStatement  string
 }
 
-func NewCsSnapshotStorageWO(session *gocql.Session, metrics CsStorageMetrics, tableName string, keysTableName string) *CsSnapshotStorage {
-	logger := log.GetLogger("CsSnapshotStorage")
+func NewCsSnapshotStorageWO(loggerParam string, session *gocql.Session, metrics CsStorageMetrics, tableName string, keysTableName string) *CsSnapshotStorage {
+	logger := log.GetLogger(fmt.Sprintf("CsSnapshotStorage[%s]", loggerParam))
 	snapshotStorage := &CsSnapshotStorage{
 		logger:        logger,
 		session:       session,

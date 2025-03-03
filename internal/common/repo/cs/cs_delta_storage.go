@@ -25,8 +25,8 @@ type CsDeltaStorage struct {
 	deleteKeyStatement  string
 }
 
-func NewCsDeltaStorageWO(session *gocql.Session, metrics CsStorageMetrics, tableName string, keysTableName string) *CsDeltaStorage {
-	logger := log.GetLogger("CsDeltaStorage")
+func NewCsDeltaStorageWO(loggerParam string, session *gocql.Session, metrics CsStorageMetrics, tableName string, keysTableName string) *CsDeltaStorage {
+	logger := log.GetLogger(fmt.Sprint("CsDeltaStorage[%s]", loggerParam))
 	deltaStorage := &CsDeltaStorage{
 		logger:        logger,
 		session:       session,

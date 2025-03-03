@@ -20,8 +20,8 @@ type CsExchangeInfoStorage struct {
 	selectLastExInfoStatemenet string
 }
 
-func NewExchangeInfoStorage(session *gocql.Session, tableName string) *CsExchangeInfoStorage {
-	logger := log.GetLogger("CsExchangeInfoStorage")
+func NewExchangeInfoStorage(loggerParam string, session *gocql.Session, tableName string) *CsExchangeInfoStorage {
+	logger := log.GetLogger(fmt.Sprintf("CsExchangeInfoStorage[%s]", loggerParam))
 	exchangeInfoStorage := &CsExchangeInfoStorage{
 		logger:    logger,
 		session:   session,

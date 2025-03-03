@@ -28,7 +28,7 @@ data:
   binance.usd.client.stream.uri.host: fstream.binance.com
   binance.usd.client.stream.uri.port: "443"
   binance.usd.client.use.all.tickers.stream: "true"
-  binance.usd.deltas.num.workers: "1"
+  binance.usd.deltas.num.workers: "3"
   binance.usd.deltas.batch.size: "5000"
   binance.usd.book.ticks.num.workers: "1"
   binance.usd.book.ticks.batch.size: "5000"
@@ -43,7 +43,7 @@ data:
   binance.coin.client.stream.uri.host: dstream.binance.com
   binance.coin.client.stream.uri.port: "443"
   binance.coin.client.use.all.tickers.stream: "true"
-  binance.coin.deltas.num.workers: "1"
+  binance.coin.deltas.num.workers: "3"
   binance.coin.deltas.batch.size: "5000"
   binance.coin.book.ticks.num.workers: "1"
   binance.coin.book.ticks.batch.size: "5000"

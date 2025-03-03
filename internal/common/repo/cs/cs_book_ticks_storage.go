@@ -26,8 +26,8 @@ type CsBookTicksStorage struct {
 	deleteKeyStatement  string
 }
 
-func NewCsBookTicksStorageWO(session *gocql.Session, metrics CsStorageMetrics, tableName string, keysTableName string) *CsBookTicksStorage {
-	logger := log.GetLogger("CsBookTicksStorage")
+func NewCsBookTicksStorageWO(loggerParam string, session *gocql.Session, metrics CsStorageMetrics, tableName string, keysTableName string) *CsBookTicksStorage {
+	logger := log.GetLogger(fmt.Sprintf("CsBookTicksStorage[%s]", loggerParam))
 	bookTicksStorage := &CsBookTicksStorage{
 		logger:        logger,
 		session:       session,

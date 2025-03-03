@@ -50,7 +50,7 @@ func NewBinanceMarketCtx(
 
 	// deltas
 	loggerParam := string("deltas_" + marketType)
-	deltaCsStorage := cs.NewCsDeltaStorageWO(csSession, cm.NewCsStorageMetrics(marketCsRepoCfg.DeltaTableName, marketType), marketCsRepoCfg.DeltaTableName, marketCsRepoCfg.DeltaKeyTableName)
+	deltaCsStorage := cs.NewCsDeltaStorageWO(loggerParam, csSession, cm.NewCsStorageMetrics(marketCsRepoCfg.DeltaTableName, marketType), marketCsRepoCfg.DeltaTableName, marketCsRepoCfg.DeltaKeyTableName)
 	deltaFileStorage := repo.NewFileRepo[cmodel.Delta](loggerParam)
 	deltaStorages := []svc.BatchedDataStorage[cmodel.Delta]{deltaCsStorage, deltaFileStorage}
 	deltasTransformator := model.NewDeltaDataTransformator()
@@ -62,7 +62,7 @@ func NewBinanceMarketCtx(
 
 	// book ticks
 	loggerParam = string("book_ticks_" + marketType)
-	ticksCsStorage := cs.NewCsBookTicksStorageWO(csSession, cm.NewCsStorageMetrics(marketCsRepoCfg.BookTicksTableName, marketType), marketCsRepoCfg.BookTicksTableName, marketCsRepoCfg.BookTicksKeyTableName)
+	ticksCsStorage := cs.NewCsBookTicksStorageWO(loggerParam, csSession, cm.NewCsStorageMetrics(marketCsRepoCfg.BookTicksTableName, marketType), marketCsRepoCfg.BookTicksTableName, marketCsRepoCfg.BookTicksKeyTableName)
 	ticksFileStorage := repo.NewFileRepo[bmodel.SymbolTick](loggerParam)
 	ticksStorages := []svc.BatchedDataStorage[bmodel.SymbolTick]{ticksCsStorage, ticksFileStorage}
 	ticksTransformator := model.NewNoChangeTransformator[bmodel.SymbolTick]()
@@ -79,7 +79,7 @@ func NewBinanceMarketCtx(
 
 	// depth snapshots
 	loggerParam = string("snapshots_" + marketType)
-	snapshotCsStorage := cs.NewCsSnapshotStorageWO(csSession, cm.NewCsStorageMetrics(marketCsRepoCfg.SnapshotTableName, marketType), marketCsRepoCfg.SnapshotTableName, marketCsRepoCfg.SnapshotKeyTableName)
+	snapshotCsStorage := cs.NewCsSnapshotStorageWO(loggerParam, csSession, cm.NewCsStorageMetrics(marketCsRepoCfg.SnapshotTableName, marketType), marketCsRepoCfg.SnapshotTableName, marketCsRepoCfg.SnapshotKeyTableName)
 	snapshotFileStorage := repo.NewFileRepo[cmodel.DepthSnapshotPart](loggerParam)
 	snapshotStorages := []svc.BatchedDataStorage[cmodel.DepthSnapshotPart]{snapshotCsStorage, snapshotFileStorage}
 	snapshotSvc := svc.NewSnapshotSvc(loggerParam, marketCfg.SnapshotsDepth, binanceClient, snapshotStorages, exInfoCache)
@@ -87,7 +87,7 @@ func NewBinanceMarketCtx(
 
 	// binance spot exchange info
 	loggerParam = string("exchange_info_" + marketType)
-	exchangeInfoCsStorage := cs.NewExchangeInfoStorage(csSession, marketCsRepoCfg.ExchangeInfoTableName)
+	exchangeInfoCsStorage := cs.NewExchangeInfoStorage(loggerParam, csSession, marketCsRepoCfg.ExchangeInfoTableName)
 	exchangeInfoFileStorage := repo.NewFileRepo[cmodel.ExchangeInfo](loggerParam)
 	exInfoStorages := []svc.BatchedDataStorage[cmodel.ExchangeInfo]{exchangeInfoCsStorage, exchangeInfoFileStorage}
 	exInfoSvc := svc.NewExchangeInfoSvc(time.Duration(marketCfg.ExchangeInfoUpdPerM)*time.Minute, binanceClient, exInfoStorages, exInfoCache)
