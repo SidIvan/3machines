@@ -67,8 +67,13 @@ func NewBinanceMarketCtx(
 	ticksStorages := []svc.BatchedDataStorage[bmodel.SymbolTick]{ticksCsStorage, ticksFileStorage}
 	ticksTransformator := model.NewNoChangeTransformator[bmodel.SymbolTick]()
 	ticksMetrics := metrics.NewWsPipelineMetrics[bmodel.SymbolTick](loggerParam)
-	ticksWorkerProvider := svc.NewBookTicksWorkerProvider(marketCfg.BinanceHttpCfg, loggerParam, marketType, ticksTransformator, marketCfg.BookTicksPipelineCfg.BatchSize, ticksStorages, ticksMetrics)
-	ticksWorkersProvider := svc.NewTradingSymbolsWorkersProvider(loggerParam, marketCfg.BookTicksPipelineCfg.NumWorkers, ticksWorkerProvider, exInfoCache)
+	var ticksWorkersProvider svc.WsDataWorkersProvider[svc.WsDataProcessWorker[bmodel.SymbolTick, bmodel.SymbolTick]]
+	if !marketCfg.BinanceHttpCfg.UseAllTickersStream {
+		ticksWorkerProvider := svc.NewBookTicksWorkerProvider(marketCfg.BinanceHttpCfg, loggerParam, marketType, ticksTransformator, marketCfg.BookTicksPipelineCfg.BatchSize, ticksStorages, ticksMetrics)
+		ticksWorkersProvider = svc.NewTradingSymbolsWorkersProvider(loggerParam, marketCfg.BookTicksPipelineCfg.NumWorkers, ticksWorkerProvider, exInfoCache)
+	} else {
+		ticksWorkersProvider = svc.NewBookTicksAllStreamsWorkerProvider(marketCfg.BinanceHttpCfg, loggerParam, ticksTransformator, marketCfg.BookTicksPipelineCfg.BatchSize, ticksStorages, ticksMetrics)
+	}
 	ticksSvc := svc.NewWsSvc(loggerParam, ticksWorkersProvider, ticksStorages, ticksMetrics, binanceReconnectPeriod, exInfoCache)
 	ticksFixer := svc.NewDataFixer(loggerParam, ticksCsStorage, []svc.AuxBatchedDataStorage[bmodel.SymbolTick]{ticksFileStorage})
 
