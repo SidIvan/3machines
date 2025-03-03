@@ -28,7 +28,7 @@ func NewBookTickerClient(cfg *BinanceHttpClientConfig, symbols []string) *BookTi
 	var shutdown atomic.Bool
 	shutdown.Store(false)
 	client := BookTickerClient{
-		logger:              log.GetLogger("DeltaReceiveClient"),
+		logger:              log.GetSTDOutLogger("DeltaReceiveClient"),
 		wsBaseUri:           cfg.StreamBaseUriConfig.GetBaseUri() + "/ws",
 		useAllTickersStream: cfg.UseAllTickersStream,
 		symbols:             symbols,
@@ -47,19 +47,21 @@ func (s *BookTickerClient) formWSUri() string {
 func (s *BookTickerClient) ConnectWs(ctx context.Context) error {
 	d := websocket.Dialer{
 		Proxy: http.ProxyFromEnvironment,
+		ReadBufferSize:  10240,
+		WriteBufferSize: 10240,
 	}
 	dialUri := s.formWSUri()
 	s.logger.Debug("start dial with uri " + dialUri)
 	dialer, resp, err := d.Dial(s.formWSUri(), nil)
+	if err != nil {
+		s.logger.Error(err.Error())
+		return err
+	}
 	if resp.StatusCode == http.StatusTeapot {
 		return banBinanceRequests(resp, TeapotErr)
 	}
 	if resp.StatusCode == http.StatusTooManyRequests {
 		return banBinanceRequests(resp, WeightLimitExceededErr)
-	}
-	if err != nil {
-		s.logger.Error(err.Error())
-		return err
 	}
 	s.dialer = dialer
 	return nil

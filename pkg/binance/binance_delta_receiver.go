@@ -40,7 +40,9 @@ func (s *DeltaReceiveClient) formWSUri() string {
 
 func (s *DeltaReceiveClient) ConnectWs(ctx context.Context) error {
 	d := websocket.Dialer{
-		Proxy: http.ProxyFromEnvironment,
+		Proxy:           http.ProxyFromEnvironment,
+		ReadBufferSize:  10240,
+		WriteBufferSize: 10240,
 	}
 	dialUri := s.formWSUri()
 	s.logger.Debug("start dial with uri " + dialUri)

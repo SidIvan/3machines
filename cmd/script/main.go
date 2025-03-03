@@ -2,20 +2,43 @@ package main
 
 import (
 	"DeltaReceiver/internal/common/model"
+	"DeltaReceiver/pkg/binance"
+	"DeltaReceiver/pkg/conf"
+	"context"
 	"fmt"
 	"os"
-
-	"time"
 
 	"github.com/parquet-go/parquet-go"
 )
 
 func main() {
-	ts := time.Now()
-	fmt.Println(ts)
-	keyDate := ts.Format("2006-01-02")
-	keyTime := ts.Format("15-04-05")
-	fmt.Println(fmt.Sprintf("%s/%s/%s/%s.parquet", "binance/deltas", "BTCUSDT", keyDate, keyTime))
+	x := binance.NewBookTickerClient(&binance.BinanceHttpClientConfig{
+		StreamBaseUriConfig: &conf.BaseUriConfig{
+			Schema: "ws://",
+			Host:   "8.209.213.102",
+			Port:   8080,
+		},
+		UseAllTickersStream: true,
+	},
+		[]string{})
+
+	x.ConnectWs(context.Background())
+	msgs := 0
+	for {
+		_, e := x.Recv(context.Background())
+		if e != nil {
+			panic(e)
+		}
+		msgs++
+		if msgs%1000 == 0 {
+			fmt.Printf("got %d msgs\n", msgs)
+		}
+	}
+	// ts := time.Now()
+	// fmt.Println(ts)
+	// keyDate := ts.Format("2006-01-02")
+	// keyTime := ts.Format("15-04-05")
+	// fmt.Println(fmt.Sprintf("%s/%s/%s/%s.parquet", "binance/deltas", "BTCUSDT", keyDate, keyTime))
 }
 
 func pqtWrite() {

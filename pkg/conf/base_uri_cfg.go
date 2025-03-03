@@ -7,9 +7,10 @@ import (
 )
 
 type BaseUriConfig struct {
-	Schema string `yaml:"schema"`
-	Host   string `yaml:"host"`
-	Port   int    `yaml:"port"`
+	Schema   string `yaml:"schema"`
+	Host     string `yaml:"host"`
+	Port     int    `yaml:"port"`
+	BasePath string `yaml:"base.path"`
 }
 
 func NewBaseUriConfigFromEnv(envPrefix string) *BaseUriConfig {
@@ -18,9 +19,10 @@ func NewBaseUriConfigFromEnv(envPrefix string) *BaseUriConfig {
 		panic(err)
 	}
 	return &BaseUriConfig{
-		Schema: os.Getenv(envPrefix + ".schema"),
-		Host:   os.Getenv(envPrefix + ".host"),
-		Port:   port,
+		Schema:   os.Getenv(envPrefix + ".schema"),
+		Host:     os.Getenv(envPrefix + ".host"),
+		Port:     port,
+		BasePath: os.Getenv(envPrefix + ".base.path"),
 	}
 }
 
@@ -29,7 +31,10 @@ func (cfg *BaseUriConfig) GetEndpoint() string {
 }
 
 func (cfg *BaseUriConfig) GetBaseUri() string {
-	return fmt.Sprintf("%s%s:%d", cfg.Schema, cfg.Host, cfg.Port)
+	if cfg.BasePath == "" {
+		return fmt.Sprintf("%s%s:%d", cfg.Schema, cfg.Host, cfg.Port)
+	}
+	return fmt.Sprintf("%s%s:%d%s", cfg.Schema, cfg.Host, cfg.Port, cfg.BasePath)
 }
 
 func (cfg *BaseUriConfig) GetAddress() string {
