@@ -60,8 +60,6 @@ func (s *CsBookTicksStorage) initStatements() {
 }
 
 func (s CsBookTicksStorage) Save(ctx context.Context, deltas []bmodel.SymbolTick) error {
-	s.logger.Debug("SAVE MOCK")
-	return nil
 	return s.SendBookTicks(ctx, deltas)
 }
 

@@ -117,14 +117,14 @@ func (s *BinanceMarketCtx) Start(ctx context.Context) {
 	if err = s.exchangeInfoStorage.SendExchangeInfo(ctx, cmodel.NewExchangeInfo(exInfo)); err != nil {
 		s.logger.Error(err.Error())
 	}
-	// go s.deltaSvc.Start(ctx)
+	go s.deltaSvc.Start(ctx)
 	go s.ticksSvc.Start(ctx)
-	// go s.snapshotSvc.StartReceiveAndSaveSnapshots(ctx)
-	// go s.exInfoSvc.StartReceiveExInfo(ctx)
-	// go s.deltaFixer.Fix()
-	// go s.ticksFixer.Fix()
-	// go s.snapshotFixer.Fix()
-	// go s.exInfoFixer.Fix()
+	go s.snapshotSvc.StartReceiveAndSaveSnapshots(ctx)
+	go s.exInfoSvc.StartReceiveExInfo(ctx)
+	go s.deltaFixer.Fix()
+	go s.ticksFixer.Fix()
+	go s.snapshotFixer.Fix()
+	go s.exInfoFixer.Fix()
 }
 
 func (s *BinanceMarketCtx) Shutdown(ctx context.Context) {

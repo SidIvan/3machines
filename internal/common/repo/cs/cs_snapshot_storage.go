@@ -59,8 +59,6 @@ func (s *CsSnapshotStorage) initStatements() {
 }
 
 func (s CsSnapshotStorage) Save(ctx context.Context, snapshotParts []model.DepthSnapshotPart) error {
-	s.logger.Debug("SAVE MOCK")
-	return nil
 	return s.SendSnapshot(ctx, snapshotParts)
 }
 
