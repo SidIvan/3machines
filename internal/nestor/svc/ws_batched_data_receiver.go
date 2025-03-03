@@ -33,7 +33,8 @@ func NewWsDataProcessWorker[TRecv, TResp any](
 	dataTrasformator DataTransformator[TRecv, TResp],
 	batchSize int,
 	dataStorages []BatchedDataStorage[TResp],
-	metrics WsDataPipelineMetrics[TResp]) *WsDataProcessWorker[TRecv, TResp] {
+	metrics WsDataPipelineMetrics[TResp],
+) *WsDataProcessWorker[TRecv, TResp] {
 	return &WsDataProcessWorker[TRecv, TResp]{
 		logger:              log.GetLogger(fmt.Sprintf("WsDataProcessWorker[%s]", dataType)),
 		dataReceiver:        dataReceiver,

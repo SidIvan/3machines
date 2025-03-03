@@ -39,7 +39,7 @@ func NewBookTickerClient(cfg *BinanceHttpClientConfig, symbols []string) *BookTi
 
 func (s *BookTickerClient) formWSUri() string {
 	if s.useAllTickersStream {
-		return fmt.Sprintf("%s/!bookTicker")
+		return fmt.Sprintf("%s/!bookTicker", s.wsBaseUri)
 	}
 	return fmt.Sprintf("%s/%s@bookTicker", s.wsBaseUri, strings.Join(s.symbols, "@bookTicker/"))
 }

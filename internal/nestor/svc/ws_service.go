@@ -29,7 +29,8 @@ func NewWsSvc[TRecv, TResp any](
 	dataStorages []BatchedDataStorage[TResp],
 	metrics WsDataPipelineMetrics[TResp],
 	reconnectPeriod time.Duration,
-	exInfoCache *cache.ExchangeInfoCache) *WsSvc[TRecv, TResp] {
+	exInfoCache *cache.ExchangeInfoCache,
+) *WsSvc[TRecv, TResp] {
 	var shutdown atomic.Bool
 	shutdown.Store(false)
 	return &WsSvc[TRecv, TResp]{
