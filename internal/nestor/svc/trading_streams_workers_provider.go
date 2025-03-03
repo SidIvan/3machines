@@ -28,10 +28,8 @@ func NewTradingSymbolsWorkersProvider[T any](workersProviderType string, numWork
 
 func (s *TradingSymbolsWorkersProvider[T]) GetNewWorkers(ctx context.Context) []*T {
 	var symbols []string
-	for _, symbolInfo := range s.exInfoCache.GetVal().Symbols {
-		if symbolInfo.Status == "TRADING" {
-			symbols = append(symbols, strings.ToLower(symbolInfo.Symbol))
-		}
+	for _, symbolInfo := range s.exInfoCache.GetTradingSymbols() {
+		symbols = append(symbols, strings.ToLower(symbolInfo))
 	}
 	s.logger.Info(fmt.Sprintf("start construct workers of %d different symbols", len(symbols)))
 	newWorkers := make([]*T, s.numWorkers)

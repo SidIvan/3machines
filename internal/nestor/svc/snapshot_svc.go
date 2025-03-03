@@ -43,14 +43,10 @@ func NewSnapshotSvc(dataType string, snapshotDepth int, binanceClient BinanceCli
 func (s *SnapshotSvc) StartReceiveAndSaveSnapshots(ctx context.Context) {
 	for {
 		s.snapshotQueue = nil
-		exInfo := s.exInfoCache.GetVal()
+		tradingSymbols := s.exInfoCache.GetTradingSymbols()
 		curTime := time.Now()
 		s.logger.Info(fmt.Sprintf("start updating scheduling map, %d snapshots scheduled now", len(s.snapshotSchedules)))
-		for _, symbolInfo := range exInfo.Symbols {
-			if symbolInfo.Status != "TRADING" {
-				continue
-			}
-			symbol := symbolInfo.Symbol
+		for _, symbol := range tradingSymbols {
 			timeToGetSnapshot, ok := s.snapshotSchedules[symbol]
 			if !ok {
 				s.snapshotQueue = append(s.snapshotQueue, symbol)
@@ -65,15 +61,16 @@ func (s *SnapshotSvc) StartReceiveAndSaveSnapshots(ctx context.Context) {
 			continue
 		}
 		s.logger.Info(fmt.Sprintf("start of getting %d snapshots", len(s.snapshotQueue)))
+		requestWeightLimit := s.exInfoCache.GetRequestWeightLimit()
 		for _, symbol := range s.snapshotQueue {
 			if s.shutdown.Load() {
 				s.done <- struct{}{}
 				return
 			}
 			limit, _ := s.ReceiveAndSaveSnapshot(ctx, symbol)
-			s.logger.Debug(fmt.Sprintf("current limit is %s when allowed %d", limit, exInfo.GetRequestWeightLimit()))
-			if tmp, _ := strconv.Atoi(limit); limit != "" && tmp*10 > exInfo.GetRequestWeightLimit()*8 {
-				sleepTime := exInfo.GetRequestWeightLimitDuration()
+			s.logger.Debug(fmt.Sprintf("current limit is %s when allowed %d", limit, requestWeightLimit))
+			if tmp, _ := strconv.Atoi(limit); limit != "" && tmp*10 > requestWeightLimit*8 {
+				sleepTime := s.exInfoCache.GetRequestWeightLimitDuration()
 				s.logger.Debug(fmt.Sprintf("sleeping snapshot service for %s", sleepTime))
 				time.Sleep(sleepTime)
 			}

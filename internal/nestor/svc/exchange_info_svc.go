@@ -3,6 +3,7 @@ package svc
 import (
 	"DeltaReceiver/internal/common/model"
 	"DeltaReceiver/internal/nestor/cache"
+	bmodel "DeltaReceiver/pkg/binance/model"
 	"DeltaReceiver/pkg/log"
 	"context"
 	"fmt"
@@ -14,6 +15,7 @@ import (
 
 type ExchangeInfoSvc struct {
 	logger          *zap.Logger
+	marketType      bmodel.DataType
 	binanceClient   BinanceClient
 	dataStorages    []BatchedDataStorage[model.ExchangeInfo]
 	exInfoUpdPeriod time.Duration
@@ -22,11 +24,12 @@ type ExchangeInfoSvc struct {
 	exInfoCache     *cache.ExchangeInfoCache
 }
 
-func NewExchangeInfoSvc(exInfoUpdPeriod time.Duration, binanceClient BinanceClient, dataStorages []BatchedDataStorage[model.ExchangeInfo], infoCache *cache.ExchangeInfoCache) *ExchangeInfoSvc {
+func NewExchangeInfoSvc(marketType bmodel.DataType, exInfoUpdPeriod time.Duration, binanceClient BinanceClient, dataStorages []BatchedDataStorage[model.ExchangeInfo], infoCache *cache.ExchangeInfoCache) *ExchangeInfoSvc {
 	var shutdown atomic.Bool
 	shutdown.Store(false)
 	return &ExchangeInfoSvc{
-		logger:          log.GetLogger("ExchangeInfoSvc"),
+		logger:          log.GetLogger(fmt.Sprintf("ExchangeInfoSvc[%s]", marketType)),
+		marketType:      marketType,
 		binanceClient:   binanceClient,
 		dataStorages:    dataStorages,
 		exInfoUpdPeriod: exInfoUpdPeriod,
@@ -44,7 +47,7 @@ func (s *ExchangeInfoSvc) StartReceiveExInfo(ctx context.Context) {
 		}
 		time.Sleep(s.exInfoUpdPeriod)
 		ctxWithTimeout, cancel := context.WithTimeout(context.Background(), 20*time.Second)
-		exInfo, err := s.binanceClient.GetFullExchangeInfo(ctxWithTimeout)
+		exInfo, err := s.binanceClient.GetFullExchangeInfo(ctxWithTimeout, s.marketType)
 		cancel()
 		if err == nil {
 			s.logger.Info(fmt.Sprintf("got exchange info with hash %d", exInfo.ExInfoHash()))
@@ -55,9 +58,10 @@ func (s *ExchangeInfoSvc) StartReceiveExInfo(ctx context.Context) {
 		ctxWithTimeout, cancel = context.WithTimeout(context.Background(), 20*time.Second)
 		lastSavedExInfo := s.dataStorages[0].(ExchangeInfoStorage).GetLastExchangeInfo(ctxWithTimeout)
 		cancel()
+		newExInfo := model.NewExchangeInfo(exInfo)
 		if lastSavedExInfo == nil {
 			s.logger.Error("error while receiving last saved exchange info from clickhouse")
-		} else if !model.EqualsExchangeInfos(lastSavedExInfo, exInfo) {
+		} else if !model.EqualsExchangeInfos(lastSavedExInfo, newExInfo) {
 			s.logger.Info("exchange info changed, attempt to send")
 			if err = s.saveExInfo(ctx, []model.ExchangeInfo{*model.NewExchangeInfo(exInfo)}); err != nil {
 				s.logger.Error(err.Error())

@@ -25,6 +25,7 @@ import (
 
 type BinanceMarketCtx struct {
 	logger              *zap.Logger
+	marketType          bmodel.DataType
 	deltaSvc            *svc.WsSvc[bmodel.DeltaMessage, cmodel.Delta]
 	ticksSvc            *svc.WsSvc[bmodel.SymbolTick, bmodel.SymbolTick]
 	snapshotSvc         *svc.SnapshotSvc
@@ -90,11 +91,12 @@ func NewBinanceMarketCtx(
 	exchangeInfoCsStorage := cs.NewExchangeInfoStorage(loggerParam, csSession, marketCsRepoCfg.ExchangeInfoTableName)
 	exchangeInfoFileStorage := repo.NewFileRepo[cmodel.ExchangeInfo](loggerParam)
 	exInfoStorages := []svc.BatchedDataStorage[cmodel.ExchangeInfo]{exchangeInfoCsStorage, exchangeInfoFileStorage}
-	exInfoSvc := svc.NewExchangeInfoSvc(time.Duration(marketCfg.ExchangeInfoUpdPerM)*time.Minute, binanceClient, exInfoStorages, exInfoCache)
+	exInfoSvc := svc.NewExchangeInfoSvc(marketType, time.Duration(marketCfg.ExchangeInfoUpdPerM)*time.Minute, binanceClient, exInfoStorages, exInfoCache)
 	exInfoFixer := svc.NewDataFixer(loggerParam, exchangeInfoCsStorage, []svc.AuxBatchedDataStorage[cmodel.ExchangeInfo]{exchangeInfoFileStorage})
 
 	return &BinanceMarketCtx{
 		logger:              log.GetLogger(fmt.Sprintf("BinanceMarketCtx[%s]", marketType)),
+		marketType:          marketType,
 		deltaSvc:            deltaSvc,
 		ticksSvc:            ticksSvc,
 		snapshotSvc:         snapshotSvc,
@@ -110,7 +112,7 @@ func NewBinanceMarketCtx(
 }
 
 func (s *BinanceMarketCtx) Start(ctx context.Context) {
-	exInfo, err := s.binanceClient.GetFullExchangeInfo(context.Background())
+	exInfo, err := s.binanceClient.GetFullExchangeInfo(context.Background(), s.marketType)
 	if err != nil {
 		s.logger.Error(err.Error())
 	}

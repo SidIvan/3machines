@@ -92,3 +92,26 @@ func (s *ExchangeInfo) GetSuffixOfLimitHeader() string {
 	}
 	return ""
 }
+
+type ExInfo interface {
+	ServerTimeMs() int64
+	ExInfoHash() int64
+	GetRequestWeightLimitDuration() time.Duration
+	GetRequestWeightLimit() int
+	GetSuffixOfLimitHeader() string
+	GetTradingSymbols() []string
+}
+
+func (s *ExchangeInfo) ServerTimeMs() int64 {
+	return s.ServerTime
+}
+
+func (s *ExchangeInfo) GetTradingSymbols() []string {
+	var tradingSymbols []string
+	for _, symbol := range s.Symbols {
+		if symbol.Status == "TRADING" {
+			tradingSymbols = append(tradingSymbols, symbol.Symbol)
+		}
+	}
+	return tradingSymbols
+}

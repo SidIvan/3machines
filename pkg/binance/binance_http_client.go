@@ -70,6 +70,46 @@ func (s BinanceHttpClient) GetFullExchangeInfo(ctx context.Context) (*model.Exch
 	return &exInfo, nil
 }
 
+func (s BinanceHttpClient) GetCoinFullExchangeInfo(ctx context.Context) (*model.CoinExchangeInfo, error) {
+	if isBanned() {
+		return nil, RequestRejectedErr
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, s.exInfoQ, http.NoBody)
+	s.logger.Debug("start get exchange info " + s.exInfoQ)
+	if err != nil {
+		s.logger.Error(err.Error())
+		return nil, err
+	}
+	resp, err := s.client.Do(req)
+	if err != nil {
+		s.logger.Error(err.Error())
+		return nil, err
+	}
+	if resp.StatusCode == http.StatusTeapot {
+		return nil, banBinanceRequests(resp, TeapotErr)
+	}
+	if resp.StatusCode == http.StatusTooManyRequests {
+		return nil, banBinanceRequests(resp, WeightLimitExceededErr)
+	}
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		s.logger.Error(err.Error())
+		return nil, err
+	}
+	var exInfo model.CoinExchangeInfo
+	err = json.Unmarshal(respBody, &exInfo)
+	if err != nil {
+		s.logger.Error(err.Error())
+		return nil, err
+	}
+	err = resp.Body.Close()
+	if err != nil {
+		s.logger.Warn(err.Error())
+	}
+	s.logger.Debug(fmt.Sprintf("got ex info with %d symbols", len(exInfo.Symbols)))
+	return &exInfo, nil
+}
+
 func (s BinanceHttpClient) GetFullSnapshot(ctx context.Context, symbol string, depthLimit int, headerType string) (*model.DepthSnapshot, string, error) {
 	if isBanned() {
 		return nil, "", RequestRejectedErr

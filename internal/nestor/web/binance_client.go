@@ -15,6 +15,7 @@ import (
 
 type BinanceClient struct {
 	logger      *zap.Logger
+	dataType    bmodel.DataType
 	client      *binance.BinanceHttpClient
 	exInfoCache *cache.ExchangeInfoCache
 }
@@ -29,7 +30,7 @@ func NewBinanceClient(dataType bmodel.DataType, cfg *binance.BinanceHttpClientCo
 
 func (s BinanceClient) GetFullSnapshot(ctx context.Context, symbol string, depth int) ([]model.DepthSnapshotPart, string, error) {
 	s.logger.Info(fmt.Sprintf("get full shapshot [%s]", symbol))
-	snapshot, curLimit, err := s.client.GetFullSnapshot(ctx, symbol, depth, s.exInfoCache.GetVal().GetSuffixOfLimitHeader())
+	snapshot, curLimit, err := s.client.GetFullSnapshot(ctx, symbol, depth, s.exInfoCache.GetSuffixOfLimitHeader())
 	if err != nil {
 		s.logger.Error(err.Error())
 		return nil, curLimit, err
@@ -45,10 +46,17 @@ func (s BinanceClient) GetFullSnapshot(ctx context.Context, symbol string, depth
 	return snapshotParts, curLimit, nil
 }
 
-func (s BinanceClient) GetFullExchangeInfo(ctx context.Context) (*bmodel.ExchangeInfo, error) {
-	exInfo, err := s.client.GetFullExchangeInfo(ctx)
+func (s BinanceClient) GetFullExchangeInfo(ctx context.Context, dataType bmodel.DataType) (bmodel.ExInfo, error) {
+	var exInfo bmodel.ExInfo
+	var err error
+	if dataType == bmodel.FuturesCoin {
+		exInfo, err = s.client.GetCoinFullExchangeInfo(ctx)
+	} else {
+		exInfo, err = s.client.GetFullExchangeInfo(ctx)
+	}
 	if err == nil {
 		s.exInfoCache.SetVal(exInfo)
+		return exInfo, nil
 	}
 	return exInfo, err
 }

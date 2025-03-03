@@ -72,7 +72,7 @@ func (s *App) Start() {
 	time.Sleep(2 * time.Second)
 	s.logger.Info("App started")
 	// go s.binanceSpotCtx.Start(baseContext)
-	go s.binanceUSDCtx.Start(baseContext)
+	// go s.binanceUSDCtx.Start(baseContext)
 	go s.binanceCoinCtx.Start(baseContext)
 }
 
@@ -85,7 +85,7 @@ func (s *App) Stop(ctx context.Context) {
 		wg.Done()
 	}()
 	go func() {
-		s.binanceUSDCtx.Shutdown(ctx)
+		// s.binanceUSDCtx.Shutdown(ctx)
 		wg.Done()
 	}()
 	go func() {

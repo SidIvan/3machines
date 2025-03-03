@@ -4,7 +4,6 @@ import (
 	bmodel "DeltaReceiver/pkg/binance/model"
 	"DeltaReceiver/pkg/log"
 	"encoding/json"
-	"reflect"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.uber.org/zap"
@@ -25,14 +24,14 @@ type ExchangeInfoWithMongoId struct {
 	Id         primitive.ObjectID `bson:"_id"`
 }
 
-func NewExchangeInfo(rawExInfo *bmodel.ExchangeInfo) *ExchangeInfo {
+func NewExchangeInfo(rawExInfo bmodel.ExInfo) *ExchangeInfo {
 	payload, err := json.Marshal(rawExInfo)
 	if err != nil {
 		logger.Error(err.Error())
 		return nil
 	}
 	return &ExchangeInfo{
-		ServerTime: rawExInfo.ServerTime,
+		ServerTime: rawExInfo.ServerTimeMs(),
 		ExInfoHash: rawExInfo.ExInfoHash(),
 		Payload:    string(payload),
 	}
@@ -50,11 +49,6 @@ func (s ExchangeInfoWithMongoId) ToData() ExchangeInfo {
 	}
 }
 
-func EqualsExchangeInfos(info1 *ExchangeInfo, info2 *bmodel.ExchangeInfo) bool {
-	var info11 bmodel.ExchangeInfo
-	_ = json.Unmarshal([]byte(info1.Payload), &info11)
-	return info11.Timezone == info2.Timezone &&
-		reflect.DeepEqual(info11.ExchangeFilters, info2.ExchangeFilters) &&
-		reflect.DeepEqual(info11.RateLimits, info2.RateLimits) &&
-		reflect.DeepEqual(info11.Symbols, info2.Symbols)
+func EqualsExchangeInfos(info1 *ExchangeInfo, info2 *ExchangeInfo) bool {
+	return info1.Payload == info2.Payload
 }
