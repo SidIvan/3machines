@@ -3,12 +3,23 @@ kind: ConfigMap
 metadata:
   name: sizif-config
 data:
-  sizif.workers.binance.deltas: "5"
-  sizif.workers.binance.book.ticks: "5"
-  sizif.workers.binance.snapshots: "2"
+  binance.spot.workers.binance.deltas: "5"
+  binance.spot.workers.binance.book.ticks: "5"
+  binance.spot.workers.binance.snapshots: "2"
+
+  binance.usd.workers.binance.deltas: "5"
+  binance.usd.workers.binance.book.ticks: "5"
+  binance.usd.workers.binance.snapshots: "2"
+
+  binance.coin.workers.binance.deltas: "5"
+  binance.coin.workers.binance.book.ticks: "5"
+  binance.coin.workers.binance.snapshots: "2"
+
   zk.servers: "zk-cs.default.svc.cluster.local:2181"
   zk.session.timeout.s: "60"
+  
   b2.bucket: "3machines"
+
   dwarf.uri.schema: http://
   dwarf.uri.host: "dwarf.default.svc.cluster.local"
   dwarf.uri.port: "8080"
