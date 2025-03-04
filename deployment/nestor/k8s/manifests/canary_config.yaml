@@ -11,7 +11,7 @@ data:
   binance.spot.client.http.uri.port: "443"
   binance.spot.client.stream.uri.schema: ws://
   binance.spot.client.stream.uri.host: "92.112.53.235"
-  binance.spot.client.stream.uri.port: "8080"
+  binance.spot.client.stream.uri.port: "8123"
   binance.spot.client.stream.uri.base.path: "/stream"
   binance.spot.client.use.all.tickers.stream: "false"
   binance.spot.deltas.num.workers: "5"
@@ -27,7 +27,7 @@ data:
   binance.usd.client.http.uri.port: "443"
   binance.usd.client.stream.uri.schema: ws://
   binance.usd.client.stream.uri.host: "92.112.53.235"
-  binance.usd.client.stream.uri.port: "8080"
+  binance.usd.client.stream.uri.port: "8123"
   binance.usd.client.stream.uri.base.path: "/fstream"
   binance.usd.client.use.all.tickers.stream: "true"
   binance.usd.deltas.num.workers: "3"
@@ -43,7 +43,7 @@ data:
   binance.coin.client.http.uri.port: "443"
   binance.coin.client.stream.uri.schema: ws://
   binance.coin.client.stream.uri.host: "92.112.53.235"
-  binance.coin.client.stream.uri.port: "8080"
+  binance.coin.client.stream.uri.port: "8123"
   binance.coin.client.stream.uri.base.path: "/dstream"
   binance.coin.client.use.all.tickers.stream: "true"
   binance.coin.deltas.num.workers: "3"
