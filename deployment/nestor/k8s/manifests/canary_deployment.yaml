@@ -37,7 +37,7 @@ spec:
         resources:
           requests:
             cpu: "1000m"
-            memory: 2Gi
+            memory: 1.75Gi
         env:
           - name: SERVICE_NAME
             valueFrom:
