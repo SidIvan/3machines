@@ -28,7 +28,7 @@ func NewBookTickerClient(cfg *BinanceHttpClientConfig, symbols []string) *BookTi
 	var shutdown atomic.Bool
 	shutdown.Store(false)
 	client := BookTickerClient{
-		logger:              log.GetSTDOutLogger("DeltaReceiveClient"),
+		logger:              log.GetLogger("BookTickerClient"),
 		wsBaseUri:           cfg.StreamBaseUriConfig.GetBaseUri() + "/ws",
 		useAllTickersStream: cfg.UseAllTickersStream,
 		symbols:             symbols,
