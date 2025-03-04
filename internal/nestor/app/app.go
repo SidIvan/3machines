@@ -38,9 +38,16 @@ func NewApp(cfg *conf.AppConfig) *App {
 	csSession := initCs(csCfg)
 	binanceReconnectPeriod := time.Minute * time.Duration(cfg.ReconnectPeriodM)
 
-	binanceSpotCtx := NewBinanceMarketCtx(cfg.BinanceSpotCfg, csCfg.BinanceSpotCfg, csSession, binanceReconnectPeriod)
-	binanceUSDCtx := NewBinanceMarketCtx(cfg.BinanceUSDCfg, csCfg.BinanceUSDCfg, csSession, binanceReconnectPeriod)
-	binanceCoinCtx := NewBinanceMarketCtx(cfg.BinanceCoinCfg, csCfg.BinanceCoinCfg, csSession, binanceReconnectPeriod)
+	var binanceSpotCtx *BinanceMarketCtx
+	var binanceUSDCtx *BinanceMarketCtx
+	var binanceCoinCtx *BinanceMarketCtx
+
+	if cfg.Mode == conf.Spot {
+		binanceSpotCtx = NewBinanceMarketCtx(cfg.BinanceSpotCfg, csCfg.BinanceSpotCfg, csSession, binanceReconnectPeriod)
+	} else {
+		binanceUSDCtx = NewBinanceMarketCtx(cfg.BinanceUSDCfg, csCfg.BinanceUSDCfg, csSession, binanceReconnectPeriod)
+		binanceCoinCtx = NewBinanceMarketCtx(cfg.BinanceCoinCfg, csCfg.BinanceCoinCfg, csSession, binanceReconnectPeriod)
+	}
 	return &App{
 		logger:         logger,
 		binanceSpotCtx: binanceSpotCtx,
@@ -71,27 +78,34 @@ func (s *App) Start() {
 	}()
 	time.Sleep(2 * time.Second)
 	s.logger.Info("App started")
-	go s.binanceSpotCtx.Start(baseContext)
-	go s.binanceUSDCtx.Start(baseContext)
-	go s.binanceCoinCtx.Start(baseContext)
+	if s.cfg.Mode == conf.Spot {
+		go s.binanceSpotCtx.Start(baseContext)
+	} else {
+		go s.binanceUSDCtx.Start(baseContext)
+		go s.binanceCoinCtx.Start(baseContext)
+	}
 }
 
 func (s *App) Stop(ctx context.Context) {
 	s.logger.Info("Begin of graceful shutdown")
 	var wg sync.WaitGroup
-	wg.Add(3)
-	go func() {
-		s.binanceSpotCtx.Shutdown(ctx)
-		wg.Done()
-	}()
-	go func() {
-		s.binanceUSDCtx.Shutdown(ctx)
-		wg.Done()
-	}()
-	go func() {
-		s.binanceCoinCtx.Shutdown(ctx)
-		wg.Done()
-	}()
+	if s.cfg.Mode == conf.Spot {
+		wg.Add(1)
+		go func() {
+			s.binanceSpotCtx.Shutdown(ctx)
+			wg.Done()
+		}()
+	} else {
+		wg.Add(2)
+		go func() {
+			s.binanceUSDCtx.Shutdown(ctx)
+			wg.Done()
+		}()
+		go func() {
+			s.binanceCoinCtx.Shutdown(ctx)
+			wg.Done()
+		}()
+	}
 	wg.Wait()
 	time.Sleep(30 * time.Second)
 	s.logger.Info("End of graceful shutdown")

@@ -46,7 +46,7 @@ func (s CsDataUploader[T]) UploadData(ctx context.Context, data []T) error {
 	var numKeysSuccessfullySentKeys atomic.Int32
 	for key, deltas := range keyToDeltas {
 		wg.Add(1)
-		go func() {
+		go func(key model.ProcessingKey, deltas []T) {
 			defer wg.Done()
 			err := s.sendPartition(ctx, key, deltas)
 			if err != nil {
@@ -54,7 +54,7 @@ func (s CsDataUploader[T]) UploadData(ctx context.Context, data []T) error {
 			} else {
 				numKeysSuccessfullySentKeys.Add(1)
 			}
-		}()
+		}(key, deltas)
 	}
 	wg.Wait()
 	if numKeysSuccessfullySentKeys.Load() == int32(len(keyToDeltas)) {
@@ -149,16 +149,14 @@ func (s CsDataUploader[T]) sendNewKeys(ctx context.Context, keys []model.Process
 		return nil
 	}
 	var err error
-	for range 3 {
-		err = s.sendKeys(ctx, keysToInsert)
-		if err == nil {
-			for _, key := range keysToInsert {
-				s.insertedKeys[key] = struct{}{}
-			}
-			return nil
+	err = s.sendKeys(ctx, keysToInsert)
+	if err == nil {
+		for _, key := range keysToInsert {
+			s.insertedKeys[key] = struct{}{}
 		}
-		s.logger.Error(err.Error())
+		return nil
 	}
+	s.logger.Error(err.Error())
 	return err
 }
 

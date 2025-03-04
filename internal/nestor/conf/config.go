@@ -7,6 +7,7 @@ import (
 )
 
 type AppConfig struct {
+	Mode             BinanceMode        `yaml:"binance.mode"`
 	ReconnectPeriodM int16              `yaml:"binance.reconnect.period.m"`
 	MongoRepoCfg     *MongoRepoConfig   `yaml:"mongo"`
 	CsCfg            *conf.CsRepoConfig `yaml:"socrates"`
@@ -15,12 +16,24 @@ type AppConfig struct {
 	BinanceCoinCfg   *BinanceMarketCfg  `yaml:"binance.coin"`
 }
 
+type BinanceMode string
+
+const (
+	Spot   BinanceMode = "spot"
+	Future BinanceMode = "future"
+)
+
 func NewAppConfigFromEnv() *AppConfig {
 	reconnectPeriodM, err := strconv.Atoi(os.Getenv("binance.reconnect.period.m"))
 	if err != nil {
 		panic(err)
 	}
+	mode := BinanceMode(os.Getenv("binance.mode"))
+	if mode != Spot && mode != Future {
+		panic("unknown mode " + mode)
+	}
 	return &AppConfig{
+		Mode:             mode,
 		ReconnectPeriodM: int16(reconnectPeriodM),
 		CsCfg:            conf.NewCsRepoConfigFromEnv("socrates"),
 		MongoRepoCfg:     NewMongoRepoConfigFromEnv("mongo"),

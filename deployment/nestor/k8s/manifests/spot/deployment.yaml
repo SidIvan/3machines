@@ -1,0 +1,74 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nestor-alibaba-spot
+  labels:
+    app: nestor-spot
+spec:
+  replicas: 1  
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
+  selector:
+    matchLabels:
+      app: nestor
+      environment: prod
+      geo: alibaba
+  template:
+    metadata:
+      labels:
+        app: nestor
+        environment: prod
+        geo: alibaba
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9001"
+    spec:          
+      nodeSelector:
+        app: nestor
+        environment: prod
+        geo: alibaba
+      containers:
+      - name: nestor
+        image: sidivan/nestor:v2.1
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 9001
+          name: prometheus
+        resources:
+          limits:
+            cpu: "1750m"
+            memory: 1.75Gi
+          requests:
+            cpu: "1750m"
+            memory: 1.75Gi
+        env:
+          - name: SERVICE_NAME
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: metadata.name
+        envFrom:
+          - configMapRef:
+              name: nestor-spot-config
+          - configMapRef:
+              name: cassandra-config
+        volumeMounts:
+          - name: nestor-logs
+            mountPath: /app/log
+          - name: file-storage
+            mountPath: /var/data
+          - name: certs
+            mountPath: /etc/ssl/certs/ca-certificates.crt
+      volumes:
+      - name: nestor-logs
+        hostPath:
+          path: /var/log/nestor
+      - name: file-storage
+        hostPath:
+          path: /var/lib/nestor/data
+      - name: certs
+        hostPath:
+          path: /etc/ssl/certs/ca-certificates.crt

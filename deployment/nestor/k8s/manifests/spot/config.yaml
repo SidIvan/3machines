@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nestor-spot-config
+data:
+  binance.reconnect.period.m: "720"
+  binance.mod: spot
+  binance.spot.data.type: spot
+  binance.spot.client.http.uri.schema: https://
+  binance.spot.client.http.uri.host: api.binance.com
+  binance.spot.client.http.uri.port: "443"
+  binance.spot.client.stream.uri.schema: wss://
+  binance.spot.client.stream.uri.host: "stream.binance.com"
+  binance.spot.client.stream.uri.port: "443"
+  binance.spot.client.stream.uri.base.path: "/stream"
+  binance.spot.client.use.all.tickers.stream: "false"
+  binance.spot.deltas.num.workers: "10"
+  binance.spot.deltas.batch.size: "5000"
+  binance.spot.book.ticks.num.workers: "10"
+  binance.spot.book.ticks.batch.size: "5000"
+  binance.spot.exchange.info.update.period.m: "5"
+  binance.spot.snapshots.depth: "5000"
+
+
