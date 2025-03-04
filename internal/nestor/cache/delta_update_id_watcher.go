@@ -33,6 +33,7 @@ func (s *DeltaUpdateIdWatcher) GetHolesAndUpdate(batch []model.Delta) []model.De
 					lastUpdId+1,
 					delta.FirstUpdateId,
 					delta.Timestamp,
+					"spot",
 				))
 			}
 		}

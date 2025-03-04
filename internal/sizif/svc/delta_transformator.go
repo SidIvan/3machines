@@ -3,6 +3,7 @@ package svc
 import (
 	"DeltaReceiver/internal/common/model"
 	"DeltaReceiver/internal/common/web"
+	bmodel "DeltaReceiver/pkg/binance/model"
 	"DeltaReceiver/pkg/log"
 	"context"
 	"fmt"
@@ -15,12 +16,14 @@ import (
 type DeltaTransformator struct {
 	logger      *zap.Logger
 	dwarfClient *web.DwarfHttpClient
+	marketType  bmodel.DataType
 }
 
-func NewDeltaTransformator(dwarfClient *web.DwarfHttpClient) *DeltaTransformator {
+func NewDeltaTransformator(dwarfClient *web.DwarfHttpClient, marketType bmodel.DataType) *DeltaTransformator {
 	return &DeltaTransformator{
 		logger:      log.GetLogger("DeltaTransformator"),
 		dwarfClient: dwarfClient,
+		marketType:  marketType,
 	}
 }
 
@@ -52,7 +55,7 @@ func (s DeltaTransformator) Transform(deltas []model.Delta, key *model.Processin
 	for i := 1; i < len(deltas); i++ {
 		if deltas[i].FirstUpdateId-lastUpdateId > 1 {
 			ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
-			s.dwarfClient.SaveDeltaHole(ctx, model.NewDeltaHole(deltas[i].Symbol, lastUpdateId, deltas[i].FirstUpdateId, deltas[i].Timestamp))
+			s.dwarfClient.SaveDeltaHole(ctx, model.NewDeltaHole(deltas[i].Symbol, lastUpdateId, deltas[i].FirstUpdateId, deltas[i].Timestamp, s.marketType))
 			cancel()
 			deltaHoles++
 		}

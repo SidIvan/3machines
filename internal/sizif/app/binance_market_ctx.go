@@ -46,7 +46,7 @@ func NewBinanceMarketCtx(
 	deltaSubpath := marketSubpath + "deltas"
 	deltaSocratesStorage := cs.NewCsDeltaStorageRO(csSession, csRepoCfg.DeltaTableName, csRepoCfg.DeltaKeyTableName)
 	deltaParquetStorage := b2pqt.NewB2ParquetStorage[model.Delta](b2Bucket, deltaSubpath, b2pqt.FromKey)
-	deltaTransformator := svc.NewDeltaTransformator(dwarfClient)
+	deltaTransformator := svc.NewDeltaTransformator(dwarfClient, marketType)
 	deltaLocker := lock.NewZkLocker(deltaSubpath, zkConn)
 	deltaMetrics := metrics.NewSizifWorkerMetrics(b2zkPathToMetric(deltaSubpath))
 	deltaSvc := svc.NewSizifSvc(deltaSubpath, deltaSocratesStorage, deltaParquetStorage, deltaTransformator, deltaLocker, marketCfg.DeltaWorkers, deltaMetrics)
