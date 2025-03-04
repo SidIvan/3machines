@@ -24,7 +24,7 @@ data:
   binance.usd.data.type: usd
   binance.usd.client.http.uri.schema: https://
   binance.usd.client.http.uri.host: fapi.binance.com
-  binance.usd.client.http.uri.port: "8080"
+  binance.usd.client.http.uri.port: "443"
   binance.usd.client.stream.uri.schema: ws://
   binance.usd.client.stream.uri.host: "92.112.53.235"
   binance.usd.client.stream.uri.port: "8080"

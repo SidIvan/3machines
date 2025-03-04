@@ -14,13 +14,14 @@ import (
 func main() {
 	x := binance.NewBookTickerClient(&binance.BinanceHttpClientConfig{
 		StreamBaseUriConfig: &conf.BaseUriConfig{
-			Schema: "ws://",
-			Host:   "8.209.213.102",
-			Port:   8080,
+			Schema:   "ws://",
+			Host:     "147.45.237.160",
+			Port:     8123,
+			BasePath: "/stream",
 		},
-		UseAllTickersStream: true,
+		UseAllTickersStream: false,
 	},
-		[]string{})
+		[]string{"btcusdt"})
 
 	x.ConnectWs(context.Background())
 	msgs := 0
