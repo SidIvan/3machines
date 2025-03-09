@@ -12,7 +12,7 @@ data:
   binance.spot.client.stream.uri.schema: wss://
   binance.spot.client.stream.uri.host: "stream.binance.com"
   binance.spot.client.stream.uri.port: "443"
-  binance.spot.client.stream.uri.base.path: "/stream"
+  # binance.spot.client.stream.uri.base.path: "/stream"
   binance.spot.client.use.all.tickers.stream: "false"
   binance.spot.deltas.num.workers: "10"
   binance.spot.deltas.batch.size: "5000"
