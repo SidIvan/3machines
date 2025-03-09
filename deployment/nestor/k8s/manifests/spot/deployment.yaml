@@ -15,13 +15,11 @@ spec:
     matchLabels:
       app: nestor
       environment: prod
-      geo: alibaba
   template:
     metadata:
       labels:
         app: nestor
         environment: prod
-        geo: alibaba
       annotations:
         prometheus.io/scrape: "true"
         prometheus.io/port: "9001"
@@ -29,7 +27,7 @@ spec:
       nodeSelector:
         app: nestor
         environment: prod
-        geo: alibaba
+        geo: ultrahost
       containers:
       - name: nestor
         image: sidivan/nestor:v2.1

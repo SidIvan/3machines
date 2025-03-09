@@ -32,13 +32,19 @@ func NewAppConfigFromEnv() *AppConfig {
 	if mode != Spot && mode != Future {
 		panic("unknown mode " + mode)
 	}
+	var spotCfg, usdCfg, coinCfg *BinanceMarketCfg
+	if mode == Spot {
+		spotCfg = NewBinanceMarketCfgFromEnv("binance.spot")
+	} else {
+		usdCfg = NewBinanceMarketCfgFromEnv("binance.usd")
+		coinCfg = NewBinanceMarketCfgFromEnv("binance.coin")
+	}
 	return &AppConfig{
 		Mode:             mode,
 		ReconnectPeriodM: int16(reconnectPeriodM),
 		CsCfg:            conf.NewCsRepoConfigFromEnv("socrates"),
-		MongoRepoCfg:     NewMongoRepoConfigFromEnv("mongo"),
-		BinanceSpotCfg:   NewBinanceMarketCfgFromEnv("binance.spot"),
-		BinanceUSDCfg:    NewBinanceMarketCfgFromEnv("binance.usd"),
-		BinanceCoinCfg:   NewBinanceMarketCfgFromEnv("binance.coin"),
+		BinanceSpotCfg:   spotCfg,
+		BinanceUSDCfg:    usdCfg,
+		BinanceCoinCfg:   coinCfg,
 	}
 }

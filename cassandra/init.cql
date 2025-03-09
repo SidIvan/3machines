@@ -12,13 +12,15 @@ CREATE TABLE IF NOT EXISTS deltas (
     first_update_id bigint,
     update_id bigint,
     PRIMARY KEY ((symbol, hour), timestamp_ms, type, price)
-);
+)
+    WITH compression = { 'class' : 'ZstdCompressor' };
 
 CREATE TABLE IF NOT EXISTS deltas_keys (
     symbol ascii,
     hour bigint,
     PRIMARY KEY ((symbol, hour))
-);
+)
+    WITH compression = { 'class' : 'ZstdCompressor' };
 
 CREATE TABLE IF NOT EXISTS snapshots (
     symbol ascii,
@@ -29,13 +31,15 @@ CREATE TABLE IF NOT EXISTS snapshots (
     count ascii,
     last_update_id bigint,
     PRIMARY KEY ((symbol, hour), timestamp_ms, type, price)
-);
+)
+    WITH compression = { 'class' : 'ZstdCompressor' };
 
 CREATE TABLE IF NOT EXISTS snapshots_keys (
     symbol ascii,
     hour bigint,
     PRIMARY KEY ((symbol, hour))
-);
+)
+    WITH compression = { 'class' : 'ZstdCompressor' };
 
 CREATE TABLE IF NOT EXISTS book_ticks (
     symbol ascii,
@@ -47,13 +51,15 @@ CREATE TABLE IF NOT EXISTS book_ticks (
     ask_price ascii,
     ask_quantity ascii,
     PRIMARY KEY ((symbol, hour), update_id)
-);
+)
+    WITH compression = { 'class' : 'ZstdCompressor' };
 
 CREATE TABLE IF NOT EXISTS book_ticks_keys (
     symbol ascii,
     hour bigint,
     PRIMARY KEY ((symbol, hour))
-);
+)
+    WITH compression = { 'class' : 'ZstdCompressor' };
 
 CREATE TABLE IF NOT EXISTS exchange_info (
     day bigint,
@@ -61,7 +67,8 @@ CREATE TABLE IF NOT EXISTS exchange_info (
     ex_info_hash bigint,
     ex_info text,
     PRIMARY KEY (day, timestamp_ms)
-);
+)
+    WITH compression = { 'class' : 'ZstdCompressor' };
 
 
 CREATE TABLE IF NOT EXISTS usd_deltas (
@@ -74,13 +81,15 @@ CREATE TABLE IF NOT EXISTS usd_deltas (
     first_update_id bigint,
     update_id bigint,
     PRIMARY KEY ((symbol, hour), timestamp_ms, type, price)
-);
+)
+    WITH compression = { 'class' : 'ZstdCompressor' };
 
 CREATE TABLE IF NOT EXISTS usd_deltas_keys (
     symbol ascii,
     hour bigint,
     PRIMARY KEY ((symbol, hour))
-);
+)
+    WITH compression = { 'class' : 'ZstdCompressor' };
 
 CREATE TABLE IF NOT EXISTS usd_snapshots (
     symbol ascii,
@@ -91,13 +100,15 @@ CREATE TABLE IF NOT EXISTS usd_snapshots (
     count ascii,
     last_update_id bigint,
     PRIMARY KEY ((symbol, hour), timestamp_ms, type, price)
-);
+)
+    WITH compression = { 'class' : 'ZstdCompressor' };
 
 CREATE TABLE IF NOT EXISTS usd_snapshots_keys (
     symbol ascii,
     hour bigint,
     PRIMARY KEY ((symbol, hour))
-);
+)
+    WITH compression = { 'class' : 'ZstdCompressor' };
 
 CREATE TABLE IF NOT EXISTS usd_book_ticks (
     symbol ascii,
@@ -109,13 +120,15 @@ CREATE TABLE IF NOT EXISTS usd_book_ticks (
     ask_price ascii,
     ask_quantity ascii,
     PRIMARY KEY ((symbol, hour), update_id)
-);
+)
+    WITH compression = { 'class' : 'ZstdCompressor' };
 
 CREATE TABLE IF NOT EXISTS usd_book_ticks_keys (
     symbol ascii,
     hour bigint,
     PRIMARY KEY ((symbol, hour))
-);
+)
+    WITH compression = { 'class' : 'ZstdCompressor' };
 
 CREATE TABLE IF NOT EXISTS usd_exchange_info (
     day bigint,
@@ -123,7 +136,8 @@ CREATE TABLE IF NOT EXISTS usd_exchange_info (
     ex_info_hash bigint,
     ex_info text,
     PRIMARY KEY (day, timestamp_ms)
-);
+)
+    WITH compression = { 'class' : 'ZstdCompressor' };
 
 CREATE TABLE IF NOT EXISTS coin_deltas (
     symbol ascii,
@@ -135,13 +149,15 @@ CREATE TABLE IF NOT EXISTS coin_deltas (
     first_update_id bigint,
     update_id bigint,
     PRIMARY KEY ((symbol, hour), timestamp_ms, type, price)
-);
+)
+    WITH compression = { 'class' : 'ZstdCompressor' };
 
 CREATE TABLE IF NOT EXISTS coin_deltas_keys (
     symbol ascii,
     hour bigint,
     PRIMARY KEY ((symbol, hour))
-);
+)
+    WITH compression = { 'class' : 'ZstdCompressor' };
 
 CREATE TABLE IF NOT EXISTS coin_snapshots (
     symbol ascii,
@@ -152,13 +168,15 @@ CREATE TABLE IF NOT EXISTS coin_snapshots (
     count ascii,
     last_update_id bigint,
     PRIMARY KEY ((symbol, hour), timestamp_ms, type, price)
-);
+)
+    WITH compression = { 'class' : 'ZstdCompressor' };
 
 CREATE TABLE IF NOT EXISTS coin_snapshots_keys (
     symbol ascii,
     hour bigint,
     PRIMARY KEY ((symbol, hour))
-);
+)
+    WITH compression = { 'class' : 'ZstdCompressor' };
 
 CREATE TABLE IF NOT EXISTS coin_book_ticks (
     symbol ascii,
@@ -170,13 +188,15 @@ CREATE TABLE IF NOT EXISTS coin_book_ticks (
     ask_price ascii,
     ask_quantity ascii,
     PRIMARY KEY ((symbol, hour), update_id)
-);
+)
+    WITH compression = { 'class' : 'ZstdCompressor' };
 
 CREATE TABLE IF NOT EXISTS coin_book_ticks_keys (
     symbol ascii,
     hour bigint,
     PRIMARY KEY ((symbol, hour))
-);
+)
+    WITH compression = { 'class' : 'ZstdCompressor' };
 
 CREATE TABLE IF NOT EXISTS coin_exchange_info (
     day bigint,
@@ -184,4 +204,5 @@ CREATE TABLE IF NOT EXISTS coin_exchange_info (
     ex_info_hash bigint,
     ex_info text,
     PRIMARY KEY (day, timestamp_ms)
-);
+)
+    WITH compression = { 'class' : 'ZstdCompressor' };
