@@ -4,7 +4,7 @@ metadata:
   name: cassandra-config
 data:
   socrates.hosts: "cassandra-0.cassandra.default.svc.cluster.local,cassandra-1.cassandra.default.svc.cluster.local,cassandra-2.cassandra.default.svc.cluster.local,cassandra-3.cassandra.default.svc.cluster.local"
-  socrates.port: 9042
+  socrates.port: "9042"
   socrates.binance.keyspace: binance_data
 
   socrates.binance.spot.delta.table: deltas
