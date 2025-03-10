@@ -80,14 +80,10 @@ func (s *WsDataProcessWorker[TRecv, TResp]) RecvAndSaveBatch(ctx context.Context
 	s.metrics.ProcessDataMetrics(batch, Receive)
 	s.saveDataWg.Add(1)
 	s.metrics.IncStartedSaveGoroutines()
-	go func(ctx context.Context, batch []TResp) {
-		defer s.saveDataWg.Done()
-		defer s.metrics.IncEndedSaveGoroutines()
-		err := s.Save(ctx, batch)
-		if err != nil {
-			s.logger.Error(err.Error())
-		}
-	}(ctx, batch)
+	err = s.Save(ctx, batch)
+	if err != nil {
+		s.logger.Error(err.Error())
+	}
 }
 
 func (s *WsDataProcessWorker[TRecv, TResp]) Recv(ctx context.Context) ([]TResp, error) {

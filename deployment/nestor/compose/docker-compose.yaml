@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  nestor:
+    image: sidivan/nestor:v2.1
+    container_name: nestor-alibaba-spot
+    networks: host
+    ports:
+      - "9001:9001"
+    environment:
+      - SERVICE_NAME=nestor-alibaba-spot
+    env_file:
+      - ./nestor-spot-config.env
+      - ./cassandra-config.env
+    volumes:
+      - '/etc/ssl/certs/ca-certificates.crt:/etc/ssl/certs/ca-certificates.crt'
+      - '/var/log/nestor:/app/log'
+      - '/var/lib/nestor/data:/var/data'
+    deploy:
+      resources:
+        limits:
+          cpus: '1.75'
+          memory: 1536M
+        reservations:
+          cpus: '1.75'
+          memory: 1536M
+    labels:
+      app: nestor
+      environment: prod
+      geo: ultrahost

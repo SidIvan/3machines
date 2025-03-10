@@ -56,13 +56,13 @@ func (s *FileRepo[T]) GetWithDeleteCallback(ctx context.Context) ([]T, error, fu
 			filePath := filepath.Join(s.dirPath, dirEntry.Name())
 			rawData, err := os.ReadFile(filePath)
 			if err != nil {
-				s.logger.Error(fmt.Errorf("error opening file: %w", err).Error())
+				s.logger.Error(fmt.Errorf("error opening file %s: %w", filePath, err).Error())
 				return nil, err, func() error { return nil }
 			}
 			var data []T
 			err = json.Unmarshal(rawData, &data)
 			if err != nil {
-				s.logger.Error(fmt.Errorf("error unmarshaling data: %w", err).Error())
+				s.logger.Error(fmt.Errorf("error unmarshaling data %s: %w", filePath, err).Error())
 				return nil, err, func() error { return nil }
 			}
 			return data, nil, func() error {

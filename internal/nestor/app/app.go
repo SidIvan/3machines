@@ -59,6 +59,7 @@ func NewApp(cfg *conf.AppConfig) *App {
 
 func initCs(cfg *cconf.CsRepoConfig) *gocql.Session {
 	cluster := gocql.NewCluster(cfg.Hosts...)
+	cluster.Port = cfg.Port
 	cluster.Keyspace = cfg.KeySpace
 	session, err := cluster.CreateSession()
 	if err != nil {
