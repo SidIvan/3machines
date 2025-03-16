@@ -30,6 +30,13 @@ spec:
               name: cassandra-config
           - secretRef:
               name: b2-creds
+        resources:
+          limits:
+            cpu: "1000m"
+            memory: 2.25Gi
+          requests:
+            cpu: "1000m"
+            memory: 2.25Gi
         volumeMounts:
           - name: sizif-logs
             mountPath: /app/log
