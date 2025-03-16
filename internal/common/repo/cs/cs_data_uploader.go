@@ -148,8 +148,7 @@ func (s CsDataUploader[T]) sendNewKeys(ctx context.Context, keys []model.Process
 	if len(keysToInsert) == 0 {
 		return nil
 	}
-	var err error
-	err = s.sendKeys(ctx, keysToInsert)
+	err := s.sendKeys(ctx, keysToInsert)
 	if err == nil {
 		for _, key := range keysToInsert {
 			s.insertedKeys[key] = struct{}{}
