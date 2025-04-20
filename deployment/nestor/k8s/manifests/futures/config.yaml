@@ -1,0 +1,38 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nestor-futures-config
+data:
+  binance.usd.data.type: usd
+  binance.usd.client.http.uri.schema: https://
+  binance.usd.client.http.uri.host: fapi.binance.com
+  binance.usd.client.http.uri.port: "443"
+  binance.usd.client.stream.uri.schema: ws://
+  binance.usd.client.stream.uri.host: "fstream.binance.com"
+  binance.usd.client.stream.uri.port: "433"
+  binance.usd.client.stream.uri.base.path: ""
+  binance.usd.client.use.all.tickers.stream: "true"
+  binance.usd.deltas.num.workers: "10"
+  binance.usd.deltas.batch.size: "5000"
+  binance.usd.book.ticks.num.workers: "1"
+  binance.usd.book.ticks.batch.size: "5000"
+  binance.usd.exchange.info.update.period.m: "5"
+  binance.usd.snapshots.depth: "1000"
+
+  binance.coin.data.type: coin
+  binance.coin.client.http.uri.schema: https://
+  binance.coin.client.http.uri.host: dapi.binance.com
+  binance.coin.client.http.uri.port: "443"
+  binance.coin.client.stream.uri.schema: ws://
+  binance.coin.client.stream.uri.host: "dstream.binance.com"
+  binance.coin.client.stream.uri.port: "433"
+  binance.coin.client.stream.uri.base.path: ""
+  binance.coin.client.use.all.tickers.stream: "true"
+  binance.coin.deltas.num.workers: "10"
+  binance.coin.deltas.batch.size: "5000"
+  binance.coin.book.ticks.num.workers: "1"
+  binance.coin.book.ticks.batch.size: "5000"
+  binance.coin.exchange.info.update.period.m: "5"
+  binance.coin.snapshots.depth: "1000"
+
+
