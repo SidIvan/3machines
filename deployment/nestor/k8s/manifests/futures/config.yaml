@@ -10,7 +10,7 @@ data:
   binance.usd.client.http.uri.schema: https://
   binance.usd.client.http.uri.host: fapi.binance.com
   binance.usd.client.http.uri.port: "443"
-  binance.usd.client.stream.uri.schema: ws://
+  binance.usd.client.stream.uri.schema: wss://
   binance.usd.client.stream.uri.host: fstream.binance.com
   binance.usd.client.stream.uri.port: "443"
   binance.usd.client.stream.uri.base.path: ""
@@ -26,7 +26,7 @@ data:
   binance.coin.client.http.uri.schema: https://
   binance.coin.client.http.uri.host: dapi.binance.com
   binance.coin.client.http.uri.port: "443"
-  binance.coin.client.stream.uri.schema: ws://
+  binance.coin.client.stream.uri.schema: wss://
   binance.coin.client.stream.uri.host: dstream.binance.com
   binance.coin.client.stream.uri.port: "443"
   binance.coin.client.stream.uri.base.path: ""
