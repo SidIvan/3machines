@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math/rand/v2"
 	"os"
 	"path/filepath"
 	"time"
@@ -31,7 +32,7 @@ func NewFileRepo[T any](dataType string) *FileRepo[T] {
 }
 
 func (s *FileRepo[T]) Save(ctx context.Context, batch []T) error {
-	file, err := os.Create(fmt.Sprintf("%s/%d", s.dirPath, time.Now().UnixMilli()))
+	file, err := os.Create(fmt.Sprintf("%s/%d_%d_%d", s.dirPath, time.Now().UnixMilli(), rand.Int64(), rand.Int64()))
 	if err != nil {
 		s.logger.Error(err.Error())
 		return err
