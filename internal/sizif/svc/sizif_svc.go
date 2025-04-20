@@ -6,7 +6,6 @@ import (
 	"DeltaReceiver/pkg/log"
 	"context"
 	"fmt"
-	"sync"
 	"time"
 
 	"go.uber.org/zap"
@@ -16,19 +15,22 @@ type SizifSvc[T model.WithTimestampMs] struct {
 	logger          *zap.Logger
 	socratesStorage SocratesStorage[T]
 	workers         []*SizifWorker[T]
+	done            chan struct{}
 	taskQueue       chan<- model.ProcessingKey
 }
 
 func NewSizifSvc[T model.WithTimestampMs](serviceType string, socratesStorage SocratesStorage[T], parquetStorage ParquetStorage[T], dataTransformator DataTransformator[T], keyLocker KeyLocker, numWorkers int, metrics Metrics) *SizifSvc[T] {
 	taskQueue := make(chan model.ProcessingKey, 1024)
-	var workers []*SizifWorker[T]
+	workers := make([]*SizifWorker[T], numWorkers)
+	done := make(chan struct{}, numWorkers)
 	for i := 0; i < numWorkers; i++ {
-		workers = append(workers, NewSizifWorker(serviceType, socratesStorage, parquetStorage, dataTransformator, taskQueue, keyLocker, metrics))
+		workers[i] = NewSizifWorker(serviceType, socratesStorage, parquetStorage, dataTransformator, taskQueue, keyLocker, metrics, done)
 	}
 	return &SizifSvc[T]{
 		logger:          log.GetLogger(fmt.Sprintf("SizifSvc[%s]", serviceType)),
 		socratesStorage: socratesStorage,
 		workers:         workers,
+		done:            done,
 		taskQueue:       taskQueue,
 	}
 }
@@ -59,15 +61,12 @@ func (s *SizifSvc[T]) Start(ctx context.Context) {
 
 func (s *SizifSvc[T]) Shutdown(ctx context.Context) {
 	s.logger.Info("Start shutdown")
-	var wg sync.WaitGroup
-	wg.Add(len(s.workers))
-	for _, worker := range s.workers {
-		go func(worker *SizifWorker[T]) {
-			worker.Shutdown(ctx)
-			wg.Done()
-		}(worker)
+	close(s.taskQueue)
+	for i := range len(s.workers) {
+		<-s.done
+		s.logger.Info(fmt.Sprintf("Shutdowned %d workers", i))
 	}
-	wg.Wait()
+	close(s.done)
 	s.logger.Info("End shutdown")
 }
 

@@ -5,15 +5,13 @@ import (
 	"DeltaReceiver/pkg/log"
 	"context"
 	"fmt"
-	"sync/atomic"
 
 	"go.uber.org/zap"
 )
 
 type SizifWorker[T model.WithTimestampMs] struct {
 	logger            *zap.Logger
-	shutdown          *atomic.Bool
-	done              chan struct{}
+	done              chan<- struct{}
 	socratesStorage   SocratesStorage[T]
 	parquetStorage    ParquetStorage[T]
 	dataTransformator DataTransformator[T]
@@ -30,13 +28,10 @@ func NewSizifWorker[T model.WithTimestampMs](
 	taskQueue <-chan model.ProcessingKey,
 	keyLocker KeyLocker,
 	metrics Metrics,
+	done chan<- struct{},
 ) *SizifWorker[T] {
-	var shutdown atomic.Bool
-	shutdown.Store(false)
-	done := make(chan struct{})
 	return &SizifWorker[T]{
 		logger:            log.GetLogger(fmt.Sprintf("SizifWorker[%s]", serviceType)),
-		shutdown:          &shutdown,
 		done:              done,
 		socratesStorage:   socratesStorage,
 		parquetStorage:    parquetStorage,
@@ -49,17 +44,19 @@ func NewSizifWorker[T model.WithTimestampMs](
 
 func (s *SizifWorker[T]) Start(ctx context.Context) {
 	s.logger.Info("Worker started")
-	for !s.shutdown.Load() {
+	for {
 		select {
-		case key := <-s.taskQueue:
+		case key, ok := <-s.taskQueue:
+			if !ok {
+				s.logger.Info("Gracefully shutdown worker")
+				s.done <- struct{}{}
+				return
+			}
 			s.lockAndProcessKey(ctx, key)
 		default:
 			sleep(5)
 		}
-		s.lockAndProcessKey(ctx, <-s.taskQueue)
 	}
-	s.logger.Info("Gracefully shutdown worker")
-	s.done <- struct{}{}
 }
 
 func (s *SizifWorker[T]) lockAndProcessKey(ctx context.Context, key model.ProcessingKey) {
@@ -162,11 +159,4 @@ func (s *SizifWorker[T]) deleteKeyData(ctx context.Context, key *model.Processin
 		s.logger.Error(err.Error())
 	}
 	return err
-}
-
-func (s *SizifWorker[T]) Shutdown(ctx context.Context) {
-	s.logger.Info("Start shutdown")
-	s.shutdown.Store(true)
-	<-s.done
-	s.logger.Info("End shutdown")
 }
