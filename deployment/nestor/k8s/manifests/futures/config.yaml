@@ -3,6 +3,8 @@ kind: ConfigMap
 metadata:
   name: nestor-futures-config
 data:
+  binance.reconnect.period.m: "720"
+  
   binance.usd.data.type: usd
   binance.usd.client.http.uri.schema: https://
   binance.usd.client.http.uri.host: fapi.binance.com
