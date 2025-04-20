@@ -5,7 +5,7 @@ metadata:
   labels:
     app: nestor-spot
 spec:
-  replicas: 1  
+  replicas: 2  
   strategy:
     type: RollingUpdate
     rollingUpdate:
@@ -28,6 +28,7 @@ spec:
         app: nestor
         environment: prod
         geo: ultrahost
+        binance_type: spot
       containers:
       - name: nestor
         image: sidivan/nestor:v2.1
