@@ -4,6 +4,7 @@ metadata:
   name: nestor-futures-config
 data:
   binance.reconnect.period.m: "720"
+  binance.mode: future
   
   binance.usd.data.type: usd
   binance.usd.client.http.uri.schema: https://

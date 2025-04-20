@@ -4,8 +4,8 @@ metadata:
   name: nestor-spot-config
 data:
   binance.reconnect.period.m: "720"
-  
   binance.mode: spot
+
   binance.spot.data.type: spot
   binance.spot.client.http.uri.schema: https://
   binance.spot.client.http.uri.host: api.binance.com
