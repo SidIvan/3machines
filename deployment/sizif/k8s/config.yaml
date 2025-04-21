@@ -7,12 +7,12 @@ data:
   binance.spot.workers.binance.book.ticks: "3"
   binance.spot.workers.binance.snapshots: "1"
 
-  binance.usd.workers.binance.deltas: "3"
-  binance.usd.workers.binance.book.ticks: "3"
+  binance.usd.workers.binance.deltas: "1"
+  binance.usd.workers.binance.book.ticks: "1"
   binance.usd.workers.binance.snapshots: "1"
 
-  binance.coin.workers.binance.deltas: "3"
-  binance.coin.workers.binance.book.ticks: "3"
+  binance.coin.workers.binance.deltas: "1"
+  binance.coin.workers.binance.book.ticks: "1"
   binance.coin.workers.binance.snapshots: "1"
 
   zk.servers: "zk-cs.default.svc.cluster.local:2181"
