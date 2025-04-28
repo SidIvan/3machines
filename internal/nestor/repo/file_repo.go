@@ -55,6 +55,7 @@ func (s *FileRepo[T]) GetWithDeleteCallback(ctx context.Context) ([]T, error, fu
 	for _, dirEntry := range dir {
 		if dirEntry.Type().IsRegular() {
 			filePath := filepath.Join(s.dirPath, dirEntry.Name())
+			s.logger.Info(fmt.Sprintf("working with file %s", filePath))
 			rawData, err := os.ReadFile(filePath)
 			if err != nil {
 				s.logger.Error(fmt.Errorf("error opening file %s: %w", filePath, err).Error())
@@ -67,7 +68,11 @@ func (s *FileRepo[T]) GetWithDeleteCallback(ctx context.Context) ([]T, error, fu
 				return nil, err, func() error { return nil }
 			}
 			return data, nil, func() error {
-				return os.Remove(filePath)
+				err := os.Remove(filePath)
+				if err == nil {
+					s.logger.Info(fmt.Sprintf("file %s deleted", filePath))
+				}
+				return err
 			}
 		}
 	}

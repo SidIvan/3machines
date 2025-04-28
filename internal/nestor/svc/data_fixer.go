@@ -28,29 +28,31 @@ const SleepTimeMin = 5
 func (s *DataFixer[T]) Fix() {
 	ctx := context.Background()
 	for {
-		time.Sleep(1 * time.Second)
 		for i, storage := range s.auxStorages {
-			data, err, callback := storage.GetWithDeleteCallback(ctx)
-			if err != nil {
-				s.logger.Error(fmt.Errorf("error while getting data: %w", err).Error())
-				break
+			for {
+				data, err, callback := storage.GetWithDeleteCallback(ctx)
+				if err != nil {
+					s.logger.Error(fmt.Errorf("error while getting data: %w", err).Error())
+					break
+				}
+				if len(data) == 0 {
+					s.logger.Info(fmt.Sprintf("no data in storage %d", i))
+					break
+				}
+				err = s.mainStorage.Save(ctx, data)
+				if err != nil {
+					s.logger.Error(fmt.Errorf("error while sending data, %w", err).Error())
+					break
+				}
+				err = callback()
+				if err != nil {
+					s.logger.Error(fmt.Errorf("error while deleting data: %w", err).Error())
+					break
+				}
+				s.logger.Info(fmt.Sprintf("successfully fixed %d data rows", len(data)))
+
 			}
-			if len(data) == 0 {
-				s.logger.Info(fmt.Sprintf("no data in storage %d", i))
-				continue
-			}
-			err = s.mainStorage.Save(ctx, data)
-			if err != nil {
-				s.logger.Error(fmt.Errorf("error while sending data, %w", err).Error())
-				break
-			}
-			err = callback()
-			if err != nil {
-				s.logger.Error(fmt.Errorf("error while deleting data: %w", err).Error())
-				break
-			}
-			s.logger.Info(fmt.Sprintf("successfully fixed %d data rows", len(data)))
 		}
-		time.Sleep(SleepTimeMin * time.Minute)
+		time.Sleep(SleepTimeMin*time.Minute)
 	}
 }
