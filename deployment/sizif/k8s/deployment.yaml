@@ -26,7 +26,7 @@ spec:
         app: zk
       containers:
       - name: sizif
-        image: sidivan/sizif:v2.0
+        image: sidivan/sizif:v3.0
         imagePullPolicy: Always
         envFrom:
           - configMapRef:
