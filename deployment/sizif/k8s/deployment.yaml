@@ -37,11 +37,11 @@ spec:
               name: b2-creds
         resources:
           limits:
-            cpu: "1000m"
-            memory: 2.25Gi
+            cpu: "3000m"
+            memory: 6.7Gi
           requests:
-            cpu: "1000m"
-            memory: 2.25Gi
+            cpu: "3000m"
+            memory: 6.7Gi
         volumeMounts:
           - name: sizif-logs
             mountPath: /app/log

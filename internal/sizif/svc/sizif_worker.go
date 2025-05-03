@@ -118,7 +118,9 @@ func (s *SizifWorker[T]) processKey(ctx context.Context, key model.ProcessingKey
 		s.logger.Info(fmt.Sprintf("no data for key %s, delete it", &key))
 		return s.socratesStorage.DeleteKey(ctx, &key)
 	}
+	s.logger.Info(fmt.Sprintf("key %s got %d raw data", &key, len(data)))
 	transformedData, isDataValid := s.dataTransformator.Transform(data, &key)
+	s.logger.Info(fmt.Sprintf("key %s got %d data after transform", &key, len(transformedData)))
 	if !isDataValid {
 		s.logger.Warn(fmt.Sprintf("Invalid data for key %s", &key))
 		s.metrics.IncInvalidDataCounter()

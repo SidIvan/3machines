@@ -5,10 +5,8 @@ import (
 	"DeltaReceiver/internal/common/web"
 	bmodel "DeltaReceiver/pkg/binance/model"
 	"DeltaReceiver/pkg/log"
-	"context"
 	"fmt"
 	"sort"
-	"time"
 
 	"go.uber.org/zap"
 )
@@ -54,9 +52,9 @@ func (s DeltaTransformator) Transform(deltas []model.Delta, key *model.Processin
 	lastUpdateId := deltas[0].UpdateId
 	for i := 1; i < len(deltas); i++ {
 		if deltas[i].FirstUpdateId-lastUpdateId > 1 {
-			ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
-			s.dwarfClient.SaveDeltaHole(ctx, model.NewDeltaHole(deltas[i].Symbol, lastUpdateId, deltas[i].FirstUpdateId, deltas[i].Timestamp, s.marketType))
-			cancel()
+			// ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+			// s.dwarfClient.SaveDeltaHole(ctx, model.NewDeltaHole(deltas[i].Symbol, lastUpdateId, deltas[i].FirstUpdateId, deltas[i].Timestamp, s.marketType))
+			// cancel()
 			deltaHoles++
 		}
 		lastUpdateId = deltas[i].UpdateId
