@@ -5,7 +5,7 @@ metadata:
 provisioner: rancher.io/local-path
 allowedTopologies:
 - matchLabelExpressions:
-  - key: node-role.kubernetes.io/control-plane=
+  - key: node-role.kubernetes.io/control-plane
     values:
     - ""
 volumeBindingMode: WaitForFirstConsumer
