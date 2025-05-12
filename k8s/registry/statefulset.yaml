@@ -26,12 +26,6 @@ spec:
           volumeMounts:
             - name: registry-storage
               mountPath: /var/lib/registry
-            - name: certs
-              mountPath: "/certs"
-              readOnly: true
-            - name: auth
-              mountPath: "/auth"
-              readOnly: true
           env:
             - name: REGISTRY_HTTP_TLS_CERTIFICATE
               value: "/certs/registry.crt"
