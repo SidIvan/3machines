@@ -1,0 +1,13 @@
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: registry-storage
+provisioner: rancher.io/local-path
+allowedTopologies:
+- matchLabelExpressions:
+  - key: node-role.kubernetes.io/control-plane=
+    values:
+    -
+volumeBindingMode: WaitForFirstConsumer
+parameters:
+  type: pd-standard
