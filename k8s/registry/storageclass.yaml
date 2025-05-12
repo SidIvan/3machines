@@ -7,7 +7,7 @@ allowedTopologies:
 - matchLabelExpressions:
   - key: node-role.kubernetes.io/control-plane
     values:
-    - ""
+    - "true"
 volumeBindingMode: WaitForFirstConsumer
 parameters:
   type: pd-standard
