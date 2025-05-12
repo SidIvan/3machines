@@ -43,13 +43,6 @@ spec:
               value: "Registry Realm"
             - name: REGISTRY_AUTH_HTPASSWD_PATH
               value: "/auth/htpasswd"
-      volumes:
-        - name: certs
-          secret:
-            secretName: registry-tls
-        - name: auth
-          secret:
-            secretName: registry-auth
   volumeClaimTemplates:
   - metadata:
       name: registry-storage
