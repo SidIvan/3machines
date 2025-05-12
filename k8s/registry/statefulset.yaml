@@ -26,17 +26,6 @@ spec:
           volumeMounts:
             - name: registry-storage
               mountPath: /var/lib/registry
-          env:
-            - name: REGISTRY_HTTP_TLS_CERTIFICATE
-              value: "/certs/registry.crt"
-            - name: REGISTRY_HTTP_TLS_KEY
-              value: "/certs/registry.key"
-            - name: REGISTRY_AUTH
-              value: "htpasswd"
-            - name: REGISTRY_AUTH_HTPASSWD_REALM
-              value: "Registry Realm"
-            - name: REGISTRY_AUTH_HTPASSWD_PATH
-              value: "/auth/htpasswd"
   volumeClaimTemplates:
   - metadata:
       name: registry-storage
